@@ -1,0 +1,60 @@
+### Base URL
+@baseUrl = http://localhost:5000
+@token = {{login.response.body.$.data.token}}
+
+### Health
+GET {{baseUrl}}/api/health
+
+### Login
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+### Me
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{token}}
+
+### KB list
+GET {{baseUrl}}/api/kb/items?page=1&size=10
+Authorization: Bearer {{token}}
+
+### KB create (batch)
+POST {{baseUrl}}/api/kb/items
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "items": [
+    { "title": "示例新闻A", "content": "正文...", "source_name": "测试源", "published_at": "2024-12-01T10:00:00Z", "tags": ["测试","样例"] },
+    { "title": "示例新闻B", "content": "正文...", "source_name": "测试源", "published_at": "2024-12-01T11:00:00Z", "tags": ["测试"] }
+  ]
+}
+
+### Semantic search
+POST {{baseUrl}}/api/search/semantic
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "AI 医疗 最新应用",
+  "top_k": 5
+}
+
+### QA
+POST {{baseUrl}}/api/search/qa
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "query": "AI 在医疗影像的作用",
+  "top_k": 5
+}
+
+### Analytics keywords
+GET {{baseUrl}}/api/analytics/keywords?top=10
+Authorization: Bearer {{token}}
