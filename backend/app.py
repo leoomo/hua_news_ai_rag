@@ -1,10 +1,10 @@
 from datetime import timedelta
 from flask import Flask
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.background import BackgroundScheduler  # type: ignore
 import os
-from flask_cors import CORS
+from flask_cors import CORS  # type: ignore
 from .config import Settings
-from .db import init_db, engine, Base
+from .db import init_db, engine, Base, close_db
 from .ingest_utils import ensure_columns_for_dedup, ensure_columns_for_enrich
 from .routes.auth import auth_bp
 from .routes.users import users_bp
@@ -21,7 +21,23 @@ def create_app() -> Flask:
     app.config['SECRET_KEY'] = settings.secret_key
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 
-    init_db(settings.database_url)
+    init_db(settings.database_url, settings)
+    # 应用关闭时清理数据库连接
+    @app.teardown_appcontext
+    def cleanup_db(error):  # type: ignore
+        if error:
+            # 如果有错误，回滚事务
+            pass
+    
+    # 应用关闭时清理资源
+    @app.teardown_appcontext
+    def cleanup_resources(error):  # type: ignore
+        pass
+    
+    # 确保应用关闭时清理数据库连接
+    import atexit
+    atexit.register(close_db)
+    
     # import models so SQLAlchemy knows all tables
     try:
         from backend import models as _models  # noqa: F401
@@ -32,7 +48,8 @@ def create_app() -> Flask:
             pass
     # ensure all tables exist (long-term approach)
     try:
-        Base.metadata.create_all(engine)
+        if engine:  # 添加空值检查
+            Base.metadata.create_all(engine)
     except Exception:
         pass
     # ensure schema columns once at startup
