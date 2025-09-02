@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { isNonEmpty, isUrl } from '@/lib/validators';
+import { useNotification, NotificationContainer } from '@/components/Notification';
+import { IngestProgress } from '@/components/IngestProgress';
 
 type Rss = { id: number; name: string; url: string; category?: string; is_active?: boolean };
 type RssStatus = { id: number; source_id: number; url: string; status: string; created: number; skipped: number; error_message?: string; created_at?: string };
@@ -17,6 +19,15 @@ export default function RssSettingsPage() {
   // 新增：采集状态管理
   const [ingestingIds, setIngestingIds] = useState<Set<number>>(new Set());
   const [isIngestingAll, setIsIngestingAll] = useState<boolean>(false);
+  
+  // 进度指示器状态
+  const [showProgress, setShowProgress] = useState(false);
+  const [progressType, setProgressType] = useState<'single' | 'batch'>('single');
+  const [progressSourceName, setProgressSourceName] = useState<string>('');
+  
+  // 使用通知管理器
+  const notification = useNotification();
+
   useEffect(() => {
     api.get('/api/settings/rss').then((res) => setItems(res.data?.data || res.data || []));
     api.get('/api/settings/rss/status').then((res) => {
@@ -57,8 +68,14 @@ export default function RssSettingsPage() {
       setAutoOn(!!data.enabled);
       const jr = (data.jobs && data.jobs[0]?.next_run_time) || null;
       setNextRun(jr);
+      
+      if (turnOn) {
+        notification.showSuccess('调度器启动成功', 'RSS自动采集已开启');
+      } else {
+        notification.showInfo('调度器已停止', 'RSS自动采集已关闭');
+      }
     } catch (err) {
-      alert('调度器操作失败');
+      notification.showError('调度器操作失败', '无法启动或停止RSS自动采集');
     }
   }
 
@@ -66,9 +83,21 @@ export default function RssSettingsPage() {
     setError(null);
     if (!isNonEmpty(form.name || '')) return setError('请输入名称');
     if (!isUrl(form.url || '')) return setError('请输入合法 URL');
-    await api.post('/api/settings/rss', form);
-    setForm({ name: '', url: '', category: '', is_active: true });
-    refresh();
+    
+    try {
+      await api.post('/api/settings/rss', form);
+      notification.showSuccess('RSS源添加成功', `${form.name} 已添加到RSS源列表`);
+      setForm({ name: '', url: '', category: '', is_active: true });
+      refresh();
+    } catch (error: any) {
+      let errorMessage = '添加RSS源失败';
+      if (error.response?.data?.msg) {
+        errorMessage += `: ${error.response.data.msg}`;
+      } else if (error.message) {
+        errorMessage += `: ${error.message}`;
+      }
+      notification.showError('添加失败', errorMessage);
+    }
   }
 
   async function onIngest(id: number) {
@@ -77,12 +106,21 @@ export default function RssSettingsPage() {
     // 互斥：批量采集中则禁止单个采集
     if (isIngestingAll) return;
     
+    const sourceName = items.find(item => item.id === id)?.name || 'RSS源';
+    setProgressSourceName(sourceName);
+    setProgressType('single');
+    setShowProgress(true);
+    
     setIngestingIds(prev => new Set(prev).add(id));
     try {
       const response = await api.post(`/api/settings/rss/ingest?id=${id}`);
-      alert('已触发采集');
+      // 延迟显示成功通知，让进度条先完成
+      setTimeout(() => {
+        notification.showSuccess('采集成功', `已触发RSS源"${sourceName}"的采集任务`);
+      }, 2000);
       refresh();
     } catch (error: any) {
+      setShowProgress(false);
       // 显示具体的错误原因
       let errorMessage = '采集失败';
       if (error.response?.data?.msg) {
@@ -98,7 +136,7 @@ export default function RssSettingsPage() {
       } else {
         errorMessage += ': 未知错误，请稍后重试';
       }
-      alert(errorMessage);
+      notification.showError('采集失败', errorMessage);
     } finally {
       setIngestingIds(prev => {
         const newSet = new Set(prev);
@@ -114,12 +152,19 @@ export default function RssSettingsPage() {
     // 互斥：存在任意单个采集中则禁止批量采集
     if (ingestingIds.size > 0) return;
     
+    setProgressType('batch');
+    setShowProgress(true);
+    
     setIsIngestingAll(true);
     try {
       const response = await api.post('/api/settings/rss/ingest_all');
-      alert('已触发批量采集');
+      // 延迟显示成功通知，让进度条先完成
+      setTimeout(() => {
+        notification.showSuccess('批量采集成功', '已触发所有RSS源的批量采集任务');
+      }, 2000);
       refresh();
     } catch (error: any) {
+      setShowProgress(false);
       // 显示具体的错误原因
       let errorMessage = '批量采集失败';
       if (error.response?.data?.msg) {
@@ -135,11 +180,15 @@ export default function RssSettingsPage() {
       } else {
         errorMessage += ': 未知错误，请稍后重试';
       }
-      alert(errorMessage);
+      notification.showError('批量采集失败', errorMessage);
     } finally {
       setIsIngestingAll(false);
     }
   }
+
+  const handleProgressComplete = () => {
+    setShowProgress(false);
+  };
 
   function onEditStart(item: Rss) {
     setEditingId(item.id);
@@ -150,18 +199,52 @@ export default function RssSettingsPage() {
     setError(null);
     if (!isNonEmpty(form.name || '')) return setError('请输入名称');
     if (!isUrl(form.url || '')) return setError('请输入合法 URL');
-    await api.patch('/api/settings/rss', form);
-    setEditingId(null);
-    setForm({ name: '', url: '', category: '', is_active: true });
-    refresh();
+    
+    try {
+      await api.patch('/api/settings/rss', form);
+      notification.showSuccess('编辑成功', `RSS源 ${form.name} 已更新`);
+      setEditingId(null);
+      setForm({ name: '', url: '', category: '', is_active: true });
+      refresh();
+    } catch (error: any) {
+      let errorMessage = '编辑RSS源失败';
+      if (error.response?.data?.msg) {
+        errorMessage += `: ${error.response.data.msg}`;
+      } else if (error.message) {
+        errorMessage += `: ${error.message}`;
+      }
+      notification.showError('编辑失败', errorMessage);
+    }
   }
 
   async function onDelete(id: number) {
-    await api.delete(`/api/settings/rss?id=${id}`);
-    refresh();
+    try {
+      await api.delete(`/api/settings/rss?id=${id}`);
+      notification.showSuccess('删除成功', 'RSS源已从列表中移除');
+      refresh();
+    } catch (error: any) {
+      let errorMessage = '删除RSS源失败';
+      if (error.response?.data?.msg) {
+        errorMessage += `: ${error.response.data.msg}`;
+      } else if (error.message) {
+        errorMessage += `: ${error.message}`;
+      }
+      notification.showError('删除失败', errorMessage);
+    }
   }
   return (
     <main className="space-y-4">
+      {/* 通知容器 */}
+      <NotificationContainer notifications={notification.notifications} />
+      
+      {/* 进度指示器 */}
+      <IngestProgress
+        isVisible={showProgress}
+        type={progressType}
+        sourceName={progressSourceName}
+        onComplete={handleProgressComplete}
+      />
+      
       <h1 className="text-2xl font-semibold">RSS 源管理</h1>
       <div className="rounded border bg-white p-4 flex items-center gap-4">
         <div className="flex items-center gap-2">
