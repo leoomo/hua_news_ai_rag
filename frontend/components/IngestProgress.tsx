@@ -13,6 +13,19 @@ export function IngestProgress({ isVisible, type, sourceName, onComplete }: Inge
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState<'running' | 'success' | 'error'>('running');
 
+  // 当组件显示时重置状态
+  useEffect(() => {
+    if (isVisible) {
+      // 完全重置所有状态
+      setProgress(0);
+      setStatus('running');
+    } else {
+      // 隐藏时也重置状态，为下次显示做准备
+      setProgress(0);
+      setStatus('running');
+    }
+  }, [isVisible]);
+
   useEffect(() => {
     if (isVisible && status === 'running') {
       // 模拟进度条
@@ -43,6 +56,7 @@ export function IngestProgress({ isVisible, type, sourceName, onComplete }: Inge
     }
   }, [progress, status, onComplete]);
 
+  // 如果不可见，直接返回null，不渲染任何内容
   if (!isVisible) return null;
 
   const getTitle = () => {

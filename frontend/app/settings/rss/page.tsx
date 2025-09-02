@@ -107,9 +107,16 @@ export default function RssSettingsPage() {
     if (isIngestingAll) return;
     
     const sourceName = items.find(item => item.id === id)?.name || 'RSS源';
-    setProgressSourceName(sourceName);
+    
+    // 先重置进度指示器状态
+    setShowProgress(false);
     setProgressType('single');
-    setShowProgress(true);
+    setProgressSourceName(sourceName);
+    
+    // 使用setTimeout确保状态重置完成后再显示
+    setTimeout(() => {
+      setShowProgress(true);
+    }, 100);
     
     setIngestingIds(prev => new Set(prev).add(id));
     try {
@@ -152,8 +159,14 @@ export default function RssSettingsPage() {
     // 互斥：存在任意单个采集中则禁止批量采集
     if (ingestingIds.size > 0) return;
     
+    // 先重置进度指示器状态
+    setShowProgress(false);
     setProgressType('batch');
-    setShowProgress(true);
+    
+    // 使用setTimeout确保状态重置完成后再显示
+    setTimeout(() => {
+      setShowProgress(true);
+    }, 100);
     
     setIsIngestingAll(true);
     try {
@@ -239,6 +252,7 @@ export default function RssSettingsPage() {
       
       {/* 进度指示器 */}
       <IngestProgress
+        key={`${showProgress}-${progressType}-${progressSourceName}`}
         isVisible={showProgress}
         type={progressType}
         sourceName={progressSourceName}
