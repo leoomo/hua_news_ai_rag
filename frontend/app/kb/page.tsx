@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Protected } from '@/components/Protected';
-import { Filter, X, Search, Calendar, Tag, Globe, ChevronDown, ChevronUp } from 'lucide-react';
+import { Filter, X, Search, Calendar, Tag, Globe, ChevronDown, ChevronUp, Edit3, Trash2, Save, XCircle } from 'lucide-react';
 
 type KbItem = {
   id: number;
@@ -30,6 +30,14 @@ export default function KbListPage() {
 
   // 筛选器收缩状态
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
+
+  // 编辑状态
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState<Partial<KbItem>>({});
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // 删除确认状态
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   useEffect(() => {
     api
@@ -93,6 +101,64 @@ export default function KbListPage() {
   // 切换筛选器展开状态
   const toggleFilterExpanded = () => {
     setIsFilterExpanded(!isFilterExpanded);
+  };
+
+  // 开始编辑
+  const startEdit = (item: KbItem) => {
+    setEditingId(item.id);
+    setEditForm({
+      title: item.title,
+      content: item.content,
+      source_name: item.source_name,
+      category: item.category,
+    });
+  };
+
+  // 取消编辑
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditForm({});
+  };
+
+  // 保存编辑
+  const saveEdit = async () => {
+    if (!editingId) return;
+    
+    setIsUpdating(true);
+    try {
+      // 这里应该调用后端API更新数据
+      // await api.put(`/api/kb/items/${editingId}`, editForm);
+      
+      // 临时更新本地状态（实际项目中应该等待API响应）
+      setItems(prev => prev.map(item => 
+        item.id === editingId 
+          ? { ...item, ...editForm, updated_at: new Date().toISOString() }
+          : item
+      ));
+      
+      setEditingId(null);
+      setEditForm({});
+    } catch (error) {
+      console.error('更新失败:', error);
+      alert('更新失败，请重试');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // 删除条目
+  const deleteItem = async (id: number) => {
+    try {
+      // 这里应该调用后端API删除数据
+      // await api.delete(`/api/kb/items/${id}`);
+      
+      // 临时更新本地状态（实际项目中应该等待API响应）
+      setItems(prev => prev.filter(item => item.id !== id));
+      setDeleteId(null);
+    } catch (error) {
+      console.error('删除失败:', error);
+      alert('删除失败，请重试');
+    }
   };
 
   return (
@@ -207,7 +273,7 @@ export default function KbListPage() {
                   <button
                     onClick={clearFilters}
                     disabled={!hasActiveFilters}
-                    className="flex-1 bg-gray-100 text-gray-700 rounded-lg px-4 py-3 text-sm font-medium hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2"
+                    className="flex-1 bg-gray-100 text-gray-700 rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2"
                   >
                     <X className="w-4 h-4" />
                     <span>清除筛选</span>
@@ -269,26 +335,125 @@ export default function KbListPage() {
                       <th className="text-left p-4 font-semibold text-gray-700">来源</th>
                       <th className="text-left p-4 font-semibold text-gray-700">分类</th>
                       <th className="text-left p-4 font-semibold text-gray-700">时间</th>
+                      <th className="text-left p-4 font-semibold text-gray-700">操作</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {currentItems.map((it) => (
                       <tr key={it.id} className="hover:bg-gray-50 transition-colors duration-150">
-                        <td className="p-4 font-medium text-gray-900">{it.title}</td>
-                        <td className="p-4 text-gray-700 max-w-[500px] truncate" title={it.content || ''}>{it.content || '-'}</td>
-                        {/* <td className="p-4 text-gray-600 max-w-[500px] truncate" title={it.summary || ''}>{it.summary || '-'}</td> */}
+                        {/* 标题列 */}
                         <td className="p-4">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                            {it.source_name || '-'}
-                          </span>
+                          {editingId === it.id ? (
+                            <input
+                              type="text"
+                              value={editForm.title || ''}
+                              onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                              className="w-full rounded border px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          ) : (
+                            <span className="font-medium text-gray-900">{it.title}</span>
+                          )}
                         </td>
+
+                        {/* 内容列 */}
                         <td className="p-4">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            {it.category || '-'}
-                          </span>
+                          {editingId === it.id ? (
+                            <textarea
+                              value={editForm.content || ''}
+                              onChange={(e) => setEditForm(prev => ({ ...prev, content: e.target.value }))}
+                              className="w-full rounded border px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                              rows={3}
+                            />
+                          ) : (
+                            <span className="text-gray-700 max-w-[500px] truncate block" title={it.content || ''}>
+                              {it.content || '-'}
+                            </span>
+                          )}
                         </td>
+
+                        {/* 来源列 */}
+                        <td className="p-4">
+                          {editingId === it.id ? (
+                            <select
+                              value={editForm.source_name || ''}
+                              onChange={(e) => setEditForm(prev => ({ ...prev, source_name: e.target.value }))}
+                              className="w-full rounded border px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                              <option value="">选择来源</option>
+                              {sources.map(source => (
+                                <option key={source} value={source}>{source}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                              {it.source_name || '-'}
+                            </span>
+                          )}
+                        </td>
+
+                        {/* 分类列 */}
+                        <td className="p-4">
+                          {editingId === it.id ? (
+                            <select
+                              value={editForm.category || ''}
+                              onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
+                              className="w-full rounded border px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                              <option value="">选择分类</option>
+                              {categories.map(cat => (
+                                <option key={cat} value={cat}>{cat}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              {it.category || '-'}
+                            </span>
+                          )}
+                        </td>
+
+                        {/* 时间列 */}
                         <td className="p-4 text-gray-500">
                           {it.created_at ? new Date(it.created_at).toLocaleDateString('zh-CN') : '-'}
+                        </td>
+
+                        {/* 操作列 */}
+                        <td className="p-4">
+                          {editingId === it.id ? (
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={saveEdit}
+                                disabled={isUpdating}
+                                className="inline-flex items-center space-x-1 px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors duration-200 disabled:opacity-50"
+                              >
+                                <Save className="w-3 h-3" />
+                                <span>{isUpdating ? '保存中...' : '保存'}</span>
+                              </button>
+                              <button
+                                onClick={cancelEdit}
+                                className="inline-flex items-center space-x-1 px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors duration-200"
+                              >
+                                <XCircle className="w-3 h-3" />
+                                <span>取消</span>
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => startEdit(it)}
+                                className="inline-flex items-center space-x-1 px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors duration-200"
+                              >
+                                <Edit3 className="w-3 h-3" />
+                                <span>编辑</span>
+                              </button>
+                              <button
+                                onClick={() => setDeleteId(it.id)}
+                                className="inline-flex items-center space-x-1 px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 transition-colors duration-200"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                <span>删除</span>
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -342,6 +507,32 @@ export default function KbListPage() {
               </div>
             )}
           </>
+        )}
+
+        {/* 删除确认对话框 */}
+        {deleteId && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">确认删除</h3>
+              <p className="text-gray-600 mb-6">
+                确定要删除这条知识库条目吗？此操作不可撤销。
+              </p>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setDeleteId(null)}
+                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={() => deleteItem(deleteId)}
+                  className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors duration-200"
+                >
+                  删除
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </main>
     </Protected>
