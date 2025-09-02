@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="4" failures="0" errors="0" time="2.452">
+  <testsuite name="Nav" errors="0" failures="0" skipped="0" timestamp="2025-09-02T07:50:16" time="1.39" tests="1">
+    <testcase classname="Nav renders main links" name="Nav renders main links" time="0.022">
+    </testcase>
+  </testsuite>
+  <testsuite name="LoginPage" errors="0" failures="0" skipped="0" timestamp="2025-09-02T07:50:16" time="1.396" tests="1">
+    <testcase classname="LoginPage renders login form" name="LoginPage renders login form" time="0.015">
+    </testcase>
+  </testsuite>
+  <testsuite name="RSS Settings Page" errors="0" failures="0" skipped="0" timestamp="2025-09-02T07:50:16" time="2.072" tests="1">
+    <testcase classname="RSS Settings Page renders list and supports create/edit/delete" name="RSS Settings Page renders list and supports create/edit/delete" time="0.042">
+    </testcase>
+  </testsuite>
+  <testsuite name="Users Settings Page" errors="0" failures="0" skipped="0" timestamp="2025-09-02T07:50:16" time="2.094" tests="1">
+    <testcase classname="Users Settings Page renders list and supports create/edit/delete" name="Users Settings Page renders list and supports create/edit/delete" time="0.036">
+    </testcase>
+  </testsuite>
+</testsuites>

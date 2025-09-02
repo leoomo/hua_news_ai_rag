@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>个性化新闻智能知识库 - 原型</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand">HUA News AI</div>
+      <nav class="nav" id="nav">
+        <button data-view="dashboard" class="nav-item active">仪表盘</button>
+        <button data-view="kb" class="nav-item">知识库</button>
+        <button data-view="search" class="nav-item">语义查询</button>
+        <button data-view="analytics" class="nav-item">数据分析</button>
+        <button data-view="settings" class="nav-item">设置</button>
+      </nav>
+      <div class="user-area" id="userArea">
+        <button id="loginBtn">登录</button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <!-- 登录对话框 -->
+      <div class="modal hidden" id="loginModal" role="dialog" aria-modal="true">
+        <div class="modal-content">
+          <h3>登录</h3>
+          <form id="loginForm">
+            <label>用户名/邮箱
+              <input type="text" id="username" required>
+            </label>
+            <label>密码
+              <input type="password" id="password" required>
+            </label>
+            <div class="modal-actions">
+              <button type="submit">登录</button>
+              <button type="button" id="closeLogin">取消</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- 详情对话框 -->
+      <div class="modal hidden" id="detailModal" role="dialog" aria-modal="true">
+        <div class="modal-content">
+          <h3 id="detailTitle">详情</h3>
+          <div id="detailMeta" class="sub"></div>
+          <div id="detailChunks" class="chunks"></div>
+          <div class="modal-actions">
+            <button type="button" id="closeDetail">关闭</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 通知条 -->
+      <div id="notice" class="notice hidden"></div>
+
+      <!-- 视图：仪表盘 -->
+      <section id="view-dashboard" class="view visible">
+        <div class="cards">
+          <div class="card"><div class="stat" id="statIngest">0</div><div class="label">今日入库</div></div>
+          <div class="card"><div class="stat" id="statPending">0</div><div class="label">待审核</div></div>
+          <div class="card"><div class="stat" id="statQueries">0</div><div class="label">检索请求</div></div>
+          <div class="card"><div class="stat" id="statFailed">0</div><div class="label">失败任务</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">最近入库</div>
+          <table class="table" id="recentTable">
+            <thead><tr><th>标题</th><th>来源</th><th>时间</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 视图：知识库列表 -->
+      <section id="view-kb" class="view">
+        <div class="toolbar">
+          <div class="filters">
+            <input type="text" id="fKeyword" placeholder="关键词...">
+            <select id="fSource">
+              <option value="">来源</option>
+              <option>新华社</option>
+              <option>人民网</option>
+            </select>
+            <input type="date" id="fFrom">
+            <input type="date" id="fTo">
+            <button id="btnFilter">筛选</button>
+          </div>
+          <div class="actions">
+            <button id="btnImport">导入Excel</button>
+            <button id="btnBatchDelete" class="danger" disabled>批量删除</button>
+          </div>
+        </div>
+        <table class="table" id="kbTable">
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="chkAll"></th>
+              <th>标题</th>
+              <th>来源</th>
+              <th>标签</th>
+              <th>发布时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <!-- 视图：语义搜索 -->
+      <section id="view-search" class="view">
+        <div class="searchbar">
+          <input id="searchInput" placeholder="请输入你的问题... 如：AI 医疗最新应用" />
+          <select id="topK">
+            <option value="5">Top 5</option>
+            <option value="10">Top 10</option>
+          </select>
+          <button id="btnSearch">搜索</button>
+          <button id="btnWeb" class="secondary">联网搜索</button>
+        </div>
+        <div id="searchResults" class="results"></div>
+      </section>
+
+      <!-- 视图：数据分析 -->
+      <section id="view-analytics" class="view">
+        <div class="filters">
+          <input type="date" id="aFrom">
+          <input type="date" id="aTo">
+          <button id="btnAnalytics">生成报告</button>
+        </div>
+        <div class="grid">
+          <div class="panel">
+            <div class="panel-header">关键词 Top10</div>
+            <ul id="topKeywords" class="list"></ul>
+          </div>
+          <div class="panel">
+            <div class="panel-header">趋势</div>
+            <div id="trend" class="placeholder">趋势图占位</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 视图：设置 -->
+      <section id="view-settings" class="view">
+        <div class="tabs">
+          <button class="tab active" data-tab="rss">RSS 管理</button>
+          <button class="tab" data-tab="models">模型与API</button>
+          <button class="tab" data-tab="users">用户与角色</button>
+        </div>
+
+        <div class="tab-content visible" id="tab-rss">
+          <div class="toolbar">
+            <button id="btnAddRss">新增RSS</button>
+            <button id="btnFetchNow">立即抓取</button>
+          </div>
+          <table class="table" id="rssTable">
+            <thead><tr><th>名称</th><th>URL</th><th>类别</th><th>启用</th><th>最近抓取</th><th>操作</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="tab-content" id="tab-models">
+          <form class="form" id="modelForm">
+            <label>Ollama Base URL
+              <input type="text" id="ollamaUrl" placeholder="http://localhost:11434">
+            </label>
+            <label>LLM 模型
+              <input type="text" id="llmModel" placeholder="qwen2.5:3b">
+            </label>
+            <label>Embedding 模型
+              <input type="text" id="embModel" placeholder="sentence-transformers/all-MiniLM-L6-v2">
+            </label>
+            <label>Rerank 模型
+              <input type="text" id="rerankModel" placeholder="ms-marco-MiniLM-L-6-v2">
+            </label>
+            <div class="form-actions">
+              <button type="submit">保存</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="tab-content" id="tab-users">
+          <table class="table" id="userTable">
+            <thead><tr><th>用户名</th><th>邮箱</th><th>角色</th><th>最近登录</th><th>操作</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

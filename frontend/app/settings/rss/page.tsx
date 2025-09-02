@@ -1,0 +1,207 @@
+'use client';
+import { useEffect, useState } from 'react';
+import { api } from '@/lib/api';
+import { isNonEmpty, isUrl } from '@/lib/validators';
+
+type Rss = { id: number; name: string; url: string; category?: string; is_active?: boolean };
+type RssStatus = { id: number; source_id: number; url: string; status: string; created: number; skipped: number; error_message?: string; created_at?: string };
+
+export default function RssSettingsPage() {
+  const [items, setItems] = useState<Rss[]>([]);
+  const [form, setForm] = useState<Partial<Rss>>({ name: '', url: '', category: '', is_active: true });
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<Record<number, RssStatus | undefined>>({});
+  const [autoOn, setAutoOn] = useState<boolean>(false);
+  const [nextRun, setNextRun] = useState<string | null>(null);
+  useEffect(() => {
+    api.get('/api/settings/rss').then((res) => setItems(res.data?.data || res.data || []));
+    api.get('/api/settings/rss/status').then((res) => {
+      const arr: RssStatus[] = res.data?.data || [];
+      const map: Record<number, RssStatus> = {};
+      for (const r of arr) if (r.source_id) map[r.source_id] = r;
+      setStatus(map);
+    });
+    api.get('/api/scheduler/status').then((res) => {
+      const data = res.data?.data || {};
+      setAutoOn(!!data.enabled);
+      const jr = (data.jobs && data.jobs[0]?.next_run_time) || null;
+      setNextRun(jr);
+    }).catch(() => {});
+  }, []);
+
+  async function refresh() {
+    const res = await api.get('/api/settings/rss');
+    setItems(res.data?.data || res.data || []);
+    const s = await api.get('/api/settings/rss/status');
+    const arr: RssStatus[] = s.data?.data || [];
+    const map: Record<number, RssStatus> = {};
+    for (const r of arr) if (r.source_id) map[r.source_id] = r;
+    setStatus(map);
+  }
+
+  async function onToggleAuto(e: React.ChangeEvent<HTMLInputElement>) {
+    const turnOn = e.target.checked;
+    setAutoOn(turnOn);
+    try {
+      if (turnOn) {
+        await api.post('/api/scheduler/start');
+      } else {
+        await api.post('/api/scheduler/stop');
+      }
+      const res = await api.get('/api/scheduler/status');
+      const data = res.data?.data || {};
+      setAutoOn(!!data.enabled);
+      const jr = (data.jobs && data.jobs[0]?.next_run_time) || null;
+      setNextRun(jr);
+    } catch (err) {
+      alert('调度器操作失败');
+    }
+  }
+
+  async function onCreate() {
+    setError(null);
+    if (!isNonEmpty(form.name || '')) return setError('请输入名称');
+    if (!isUrl(form.url || '')) return setError('请输入合法 URL');
+    await api.post('/api/settings/rss', form);
+    setForm({ name: '', url: '', category: '', is_active: true });
+    refresh();
+  }
+
+  async function onIngest(id: number) {
+    await api.post(`/api/settings/rss/ingest?id=${id}`);
+    alert('已触发采集');
+    refresh();
+  }
+
+  async function onIngestAll() {
+    await api.post('/api/settings/rss/ingest_all');
+    alert('已触发批量采集');
+    refresh();
+  }
+
+  function onEditStart(item: Rss) {
+    setEditingId(item.id);
+    setForm(item);
+  }
+
+  async function onSaveEdit() {
+    setError(null);
+    if (!isNonEmpty(form.name || '')) return setError('请输入名称');
+    if (!isUrl(form.url || '')) return setError('请输入合法 URL');
+    await api.patch('/api/settings/rss', form);
+    setEditingId(null);
+    setForm({ name: '', url: '', category: '', is_active: true });
+    refresh();
+  }
+
+  async function onDelete(id: number) {
+    await api.delete(`/api/settings/rss?id=${id}`);
+    refresh();
+  }
+  return (
+    <main className="space-y-4">
+      <h1 className="text-2xl font-semibold">RSS 源管理</h1>
+      <div className="rounded border bg-white p-4 flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <label className="text-sm">自动采集</label>
+          <input type="checkbox" checked={autoOn} onChange={onToggleAuto} />
+        </div>
+        <div className="text-sm text-gray-600">{nextRun ? `下次运行：${new Date(nextRun).toLocaleString()}` : '下次运行：-'}
+        </div>
+      </div>
+      <div className="rounded border bg-white p-4 space-y-3">
+        <h2 className="font-medium">新增</h2>
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+          <input className="rounded border px-3 py-2" placeholder="名称" value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          <input className="rounded border px-3 py-2" placeholder="URL" value={form.url || ''} onChange={(e) => setForm({ ...form, url: e.target.value })} />
+          <input className="rounded border px-3 py-2" placeholder="分类" value={form.category || ''} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+          <div className="flex items-center gap-2">
+            <label className="text-sm">启用</label>
+            <input type="checkbox" checked={!!form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
+            <button onClick={onCreate} className="ml-auto rounded bg-black text-white px-4 py-2">添加</button>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded border bg-white">
+        <div className="flex items-center justify-between p-2">
+          <h2 className="font-medium">列表</h2>
+          <button onClick={onIngestAll} className="rounded bg-black text-white px-3 py-1">批量采集</button>
+        </div>
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="text-left p-2">名称</th>
+              <th className="text-left p-2">URL</th>
+              <th className="text-left p-2">分类</th>
+              <th className="text-left p-2">启用</th>
+              <th className="text-left p-2">状态</th>
+              <th className="text-left p-2">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((r) => (
+              <tr key={r.id} className="border-t">
+                <td className="p-2">
+                  {editingId === r.id ? (
+                    <input className="w-full rounded border px-2 py-1" value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                  ) : (
+                    r.name
+                  )}
+                </td>
+                <td className="p-2">
+                  {editingId === r.id ? (
+                    <input className="w-full rounded border px-2 py-1" value={form.url || ''} onChange={(e) => setForm({ ...form, url: e.target.value })} />
+                  ) : (
+                    r.url
+                  )}
+                </td>
+                <td className="p-2">
+                  {editingId === r.id ? (
+                    <input className="w-full rounded border px-2 py-1" value={form.category || ''} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+                  ) : (
+                    r.category || '-'
+                  )}
+                </td>
+                <td className="p-2">
+                  {editingId === r.id ? (
+                    <input type="checkbox" checked={!!form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
+                  ) : (
+                    r.is_active ? '是' : '否'
+                  )}
+                </td>
+                <td className="p-2 text-sm">
+                  {status[r.id] ? (
+                    <span className={status[r.id]?.status === 'success' ? 'text-green-600' : 'text-red-600'}>
+                      {status[r.id]?.status}
+                      {status[r.id]?.status === 'success' ? ` (+${status[r.id]?.created}/~${status[r.id]?.skipped})` : ''}
+                    </span>
+                  ) : (
+                    '-'
+                  )}
+                </td>
+                <td className="p-2">
+                  {editingId === r.id ? (
+                    <div className="flex gap-2">
+                      <button onClick={onSaveEdit} className="rounded bg-black text-white px-3 py-1">保存</button>
+                      <button onClick={() => { setEditingId(null); setForm({ name: '', url: '', category: '', is_active: true }); }} className="rounded border px-3 py-1">取消</button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <button onClick={() => onEditStart(r)} className="rounded border px-3 py-1">编辑</button>
+                      <button onClick={() => onDelete(r.id)} className="rounded border px-3 py-1 text-red-600">删除</button>
+                      <button onClick={() => onIngest(r.id)} className="rounded border px-3 py-1 text-green-700">采集</button>
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </main>
+  );
+}
+

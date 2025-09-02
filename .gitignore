@@ -1,0 +1,27 @@
+# Next.js build output
+.next/
+frontend/.next/
+frontend/coverage/
+frontend/.npm-cache/
+
+# Node modules
+node_modules/
+frontend/node_modules/
+
+# Python venv (uv)
+.venv/
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+hua_news.db
+frontend/.next/cache/webpack/server-development/*.pack.gz
+frontend/.next/server/webpack-runtime.js
+frontend/.next/cache/webpack/client-development/*.pack.gz
+frontend/.next/cache/webpack/client-development/1.pack.gz
