@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase, scoped_session
 from contextlib import contextmanager
+from sqlalchemy import text
 
 
 engine = None
@@ -69,5 +70,28 @@ def close_db():
         SessionLocal.remove()
     if engine:
         engine.dispose()
+
+
+def ensure_columns_for_enrich():
+    """确保数据库表有摘要和关键词列"""
+    try:
+        with engine.connect() as conn:
+            # 检查并添加summary列
+            try:
+                conn.execute(text("ALTER TABLE news_articles ADD COLUMN summary TEXT"))
+                print("Added summary column to news_articles")
+            except Exception:
+                pass  # 列已存在
+            
+            # 检查并添加keywords列
+            try:
+                conn.execute(text("ALTER TABLE news_articles ADD COLUMN keywords TEXT"))
+                print("Added keywords column to news_articles")
+            except Exception:
+                pass  # 列已存在
+                
+            conn.commit()
+    except Exception as e:
+        print(f"Error ensuring enrich columns: {e}")
 
 

@@ -25,13 +25,41 @@ def parse_rss(source: RssSource) -> Iterable[dict]:
     fetcher = Fetcher()
     resp = fetcher.get(source.url)
     parsed = feedparser.parse(resp.content)
+    
+    print(f"Parsing RSS source: {source.name}, found {len(parsed.entries)} entries")
+    
     for entry in parsed.entries:
         url = getattr(entry, "link", None) or getattr(entry, "id", None)
         if not url:
             continue
+            
         title = getattr(entry, "title", "")
-        content_raw = getattr(entry, "summary", "")
+        
+        # 尝试多种方式获取内容
+        content_raw = ""
+        if hasattr(entry, "summary") and entry.summary:
+            content_raw = entry.summary
+        elif hasattr(entry, "description") and entry.description:
+            content_raw = entry.description
+        elif hasattr(entry, "content") and entry.content:
+            # 某些RSS源使用content字段
+            if isinstance(entry.content, list) and len(entry.content) > 0:
+                content_raw = entry.content[0].get("value", "")
+            else:
+                content_raw = str(entry.content)
+        
+        # 如果RSS中没有内容，尝试从URL获取
+        if not content_raw.strip():
+            print(f"Warning: No content found in RSS for {url}, title: {title}")
+            # 这里可以添加网页抓取逻辑来获取完整内容
+            content_raw = f"标题：{title}\n来源：{source.name}\n链接：{url}"
+        
         content = clean_html_to_text(content_raw)
+        
+        # 如果清理后内容仍然为空，使用标题作为内容
+        if not content.strip():
+            content = f"标题：{title}\n来源：{source.name}\n链接：{url}"
+        
         published = getattr(entry, "published_parsed", None)
         published_at = None
         if published:
@@ -39,6 +67,9 @@ def parse_rss(source: RssSource) -> Iterable[dict]:
                 published_at = datetime(*published[:6])
             except Exception:
                 published_at = None
+                
+        print(f"Processing entry: {title[:50]}..., content length: {len(content)}")
+        
         yield {
             "title": title,
             "content": content,
@@ -108,20 +139,31 @@ def ingest_rss_source(source_id: int) -> dict:
     for item in iterator:
         url = item.get("source_url")
         url_hash = _hash_url(url) if url else None
+        
+        # 验证内容是否有效
+        title = item.get("title", "").strip()
+        content = item.get("content", "").strip()
+        
+        if not title or not content:
+            print(f"Skipping item with empty title or content: title='{title}', content_length={len(content)}")
+            skipped += 1
+            continue
+            
         if url:
             exists = db.query(NewsArticle).filter(NewsArticle.source_url == url).first()
             if exists:
+                print(f"Skipping duplicate URL: {url}")
                 skipped += 1
                 continue
 
-        sh = simhash((item.get("title") or "") + " " + (item.get("content") or ""))
+        sh = simhash(title + " " + content)
 
-        summary = summarize_text((item.get("content") or ""), max_chars=200)
-        keywords = ",".join(extract_keywords((item.get("title") or "") + " " + (item.get("content") or ""), top_k=8))
+        summary = summarize_text(content, max_chars=200)
+        keywords = ",".join(extract_keywords(title + " " + content, top_k=8))
 
         article = NewsArticle(
-            title=item["title"] or "",
-            content=item["content"] or "",
+            title=title,
+            content=content,
             source_url=url,
             source_name=item.get("source_name"),
             published_at=item.get("published_at"),

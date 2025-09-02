@@ -37,7 +37,7 @@ export default function KbListPage() {
                 <tr>
                   <th className="text-left p-2">标题</th>
                   <th className="text-left p-2">内容</th>
-                  <th className="text-left p-2">摘要</th>
+                  {/* <th className="text-left p-2">摘要</th> */}
                   <th className="text-left p-2">来源</th>
                   <th className="text-left p-2">分类</th>
                   <th className="text-left p-2">时间</th>
@@ -48,7 +48,7 @@ export default function KbListPage() {
                   <tr key={it.id} className="border-t">
                     <td className="p-2">{it.title}</td>
                     <td className="p-2 text-gray-700 max-w-[500px] truncate" title={it.content || ''}>{it.content || '-'}</td>
-                    <td className="p-2 text-gray-600 max-w-[500px] truncate" title={it.summary || ''}>{it.summary || '-'}</td>
+                    {/* <td className="p-2 text-gray-600 max-w-[500px] truncate" title={it.summary || ''}>{it.summary || '-'}</td> */}
                     <td className="p-2">{it.source_name || '-'}</td>
                     <td className="p-2">{it.category || '-'}</td>
                     <td className="p-2">{it.created_at || '-'}</td>

@@ -32,6 +32,9 @@ class NewsArticle(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     vector_id: Mapped[str | None] = mapped_column(String(100))
     status: Mapped[str] = mapped_column(String(20), default='active')
+    # 新增字段
+    summary: Mapped[str | None] = mapped_column(Text)
+    keywords: Mapped[str | None] = mapped_column(Text)
 
 
 class RssSource(Base):
