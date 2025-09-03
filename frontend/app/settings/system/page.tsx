@@ -108,7 +108,7 @@ export default function SystemSettingsPage() {
       <h1 className="text-2xl font-semibold">系统设置</h1>
       
       {/* 邮件配置 */}
-      <div className="rounded border bg-white p-6 space-y-6">
+      <div className="rounded-xl border border-gray-200 bg-white/90 backdrop-blur-sm p-6 space-y-6 shadow-sm">
         <h2 className="text-xl font-medium text-gray-800 border-b pb-2">邮件配置</h2>
         
         {error && (
@@ -126,8 +126,8 @@ export default function SystemSettingsPage() {
         {/* 邮件功能开关 */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium text-gray-700">功能开关</h3>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-            <p className="text-sm text-blue-800">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4">
+            <p className="text-sm text-gray-700">
               💡 提示：您可以先配置所有设置，然后启用邮件模块。配置会立即保存并生效。
             </p>
           </div>
@@ -140,7 +140,7 @@ export default function SystemSettingsPage() {
                   ...emailConfig,
                   enable_email_module: e.target.checked
                 })}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded border-gray-300 text-gray-600 focus:ring-gray-500"
               />
               <span className="text-sm font-medium text-gray-700">启用邮件模块</span>
             </label>
@@ -152,7 +152,7 @@ export default function SystemSettingsPage() {
                   ...emailConfig,
                   enable_email_notification: e.target.checked
                 })}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded border-gray-300 text-gray-600 focus:ring-gray-500"
                 disabled={!emailConfig.enable_email_module}
               />
               <span className="text-sm font-medium text-gray-700">启用邮件通知</span>
@@ -171,12 +171,12 @@ export default function SystemSettingsPage() {
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="flex-1 rounded border px-3 py-2"
+                className="flex-1 rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
               />
               <button
                 onClick={addRecipientEmail}
                 disabled={!newEmail.trim()}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-gray-900 text-white rounded-md border border-gray-900 hover:bg-gray-800 hover:shadow hover:-translate-y-0.5 transition-all duration-150 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:border-gray-300"
               >
                 添加
               </button>
@@ -192,12 +192,12 @@ export default function SystemSettingsPage() {
                       className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full text-sm"
                     >
                       <span className="text-gray-700">{email}</span>
-                                              <button
-                          onClick={() => removeRecipientEmail(email)}
-                          className="text-red-500 hover:text-red-700 text-xs"
-                        >
-                          ×
-                        </button>
+                      <button
+                        onClick={() => removeRecipientEmail(email)}
+                        className="text-red-500 hover:text-red-700 text-xs"
+                      >
+                        ×
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -221,7 +221,7 @@ export default function SystemSettingsPage() {
                   ...emailConfig,
                   sender_name: e.target.value
                 })}
-                className="w-full rounded border px-3 py-2"
+                className="w-full rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 disabled={!emailConfig.enable_email_module}
               />
             </div>
@@ -236,7 +236,7 @@ export default function SystemSettingsPage() {
                   ...emailConfig,
                   email_format: e.target.value
                 })}
-                className="w-full rounded border px-3 py-2"
+                className="w-full rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 disabled={!emailConfig.enable_email_module}
               >
                 <option value="html">HTML</option>
@@ -254,7 +254,7 @@ export default function SystemSettingsPage() {
                   ...emailConfig,
                   email_template_language: e.target.value
                 })}
-                className="w-full rounded border px-3 py-2"
+                className="w-full rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 disabled={!emailConfig.enable_email_module}
               >
                 <option value="zh_cn">中文</option>
@@ -275,7 +275,7 @@ export default function SystemSettingsPage() {
                   ...emailConfig,
                   max_articles_in_email: parseInt(e.target.value) || 10
                 })}
-                className="w-full rounded border px-3 py-2"
+                className="w-full rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 disabled={!emailConfig.enable_email_module}
               />
             </div>
@@ -299,7 +299,7 @@ export default function SystemSettingsPage() {
                   ...emailConfig,
                   email_send_timeout: parseInt(e.target.value) || 30
                 })}
-                className="w-full rounded border px-3 py-2"
+                className="w-full rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 disabled={!emailConfig.enable_email_module}
               />
             </div>
@@ -317,7 +317,7 @@ export default function SystemSettingsPage() {
                   ...emailConfig,
                   email_retry_count: parseInt(e.target.value) || 3
                 })}
-                className="w-full rounded border px-3 py-2"
+                className="w-full rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 disabled={!emailConfig.enable_email_module}
               />
             </div>
@@ -335,7 +335,7 @@ export default function SystemSettingsPage() {
                   ...emailConfig,
                   email_retry_delay: parseInt(e.target.value) || 5
                 })}
-                className="w-full rounded border px-3 py-2"
+                className="w-full rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 disabled={!emailConfig.enable_email_module}
               />
             </div>
@@ -352,7 +352,7 @@ export default function SystemSettingsPage() {
           <button
             onClick={saveEmailConfig}
             disabled={loading}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className="px-6 py-2 bg-gray-900 text-white rounded-md border border-gray-900 hover:bg-gray-800 hover:shadow hover:-translate-y-0.5 transition-all duration-150 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:border-gray-300"
           >
             {loading ? '保存中...' : '保存配置'}
           </button>
