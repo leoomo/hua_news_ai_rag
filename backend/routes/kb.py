@@ -8,6 +8,8 @@ from sqlalchemy import func
 from ai.enrich import extract_keywords
 from flask import current_app
 from datetime import datetime, timezone
+from services import web_search_service, ai_summary_service, simple_web_search_service
+from config import Settings
 
 kb_bp = Blueprint('kb', __name__)
 
@@ -249,6 +251,40 @@ def search_semantic():
         ]
     # 对所有结果统一应用阈值过滤
     data_out = [r for r in data_out if r['score'] >= min_score]
+    
+    # 如果本地搜索无结果且启用了网络搜索兜底，则进行联网查询
+    if not data_out and Settings().web_search_fallback:
+        try:
+            # 优先使用简单搜索服务（无需API密钥）
+            web_results = simple_web_search_service.search_with_fallback(query, top_k=3)
+            
+            if web_results and web_results[0].get('source') != 'fallback':
+                # 使用AI总结网络搜索结果
+                enhanced_response = ai_summary_service.generate_enhanced_response(query, web_results)
+                return {
+                    'code': 0, 
+                    'data': [], 
+                    'web_search': enhanced_response,
+                    'message': '本地知识库未找到相关内容，已为您联网查询并总结'
+                }
+            elif web_results:
+                # 返回兜底结果
+                return {
+                    'code': 0, 
+                    'data': [], 
+                    'web_search': {
+                        'summary': f'关于"{query}"的搜索结果暂时不可用，建议稍后再试或尝试其他关键词。',
+                        'web_results': web_results,
+                        'source': 'fallback',
+                        'query': query
+                    },
+                    'message': '本地知识库未找到相关内容，网络搜索暂时不可用'
+                }
+        except Exception as e:
+            print(f"网络搜索失败: {e}")
+            # 网络搜索失败时，返回空结果
+            pass
+    
     return {'code': 0, 'data': data_out[:top_k]}
 
 
@@ -555,6 +591,39 @@ def search_qa():
         return {'code': 0, 'data': {'answer': answer, 'sources': sources}}
     except Exception as e:
         return {'code': 500, 'msg': str(e)}, 500
+
+
+@kb_bp.post('/search/web')
+def search_web():
+    """专门的网络搜索接口"""
+    data = request.get_json(force=True)
+    query = (data.get('query', '') or '').strip()
+    top_k = int(data.get('top_k') or 3)
+    
+    if not query:
+        return {'code': 400, 'msg': 'query is required'}, 400
+    
+    if not Settings().enable_web_search:
+        return {'code': 403, 'msg': 'web search is disabled'}, 403
+    
+    try:
+        # 执行网络搜索（使用简单搜索服务）
+        web_results = simple_web_search_service.search_with_fallback(query, top_k)
+        
+        if not web_results:
+            return {'code': 0, 'data': [], 'message': '未找到相关网络搜索结果'}
+        
+        # 使用AI总结搜索结果
+        enhanced_response = ai_summary_service.generate_enhanced_response(query, web_results)
+        
+        return {
+            'code': 0,
+            'data': enhanced_response,
+            'message': '网络搜索完成'
+        }
+        
+    except Exception as e:
+        return {'code': 500, 'msg': f'网络搜索失败: {str(e)}'}, 500
 
 
 @kb_bp.get('/kb/item')

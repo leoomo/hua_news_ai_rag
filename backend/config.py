@@ -22,5 +22,13 @@ class Settings(BaseModel):
     chunk_size: int = int(os.getenv('CHUNK_SIZE', '800'))
     chunk_overlap: int = int(os.getenv('CHUNK_OVERLAP', '120'))
     simhash_hamming_threshold: int = int(os.getenv('SIMHASH_HAMMING_THRESHOLD', '4'))
+    
+    # 百度搜索API配置
+    baidu_api_key: str = os.getenv('BAIDU_API_KEY', '')
+    baidu_secret_key: str = os.getenv('BAIDU_SECRET_KEY', '')
+    
+    # 网络搜索配置
+    enable_web_search: bool = os.getenv('ENABLE_WEB_SEARCH', 'true').lower() == 'true'
+    web_search_fallback: bool = os.getenv('WEB_SEARCH_FALLBACK', 'true').lower() == 'true'
 
 

@@ -13,10 +13,30 @@ type SearchResult = {
   score?: number;
 };
 
+type WebSearchResult = {
+  query: string;
+  source: string;
+  summary?: string;
+  web_results: Array<{
+    title: string;
+    snippet: string;
+    url: string;
+    source: string;
+  }>;
+};
+
+type SearchResponse = {
+  code: number;
+  data: SearchResult[];
+  message: string;
+  web_search?: WebSearchResult;
+};
+
 export default function SearchPage() {
   const [q, setQ] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [webSearch, setWebSearch] = useState<WebSearchResult | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   
   // 使用通知管理器
@@ -39,12 +59,23 @@ export default function SearchPage() {
     
     setLoading(true);
     setHasSearched(true);
+    setWebSearch(null); // 清空之前的网络搜索结果
+    
     try {
       const res = await api.post('/api/search/semantic', { query: text, top_k: 10 });
+      
+      // 处理本地搜索结果
       setResults(res.data?.data || res.data || []);
+      
+      // 处理网络搜索结果
+      if (res.data?.web_search) {
+        setWebSearch(res.data.web_search);
+      }
       
       if (res.data?.data?.length > 0 || res.data?.length > 0) {
         notification.showSuccess('搜索完成', `找到 ${res.data?.data?.length || res.data?.length || 0} 条相关结果`);
+      } else if (res.data?.web_search) {
+        notification.showInfo('搜索完成', '本地知识库未找到相关内容，已为您联网查询');
       } else {
         notification.showInfo('搜索完成', '未找到相关内容，请尝试其他关键词');
       }
@@ -113,10 +144,11 @@ export default function SearchPage() {
           </div>
         ) : (
           <>
+            {/* 本地搜索结果 */}
             {results.length > 0 && (
               <div className="space-y-2">
                 <div className="text-sm text-gray-600">
-                  找到 {results.length} 条相关结果
+                  找到 {results.length} 条本地相关结果
                 </div>
                 <ul className="space-y-2">
                   {results.map((r) => (
@@ -152,7 +184,53 @@ export default function SearchPage() {
               </div>
             )}
             
-            {hasSearched && results.length === 0 && !loading && q.trim() && (
+            {/* 网络搜索结果 */}
+            {webSearch && webSearch.web_results && webSearch.web_results.length > 0 && (
+              <div className="space-y-2 mt-6">
+                <div className="text-sm text-gray-600 flex items-center gap-2">
+                  <span>🌐 网络搜索结果</span>
+                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                    {webSearch.source}
+                  </span>
+                </div>
+                {webSearch.summary && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-sm text-blue-800">{webSearch.summary}</p>
+                  </div>
+                )}
+                <ul className="space-y-2">
+                  {webSearch.web_results.map((r, index) => (
+                    <li key={index} className="rounded border bg-blue-50 p-3 hover:shadow-md transition-shadow duration-200">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-medium text-blue-900">{r.title}</h3>
+                        <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                          {r.source}
+                        </span>
+                      </div>
+                      {r.snippet && (
+                        <p className="text-sm text-blue-700 mt-2 leading-relaxed">
+                          {r.snippet}
+                        </p>
+                      )}
+                      {r.url && r.url !== '#' && (
+                        <div className="mt-2">
+                          <a 
+                            className="text-sm text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1" 
+                            href={r.url} 
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            访问网站 →
+                          </a>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {hasSearched && results.length === 0 && !webSearch && !loading && q.trim() && (
               <div className="text-center py-8 text-gray-500">
                 <p>未找到相关内容</p>
                 <p className="text-sm mt-1">请尝试使用其他关键词或调整搜索条件</p>
