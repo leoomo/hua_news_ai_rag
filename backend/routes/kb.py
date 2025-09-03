@@ -490,6 +490,7 @@ def dashboard_summary():
             'id': a.id,
             'title': a.title,
             'source_name': a.source_name,
+            'source_url': a.source_url,
             'created_at': a.created_at.isoformat() if a.created_at else None,
         } for a in latest
     ]
