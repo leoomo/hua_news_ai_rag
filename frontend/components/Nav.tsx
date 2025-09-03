@@ -12,6 +12,7 @@ const links = [
   { href: '/settings/rss', label: 'RSS' },
   { href: '/settings/models', label: '模型' },
   { href: '/settings/users', label: '用户' },
+  { href: '/settings/system', label: '系统' },
 ];
 
 export function Nav() {

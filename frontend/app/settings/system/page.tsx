@@ -1,0 +1,363 @@
+'use client';
+import { useEffect, useState } from 'react';
+import { api } from '@/lib/api';
+import { isEmail } from '@/lib/validators';
+
+type EmailConfig = {
+  enable_email_module: boolean;
+  enable_email_notification: boolean;
+  recipient_emails: string[];
+  sender_name: string;
+  max_articles_in_email: number;
+  email_template_language: string;
+  email_format: string;
+  email_send_timeout: number;
+  email_retry_count: number;
+  email_retry_delay: number;
+};
+
+export default function SystemSettingsPage() {
+  const [emailConfig, setEmailConfig] = useState<EmailConfig>({
+    enable_email_module: false,
+    enable_email_notification: true,
+    recipient_emails: [],
+    sender_name: '华新AI知识库系统',
+    max_articles_in_email: 10,
+    email_template_language: 'zh_cn',
+    email_format: 'markdown',
+    email_send_timeout: 30,
+    email_retry_count: 3,
+    email_retry_delay: 5,
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [newEmail, setNewEmail] = useState('');
+
+  useEffect(() => {
+    loadEmailConfig();
+  }, []);
+
+  async function loadEmailConfig() {
+    try {
+      const res = await api.get('/api/settings/email');
+      if (res.data?.code === 0) {
+        setEmailConfig(res.data.data);
+      }
+    } catch (error) {
+      console.error('加载邮件配置失败:', error);
+    }
+  }
+
+  async function saveEmailConfig() {
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      // 验证收件人邮箱
+      for (const email of emailConfig.recipient_emails) {
+        if (!isEmail(email)) {
+          setError(`无效的邮箱地址: ${email}`);
+          setLoading(false);
+          return;
+        }
+      }
+
+      const res = await api.post('/api/settings/email', emailConfig);
+      if (res.data?.code === 0) {
+        setSuccess('邮件配置保存成功');
+        await loadEmailConfig(); // 重新加载配置
+      } else {
+        setError(res.data?.message || '保存失败');
+      }
+    } catch (error: any) {
+      setError(error.response?.data?.message || '保存失败');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function addRecipientEmail() {
+    if (newEmail.trim() && isEmail(newEmail.trim())) {
+      if (!emailConfig.recipient_emails.includes(newEmail.trim())) {
+        setEmailConfig({
+          ...emailConfig,
+          recipient_emails: [...emailConfig.recipient_emails, newEmail.trim()]
+        });
+        setNewEmail('');
+      }
+    }
+  }
+
+  function removeRecipientEmail(email: string) {
+    setEmailConfig({
+      ...emailConfig,
+      recipient_emails: emailConfig.recipient_emails.filter(e => e !== email)
+    });
+  }
+
+  function handleKeyPress(e: React.KeyboardEvent) {
+    if (e.key === 'Enter') {
+      addRecipientEmail();
+    }
+  }
+
+  return (
+    <main className="space-y-6">
+      <h1 className="text-2xl font-semibold">系统设置</h1>
+      
+      {/* 邮件配置 */}
+      <div className="rounded border bg-white p-6 space-y-6">
+        <h2 className="text-xl font-medium text-gray-800 border-b pb-2">邮件配置</h2>
+        
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
+        
+        {success && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+            <p className="text-sm text-green-600">{success}</p>
+          </div>
+        )}
+
+        {/* 邮件功能开关 */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium text-gray-700">功能开关</h3>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+            <p className="text-sm text-blue-800">
+              💡 提示：您可以先配置所有设置，然后启用邮件模块。配置会立即保存并生效。
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                checked={emailConfig.enable_email_module}
+                onChange={(e) => setEmailConfig({
+                  ...emailConfig,
+                  enable_email_module: e.target.checked
+                })}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm font-medium text-gray-700">启用邮件模块</span>
+            </label>
+            <label className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                checked={emailConfig.enable_email_notification}
+                onChange={(e) => setEmailConfig({
+                  ...emailConfig,
+                  enable_email_notification: e.target.checked
+                })}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                disabled={!emailConfig.enable_email_module}
+              />
+              <span className="text-sm font-medium text-gray-700">启用邮件通知</span>
+            </label>
+          </div>
+        </div>
+
+        {/* 收件人配置 */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium text-gray-700">收件人配置</h3>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <input
+                type="email"
+                placeholder="输入邮箱地址"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="flex-1 rounded border px-3 py-2"
+              />
+              <button
+                onClick={addRecipientEmail}
+                disabled={!newEmail.trim()}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                添加
+              </button>
+            </div>
+            
+            {emailConfig.recipient_emails.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600">当前收件人：</p>
+                <div className="flex flex-wrap gap-2">
+                  {emailConfig.recipient_emails.map((email, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full text-sm"
+                    >
+                      <span className="text-gray-700">{email}</span>
+                                              <button
+                          onClick={() => removeRecipientEmail(email)}
+                          className="text-red-500 hover:text-red-700 text-xs"
+                        >
+                          ×
+                        </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 邮件内容配置 */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium text-gray-700">邮件内容配置</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                发件人显示名称
+              </label>
+              <input
+                type="text"
+                value={emailConfig.sender_name}
+                onChange={(e) => setEmailConfig({
+                  ...emailConfig,
+                  sender_name: e.target.value
+                })}
+                className="w-full rounded border px-3 py-2"
+                disabled={!emailConfig.enable_email_module}
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                邮件格式
+              </label>
+              <select
+                value={emailConfig.email_format}
+                onChange={(e) => setEmailConfig({
+                  ...emailConfig,
+                  email_format: e.target.value
+                })}
+                className="w-full rounded border px-3 py-2"
+                disabled={!emailConfig.enable_email_module}
+              >
+                <option value="html">HTML</option>
+                <option value="markdown">Markdown</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                模板语言
+              </label>
+              <select
+                value={emailConfig.email_template_language}
+                onChange={(e) => setEmailConfig({
+                  ...emailConfig,
+                  email_template_language: e.target.value
+                })}
+                className="w-full rounded border px-3 py-2"
+                disabled={!emailConfig.enable_email_module}
+              >
+                <option value="zh_cn">中文</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                每封邮件最多文章数
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="50"
+                value={emailConfig.max_articles_in_email}
+                onChange={(e) => setEmailConfig({
+                  ...emailConfig,
+                  max_articles_in_email: parseInt(e.target.value) || 10
+                })}
+                className="w-full rounded border px-3 py-2"
+                disabled={!emailConfig.enable_email_module}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 发送配置 */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium text-gray-700">发送配置</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                发送超时（秒）
+              </label>
+              <input
+                type="number"
+                min="10"
+                max="120"
+                value={emailConfig.email_send_timeout}
+                onChange={(e) => setEmailConfig({
+                  ...emailConfig,
+                  email_send_timeout: parseInt(e.target.value) || 30
+                })}
+                className="w-full rounded border px-3 py-2"
+                disabled={!emailConfig.enable_email_module}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                重试次数
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="10"
+                value={emailConfig.email_retry_count}
+                onChange={(e) => setEmailConfig({
+                  ...emailConfig,
+                  email_retry_count: parseInt(e.target.value) || 3
+                })}
+                className="w-full rounded border px-3 py-2"
+                disabled={!emailConfig.enable_email_module}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                重试延迟（秒）
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="60"
+                value={emailConfig.email_retry_delay}
+                onChange={(e) => setEmailConfig({
+                  ...emailConfig,
+                  email_retry_delay: parseInt(e.target.value) || 5
+                })}
+                className="w-full rounded border px-3 py-2"
+                disabled={!emailConfig.enable_email_module}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 保存按钮 */}
+        <div className="pt-4 border-t">
+          <div className="mb-3">
+            <p className="text-sm text-gray-600">
+              💾 点击保存后，配置将立即生效。如果启用了邮件模块，系统将使用新的配置发送邮件。
+            </p>
+          </div>
+          <button
+            onClick={saveEmailConfig}
+            disabled={loading}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            {loading ? '保存中...' : '保存配置'}
+          </button>
+        </div>
+      </div>
+    </main>
+  );
+}

@@ -911,7 +911,7 @@ export default function KbListPage() {
             defaultEditing={selectedItem?.id === -1}
             onSave={async (id, data) => {
               if (id === -1) {
-                if (!data.title?.trim() || !data.content?.trim()) {
+                if (!data?.title?.trim() || !data?.content?.trim()) {
                   notification.showError('校验失败', '标题与内容为必填');
                   throw new Error('validation');
                 }
@@ -919,7 +919,7 @@ export default function KbListPage() {
                   await api.post('/api/kb/items', data);
                   notification.showSuccess('新增成功', '知识已创建');
                   const res = await api.get('/api/kb/items');
-                  const dd = res.data?.data || res.data || [];
+                  const dd = (res.data?.data || res.data || []) as KbItem[];
                   setItems(dd);
                   setFilteredItems(dd);
                   setContentModalOpen(false);

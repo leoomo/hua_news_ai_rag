@@ -11,6 +11,7 @@ from routes.users import users_bp
 from routes.rss import rss_bp
 from routes.kb import kb_bp
 from routes.models_settings import models_bp
+from routes.settings import bp as settings_bp
 
 
 def create_app() -> Flask:
@@ -64,6 +65,7 @@ def create_app() -> Flask:
     app.register_blueprint(rss_bp, url_prefix='/api/settings')
     app.register_blueprint(kb_bp, url_prefix='/api')
     app.register_blueprint(models_bp, url_prefix='/api/settings')
+    app.register_blueprint(settings_bp, url_prefix='/api/settings')
 
     # background scheduler for periodic ingest
     try:
