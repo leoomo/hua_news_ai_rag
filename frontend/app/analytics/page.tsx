@@ -68,29 +68,55 @@ export default function AnalyticsPage() {
 
             <div className="rounded border bg-white p-4">
             <h2 className="font-medium mb-3">近14天文章数量趋势</h2>
-            <div className="mb-3 text-xs text-gray-600">
-              总计：{trend.reduce((s, x) => s + x.count, 0)}，日均：{Math.round(trend.reduce((s, x) => s + x.count, 0) / Math.max(1, trend.length))}
-            </div>
             {(() => {
+              const total = trend.reduce((s, x) => s + x.count, 0);
+              const avg = Math.round(total / Math.max(1, trend.length));
               const maxV = Math.max(1, ...trend.map(t => t.count));
               const barMaxH = 120; // px
+              const weekdayCN = ['日','一','二','三','四','五','六'];
               return (
-                <div className="flex items-end gap-3 overflow-x-auto py-2">
-                  {trend.map((d) => {
-                    const h = Math.max(4, Math.round((d.count / maxV) * barMaxH));
-                    const dt = new Date(d.date);
-                    const label = isNaN(dt.getTime())
-                      ? d.date
-                      : dt.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }).replace(/-/g, '/');
-                    return (
-                      <div key={d.date} className="text-center min-w-[28px]" title={`${label}：${d.count}`}>
-                        <div className="text-[11px] text-gray-600 mb-1">{d.count}</div>
-                        <div className="mx-auto w-3.5 bg-gray-800 hover:bg-blue-600 transition-colors" style={{ height: h }} />
-                        <div className="text-[10px] text-gray-400 mt-1">{label}</div>
+                <>
+                  <div className="mb-3 text-xs text-gray-600 flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-50 text-gray-700 border border-gray-200">总计 {total}</span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">日均 {avg}</span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200">峰值 {maxV}</span>
+                  </div>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 right-0 pointer-events-none">
+                      <div className="h-full grid" style={{ gridTemplateRows: 'repeat(4, 1fr)' }}>
+                        <div className="border-t border-dashed border-gray-200" />
+                        <div className="border-t border-dashed border-gray-200" />
+                        <div className="border-t border-dashed border-gray-200" />
+                        <div className="border-t border-dashed border-gray-200" />
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                    <div className="flex items-end gap-2 overflow-x-auto py-2">
+                      {trend.map((d, idx) => {
+                        const h = Math.max(4, Math.round((d.count / maxV) * 180));
+                        const dt = new Date(d.date);
+                        const label = isNaN(dt.getTime())
+                          ? d.date
+                          : dt.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }).replace(/-/g, '/');
+                        const wday = isNaN(dt.getTime()) ? '' : `周${weekdayCN[dt.getDay()]}`;
+                        const intensity = Math.max(0.2, d.count / maxV); // 0.2~1
+                        const isToday = idx === trend.length - 1;
+                        return (
+                          <div key={d.date} className="text-center min-w-[30px]" title={`${label}（${wday}）：${d.count}`}>
+                            <div className="text-[11px] text-gray-700 mb-1">{d.count}</div>
+                            <div
+                              className={`mx-auto w-3.5 rounded-sm transition-colors ${isToday ? 'ring-2 ring-blue-300' : ''}`}
+                              style={{ height: h, backgroundColor: `rgba(37,99,235,${intensity})` }}
+                            />
+                            <div className="text-[10px] text-gray-400 mt-1 leading-tight">
+                              <div>{label}</div>
+                              <div className="text-[9px]">{wday}</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
               );
             })()}
             </div>
