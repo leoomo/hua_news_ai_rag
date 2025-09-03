@@ -1,4 +1,5 @@
 from flask import Blueprint, request
+from datetime import timezone
 from data.db import get_session
 from data.models import NewsArticle
 from ai.vectorstore import build_index_from_recent_articles, search_index
@@ -14,6 +15,20 @@ kb_bp = Blueprint('kb', __name__)
 def kb_items():
     db = get_session()
     rows = db.query(NewsArticle).order_by(NewsArticle.created_at.desc()).limit(50).all()
+    def to_iso_utc(dt):
+        if not dt:
+            return None
+        # If naive, assume UTC; else convert to UTC
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        else:
+            dt = dt.astimezone(timezone.utc)
+        # Ensure trailing 'Z'
+        iso = dt.isoformat()
+        if not iso.endswith('Z'):
+            iso = iso.replace('+00:00', 'Z')
+        return iso
+
     return {'code': 0, 'data': [
         {
             'id': a.id,
@@ -21,7 +36,7 @@ def kb_items():
             'content': a.content,
             'source_name': a.source_name,
             'category': a.category,
-            'created_at': a.created_at.isoformat() if a.created_at else None,
+            'created_at': to_iso_utc(a.created_at),
             'summary': getattr(a, 'summary', None),
         } for a in rows
     ]}
@@ -241,6 +256,18 @@ def kb_item_detail():
     a = db.query(NewsArticle).get(article_id)
     if not a:
         return {'code': 404, 'msg': 'Not Found'}, 404
+    def to_iso_utc(dt):
+        if not dt:
+            return None
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        else:
+            dt = dt.astimezone(timezone.utc)
+        iso = dt.isoformat()
+        if not iso.endswith('Z'):
+            iso = iso.replace('+00:00', 'Z')
+        return iso
+
     return {'code': 0, 'data': {
         'id': a.id,
         'title': a.title,
@@ -250,7 +277,7 @@ def kb_item_detail():
         'source_url': a.source_url,
         'source_name': a.source_name,
         'category': a.category,
-        'published_at': a.published_at.isoformat() if a.published_at else None,
-        'created_at': a.created_at.isoformat() if a.created_at else None,
+        'published_at': to_iso_utc(a.published_at),
+        'created_at': to_iso_utc(a.created_at),
     }}
 

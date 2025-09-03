@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
+import calendar
 from typing import Iterable
 
 import feedparser
@@ -79,7 +80,9 @@ def parse_rss(source: RssSource) -> Iterable[dict]:
         published_at = None
         if published:
             try:
-                published_at = datetime(*published[:6])
+                # Convert struct_time (assumed UTC from RSS) to timezone-aware UTC datetime
+                ts = calendar.timegm(published)
+                published_at = datetime.fromtimestamp(ts, tz=timezone.utc)
             except Exception:
                 published_at = None
                 
@@ -202,7 +205,8 @@ def ingest_rss_source(source_id: int) -> dict:
         db.add(article)
         created += 1
 
-    source.last_fetch = datetime.utcnow()
+    # Record last fetch in UTC (timezone-aware)
+    source.last_fetch = datetime.now(timezone.utc)
     try:
         db.add(IngestLog(source_id=source.id, url=source.url, status='success', created=created, skipped=skipped))
         db.commit()

@@ -236,7 +236,36 @@ export default function KbListPage() {
     <Protected>
       <main className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900">知识库</h1>
+          <div className="flex flex-col space-y-2">
+            <h1 className="text-3xl font-bold text-gray-900">知识库</h1>
+            {items.length > 0 && (
+              <div className="flex items-center space-x-2 text-sm text-gray-500">
+                <Calendar className="w-4 h-4" />
+                <span>最近更新: {(() => {
+                  const validDates = items
+                    .map(item => item.created_at)
+                    .filter(date => date)
+                    .map(date => new Date(date!).getTime());
+                  
+                  if (validDates.length === 0) return '暂无数据';
+                  
+                  const latestDate = new Date(Math.max(...validDates));
+                  // 以北京时间渲染（不手动 +8，使用时区格式化，24小时制）
+                  const displayTime = latestDate.toLocaleString('zh-CN', {
+                    timeZone: 'Asia/Shanghai',
+                    hour12: false,
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }).replace(/-/g, '/');
+                  
+                  return displayTime;
+                })()}</span>
+              </div>
+            )}
+          </div>
           <div className="flex items-center space-x-2 text-sm text-gray-500">
             <Filter className="w-4 h-4" />
             <span>智能筛选与分页</span>
