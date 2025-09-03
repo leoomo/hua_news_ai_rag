@@ -106,7 +106,7 @@ export default function SearchPage() {
         <h1 className="text-2xl font-semibold">语义搜索</h1>
         <form onSubmit={onSearch} className="flex gap-2">
           <input 
-            className="flex-1 rounded border px-3 py-2" 
+            className="flex-1 rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
             value={q} 
             onChange={(e) => setQ(e.target.value)} 
             placeholder="请输入问题..." 
@@ -115,10 +115,10 @@ export default function SearchPage() {
           <button 
             type="submit"
             disabled={loading}
-            className={`rounded px-4 py-2 flex items-center gap-2 transition-all duration-200 ${
+            className={`rounded-md px-4 py-2 flex items-center gap-2 border transition-all duration-150 ${
               loading
-                ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                : 'bg-black text-white hover:bg-gray-800 hover:shadow-md'
+                ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                : 'bg-gray-900 text-white border-gray-900 hover:bg-gray-800 hover:shadow hover:-translate-y-0.5'
             }`}
           >
             {loading ? (
@@ -152,24 +152,24 @@ export default function SearchPage() {
                 </div>
                 <ul className="space-y-2">
                   {results.map((r) => (
-                    <li key={r.id} className="rounded border bg-white p-3 hover:shadow-md transition-shadow duration-200">
+                    <li key={r.id} className="rounded-xl border border-gray-200 bg-white/90 backdrop-blur-sm p-3 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
                       <div className="flex items-center justify-between">
                         <h3 className="font-medium">{r.title}</h3>
                         {typeof r.score === 'number' && (
-                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                          <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
                             相似度: {r.score.toFixed(3)}
                           </span>
                         )}
                       </div>
                       {r.snippet && (
-                        <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+                        <p className="text-sm text-gray-700 mt-2 leading-relaxed">
                           {r.snippet}
                         </p>
                       )}
                       {r.source_url && (
                         <div className="mt-2">
                           <a 
-                            className="text-sm text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1" 
+                            className="text-sm text-gray-700 hover:text-gray-900 hover:underline inline-flex items-center gap-1" 
                             href={r.source_url} 
                             target="_blank"
                             rel="noopener noreferrer"
@@ -189,33 +189,33 @@ export default function SearchPage() {
               <div className="space-y-2 mt-6">
                 <div className="text-sm text-gray-600 flex items-center gap-2">
                   <span>🌐 网络搜索结果</span>
-                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                  <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
                     {webSearch.source}
                   </span>
                 </div>
                 {webSearch.summary && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <p className="text-sm text-blue-800">{webSearch.summary}</p>
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-3">
+                    <p className="text-sm text-gray-800">{webSearch.summary}</p>
                   </div>
                 )}
                 <ul className="space-y-2">
                   {webSearch.web_results.map((r, index) => (
-                    <li key={index} className="rounded border bg-blue-50 p-3 hover:shadow-md transition-shadow duration-200">
+                    <li key={index} className="rounded-xl border border-gray-200 bg-white/90 backdrop-blur-sm p-3 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-medium text-blue-900">{r.title}</h3>
-                        <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                        <h3 className="font-medium text-gray-900">{r.title}</h3>
+                        <span className="text-xs text-gray-700 bg-gray-100 px-2 py-1 rounded">
                           {r.source}
                         </span>
                       </div>
                       {r.snippet && (
-                        <p className="text-sm text-blue-700 mt-2 leading-relaxed">
+                        <p className="text-sm text-gray-700 mt-2 leading-relaxed">
                           {r.snippet}
                         </p>
                       )}
                       {r.url && r.url !== '#' && (
                         <div className="mt-2">
                           <a 
-                            className="text-sm text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1" 
+                            className="text-sm text-gray-700 hover:text-gray-900 hover:underline inline-flex items-center gap-1" 
                             href={r.url} 
                             target="_blank"
                             rel="noopener noreferrer"
