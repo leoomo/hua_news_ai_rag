@@ -346,7 +346,7 @@ export default function RssSettingsPage() {
       />
       
       <h1 className="text-2xl font-semibold">RSS 源管理</h1>
-      <div className="rounded border bg-white p-4 flex items-center gap-4">
+      <div className="rounded-xl border border-gray-200 bg-white/90 backdrop-blur-sm p-4 flex items-center gap-4 shadow-sm">
         <div className="flex items-center gap-2">
           <label className="text-sm font-semibold text-gray-800 tracking-wide antialiased">自动采集</label>
           <input type="checkbox" checked={autoOn} onChange={onToggleAuto} />
@@ -365,33 +365,33 @@ export default function RssSettingsPage() {
         <div className="text-sm text-gray-600">{nextRun ? `下次运行：${new Date(nextRun).toLocaleString()}` : '下次运行：-'}
         </div>
       </div>
-      <div className="rounded border bg-white p-4 space-y-3">
+      <div className="rounded-xl border border-gray-200 bg-white/90 backdrop-blur-sm p-4 space-y-3 shadow-sm">
         <h2 className="font-medium">新增</h2>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-          <input className="rounded border px-3 py-2" placeholder="名称" value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <input className="rounded border px-3 py-2" placeholder="URL" value={form.url || ''} onChange={(e) => setForm({ ...form, url: e.target.value })} />
-          <input className="rounded border px-3 py-2" placeholder="分类" value={form.category || ''} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+          <input className="rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200" placeholder="名称" value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          <input className="rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200" placeholder="URL" value={form.url || ''} onChange={(e) => setForm({ ...form, url: e.target.value })} />
+          <input className="rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200" placeholder="分类" value={form.category || ''} onChange={(e) => setForm({ ...form, category: e.target.value })} />
           <div className="flex items-center gap-2">
             <label className="text-sm">启用</label>
             <input type="checkbox" checked={!!form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
-            <button onClick={onCreate} className="ml-auto rounded bg-black text-white px-4 py-2">添加</button>
+            <button onClick={onCreate} className="ml-auto rounded-md border px-4 py-2 bg-gray-900 text-white border-gray-900 hover:bg-gray-800 hover:shadow hover:-translate-y-0.5 transition-all duration-150">添加</button>
           </div>
         </div>
       </div>
 
-      <div className="rounded border bg-white">
+      <div className="rounded-xl border border-gray-200 bg-white/90 backdrop-blur-sm shadow-sm">
         <div className="flex items-center justify-between p-2">
           <h2 className="font-medium">列表</h2>
           <button 
             onClick={onIngestAll} 
             disabled={isIngestingAll || ingestingIds.size > 0}
-            className={`relative overflow-hidden rounded px-3 py-1 ${
+            className={`relative overflow-hidden rounded-md border px-3 py-1 transition-all duration-150 ${
               (isIngestingAll)
-                ? `bg-blue-500 text-white border border-blue-500 cursor-wait ${batchJustCompleted ? 'animate-bounce' : 'animate-pulse'}` 
+                ? `bg-blue-500 text-white border-blue-500 cursor-wait ${batchJustCompleted ? 'animate-bounce' : 'animate-pulse'}` 
                 : (ingestingIds.size > 0)
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' 
-                  : 'bg-black text-white hover:bg-gray-800'
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200' 
+                  : 'bg-gray-900 text-white border-gray-900 hover:bg-gray-800 hover:shadow hover:-translate-y-0.5'
             }`}
           >
             {isIngestingAll ? (
@@ -411,9 +411,9 @@ export default function RssSettingsPage() {
         
         {/* 状态说明 */}
         {(isIngestingAll || ingestingIds.size > 0) && (
-          <div className="px-4 py-2 bg-blue-50 border-t border-blue-200 text-sm text-blue-700">
+          <div className="px-4 py-2 bg-gray-50 border-t border-gray-200 text-sm text-gray-700">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+              <span className="w-2 h-2 bg-gray-500 rounded-full animate-pulse"></span>
               {isIngestingAll ? '批量采集中，所有RSS源暂时无法编辑/删除' : '部分RSS源采集中，相关条目暂时无法编辑/删除'}
             </div>
           </div>
@@ -440,21 +440,21 @@ export default function RssSettingsPage() {
               }`}>
                 <td className="p-2">
                   {editingId === r.id ? (
-                    <input className="w-full rounded border px-2 py-1" value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                    <input className="w-full rounded-md border border-gray-200 bg-white/90 px-2 py-1 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200" value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                   ) : (
                     r.name
                   )}
                 </td>
                 <td className="p-2">
                   {editingId === r.id ? (
-                    <input className="w-full rounded border px-2 py-1" value={form.url || ''} onChange={(e) => setForm({ ...form, url: e.target.value })} />
+                    <input className="w-full rounded-md border border-gray-200 bg-white/90 px-2 py-1 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200" value={form.url || ''} onChange={(e) => setForm({ ...form, url: e.target.value })} />
                   ) : (
                     r.url
                   )}
                 </td>
                 <td className="p-2">
                   {editingId === r.id ? (
-                    <input className="w-full rounded border px-2 py-1" value={form.category || ''} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+                    <input className="w-full rounded-md border border-gray-200 bg-white/90 px-2 py-1 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200" value={form.category || ''} onChange={(e) => setForm({ ...form, category: e.target.value })} />
                   ) : (
                     r.category || '-'
                   )}
