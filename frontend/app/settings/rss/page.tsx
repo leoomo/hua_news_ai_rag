@@ -350,6 +350,18 @@ export default function RssSettingsPage() {
         <div className="flex items-center gap-2">
           <label className="text-sm">自动采集</label>
           <input type="checkbox" checked={autoOn} onChange={onToggleAuto} />
+          {autoOn && (
+            <span
+              className="inline-flex items-center gap-2 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"
+              title="自动采集中"
+            >
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              自动采集中
+            </span>
+          )}
         </div>
         <div className="text-sm text-gray-600">{nextRun ? `下次运行：${new Date(nextRun).toLocaleString()}` : '下次运行：-'}
         </div>
