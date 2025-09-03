@@ -95,16 +95,25 @@ export default function Page() {
                   })()}
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-                  <div className="rounded border border-gray-200 p-2 bg-gray-50">
-                    <div className="text-gray-500">今日新增</div>
+                  <div className="rounded border border-gray-200 p-2 bg-gradient-to-b from-green-50 to-white">
+                    <div className="flex items-center justify-between text-gray-600">
+                      <span>今日新增</span>
+                      {(() => {
+                        const diff = today - yesterday;
+                        const up = diff >= 0;
+                        const color = up ? 'text-green-600' : 'text-red-600';
+                        const arrow = up ? '▲' : '▼';
+                        return <span className={`${color}`}>{arrow} {Math.abs(diff)}</span>;
+                      })()}
+                    </div>
                     <div className="text-base font-semibold text-gray-900 mt-0.5">{today}</div>
                   </div>
-                  <div className="rounded border border-gray-200 p-2 bg-gray-50">
-                    <div className="text-gray-500">昨日新增</div>
+                  <div className="rounded border border-gray-200 p-2 bg-gradient-to-b from-gray-50 to-white">
+                    <div className="text-gray-600">昨日新增</div>
                     <div className="text-base font-semibold text-gray-900 mt-0.5">{yesterday}</div>
                   </div>
-                  <div className="rounded border border-gray-200 p-2 bg-gray-50">
-                    <div className="text-gray-500">近7天日均</div>
+                  <div className="rounded border border-gray-200 p-2 bg-gradient-to-b from-blue-50 to-white">
+                    <div className="text-gray-600">近7天日均</div>
                     <div className="text-base font-semibold text-gray-900 mt-0.5">{Math.round((last7.reduce((s, x) => s + x.count, 0) / Math.max(1, last7.length)) || 0)}</div>
                   </div>
                 </div>
@@ -112,24 +121,36 @@ export default function Page() {
                   <div>
                     <div className="text-gray-500 mb-1">分类 Top3</div>
                     <div className="space-y-1">
-                      {topCats.map((c, i) => (
-                        <div key={i} className="flex items-center justify-between">
-                          <span className="truncate mr-2">{c.name}</span>
-                          <span className="text-gray-700">{c.count}</span>
-                        </div>
-                      ))}
+                      {(() => {
+                        const maxV = Math.max(1, ...topCats.map(x => x.count));
+                        return topCats.map((c, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <a href={`/kb?category=${encodeURIComponent(c.name)}`} className="truncate w-16 text-blue-600 hover:underline" title={c.name}>{c.name}</a>
+                            <div className="flex-1 h-2 bg-gray-100 rounded">
+                              <div className="h-2 rounded bg-green-500" style={{ width: `${Math.max(5, Math.round((c.count / maxV) * 100))}%` }} />
+                            </div>
+                            <span className="w-8 text-right text-gray-700">{c.count}</span>
+                          </div>
+                        ));
+                      })()}
                       {topCats.length === 0 && <div className="text-gray-400">-</div>}
                     </div>
                   </div>
                   <div>
                     <div className="text-gray-500 mb-1">来源 Top3</div>
                     <div className="space-y-1">
-                      {topSrcs.map((s, i) => (
-                        <div key={i} className="flex items-center justify-between">
-                          <span className="truncate mr-2">{s.name}</span>
-                          <span className="text-gray-700">{s.count}</span>
-                        </div>
-                      ))}
+                      {(() => {
+                        const maxV = Math.max(1, ...topSrcs.map(x => x.count));
+                        return topSrcs.map((s, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <a href={`/kb?source=${encodeURIComponent(s.name)}`} className="truncate w-16 text-blue-600 hover:underline" title={s.name}>{s.name}</a>
+                            <div className="flex-1 h-2 bg-gray-100 rounded">
+                              <div className="h-2 rounded bg-blue-500" style={{ width: `${Math.max(5, Math.round((s.count / maxV) * 100))}%` }} />
+                            </div>
+                            <span className="w-8 text-right text-gray-700">{s.count}</span>
+                          </div>
+                        ));
+                      })()}
                       {topSrcs.length === 0 && <div className="text-gray-400">-</div>}
                     </div>
                   </div>

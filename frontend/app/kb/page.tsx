@@ -166,6 +166,14 @@ export default function KbListPage() {
       .then((res) => {
         const d = res.data?.data || res.data || {};
         setLatestUpdateISO(d.latest_update || null);
+        // 支持从 URL query 预设筛选，如 /kb?category=xx 或 /kb?source=yy
+        if (typeof window !== 'undefined') {
+          const url = new URL(window.location.href);
+          const qCat = url.searchParams.get('category');
+          const qSrc = url.searchParams.get('source');
+          if (qCat) setCategoryFilter(qCat);
+          if (qSrc) setSourceFilter(qSrc);
+        }
       })
       .catch(() => {})
   }, []);
