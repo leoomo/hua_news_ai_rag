@@ -736,11 +736,19 @@ export default function KbListPage() {
                           )}
                         </td>
 
-                        {/* 分类列 */}
+                        {/* 分类列（点击跳转到该分类的筛选页）*/}
                         <td className="p-4">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            {it.category || '-'}
-                          </span>
+                          {it.category ? (
+                            <a
+                              href={`/kb?category=${encodeURIComponent(it.category)}`}
+                              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-900 transition-colors"
+                              title={`查看分类：${it.category}`}
+                            >
+                              {it.category}
+                            </a>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">-</span>
+                          )}
                         </td>
 
                         {/* 时间列 */}

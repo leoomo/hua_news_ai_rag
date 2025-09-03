@@ -38,6 +38,7 @@ def kb_items():
             'title': a.title,
             'content': a.content,
             'source_name': a.source_name,
+            'source_url': a.source_url,
             'category': a.category,
             'created_at': to_iso_utc(a.created_at),
             'summary': getattr(a, 'summary', None),
