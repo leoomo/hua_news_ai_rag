@@ -43,6 +43,32 @@ def kb_items():
     ]}
 
 
+@kb_bp.post('/kb/items')
+def kb_item_create():
+    db = get_session()
+    data = request.get_json(force=True) or {}
+    title = (data.get('title') or '').strip()
+    content = (data.get('content') or '').strip()
+    if not title or not content:
+        return {'code': 400, 'msg': 'title and content are required'}, 400
+    a = NewsArticle(
+        title=title,
+        content=content,
+        source_name=data.get('source_name'),
+        source_url=data.get('source_url'),
+        category=data.get('category'),
+    )
+    # 可选字段
+    try:
+        if data.get('summary') is not None:
+            setattr(a, 'summary', data.get('summary'))
+    except Exception:
+        pass
+    db.add(a)
+    db.commit()
+    return {'code': 0, 'data': {'id': a.id}}
+
+
 @kb_bp.post('/kb/items/import')
 def kb_items_import():
     """批量导入知识库条目。
