@@ -97,7 +97,7 @@ uv sync -E langchain
 ```
 DATABASE_URL=sqlite:///绝对路径/hua_news.db     # 默认：项目根的 hua_news.db
 SECRET_KEY=dev-secret-key                      # 会话密钥
-PORT=5000                                      # 后端端口，默认 5000
+PORT=5050                                      # 后端端口，默认 5050
 
 # 抓取/切分/嵌入等（均有默认值）
 FETCH_TIMEOUT_SEC=8
@@ -117,17 +117,23 @@ SIMHASH_HAMMING_THRESHOLD=4
 sqlite3 hua_news.db < db/seed.sql
 ```
 
-### 4. 启动后端
+### 4. 启动后端（推荐方式）
+使用封装的启动脚本，避免相对导入问题：
 ```
 cd backend
 source ../.venv/bin/activate
-PORT=5050 python run.py
+python run.py               # 默认端口 5050
+# 或自定义端口：PORT=8080 python run.py
 ```
 默认监听：`http://localhost:5050`
 
 健康检查：`GET http://localhost:5050/api/health` → `{ "status": "ok" }`
 
-**注意**: 重构后使用 `backend/run.py` 作为启动入口，避免相对导入问题
+> 兼容方式：也可使用 Flask 命令行启动
+> ```bash
+> source .venv/bin/activate
+> python -m flask --app backend.core.app run --host=0.0.0.0 --port=5001 --debug
+> ```
 
 ### 5. 启动 RAG/QA（可选）
 仅当已执行 `uv sync -E langchain` 且本机有可用 LLM（如 Ollama）时：
@@ -147,14 +153,9 @@ npm install
 ### 2. 环境变量
 前端通过 `NEXT_PUBLIC_API_BASE_URL` 访问后端，默认 `http://localhost:5050`。
 
-如后端运行在 5000 端口（默认），推荐在 `frontend/.env.local` 设置：
+如后端运行在 5001 端口（兼容方式），推荐在 `frontend/.env.local` 设置：
 ```
-NEXT_PUBLIC_API_BASE_URL=http://localhost:5000
-```
-
-或者将后端端口改为 5050 启动：
-```
-PORT=5050 uv run backend/app.py
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5001
 ```
 
 ### 3. 启动前端
@@ -217,7 +218,7 @@ cd backend
 python fix_imports.py
 
 # 测试邮件配置
-cd backend/email
+cd backend/email_fly
 python test_email.py
 ```
 
@@ -242,6 +243,7 @@ python test_email.py
 - **知识库**: `GET /api/kb/items`
 - **仪表板**: `GET /api/dashboard/summary`
 - **用户认证**: `POST /api/auth/login`
+- **系统设置**: `GET /api/settings`（来自 `routes/settings.py`）
 
 ### API 测试
 项目包含完整的 API 测试套件：
@@ -265,7 +267,7 @@ python test_email.py
 ### 🐍 Python 相关问题
 3) **导入错误 (ImportError)**
    - 运行修复脚本：`cd backend && python fix_imports.py`
-   - 确保使用正确的启动方式：`python run.py` 而不是 `python -m core.app`
+   - 确保使用正确的启动方式：`python run.py`
 
 4) **虚拟环境问题**
    - 确保激活虚拟环境：`source .venv/bin/activate`
@@ -348,17 +350,18 @@ backend/
 │   ├── rss.py            # RSS 源管理端点
 │   ├── kb.py             # 知识库和搜索端点
 │   ├── models_settings.py # AI 模型配置端点
+│   ├── settings.py       # 系统设置端点（新）
 │   └── __init__.py       # 路由层初始化
+├── services/              # 领域服务（新）
+│   ├── ai_summary.py     # AI 摘要服务
+│   ├── web_search.py     # 联网搜索服务
+│   └── __init__.py       # 服务层初始化
 ├── utils/                 # 工具层
 │   ├── test_rss.py       # RSS 测试工具
 │   └── __init__.py       # 工具层初始化
 ├── email_fly/             # 邮件模块
 │   ├── email_config.py   # 邮件配置文件
-│   ├── email_sender.py   # 邮件发送器
-│   ├── test_email.py     # 邮件测试脚本
-│   ├── README.md         # 邮件模块说明
-│   ├── QUICK_SETUP.md    # 快速设置指南
-│   └── __init__.py       # 邮件模块初始化
+│   └── ...
 ├── config.py              # 应用配置（Pydantic 设置）
 ├── run.py                 # 后端服务启动文件
 └── __init__.py            # 后端模块初始化
@@ -377,16 +380,14 @@ backend/
 
 #### 🤖 AI 服务层 (ai/)
 - **embeddings.py**: 文本向量化服务，支持多种嵌入模型
-- **enrich.py**: 文本增强（摘要生成、关键词提取）
+- **enrich.py**: 文本增强（摘要、关键词提取）
 - **qa.py**: 基于 LangChain 的问答系统
 - **vectorstore.py**: FAISS 向量数据库操作
-- 实现 RAG 核心功能，支持语义搜索和智能问答
 
 #### 🕷️ 数据采集层 (crawler/)
 - **fetcher.py**: 智能 HTTP 抓取，支持限速、重试、robots.txt
 - **ingest.py**: RSS 源采集、内容解析、去重处理
 - **ingest_utils.py**: 采集工具、数据库模式管理、SimHash 去重
-- 负责外部数据源的自动化采集和预处理
 
 #### 🌐 API 路由层 (routes/)
 - **auth.py**: JWT 认证、登录登出、权限验证
@@ -394,34 +395,17 @@ backend/
 - **rss.py**: RSS 源管理、采集触发、状态监控
 - **kb.py**: 知识库管理、搜索接口、数据分析
 - **models_settings.py**: AI 模型配置、参数调优
-- 提供 RESTful API 接口，支持前后端分离
+- **settings.py**: 系统设置接口（如开关、阈值、外部服务配置）
+
+#### 🧩 领域服务 (services/)
+- **ai_summary.py**: 复用 AI 能力为业务提供摘要服务
+- **web_search.py**: 联网检索、聚合外部信息
 
 #### 🛠️ 工具层 (utils/)
 - **test_rss.py**: RSS 功能测试、调试工具
-- 提供开发和测试支持工具
 
 #### 📧 邮件模块 (email_fly/)
-- **email_config.py**: 邮件服务商配置、收件人列表、发送参数
-- **email_sender.py**: 邮件发送器、HTML模板生成、重试机制
-- **test_email.py**: 邮件功能测试、连接验证、示例发送
-- 实现RSS采集后的自动邮件通知功能
-
-### 架构优势
-
-#### 🏗️ 分层架构
-- **关注点分离**: 每层专注特定职责，降低耦合度
-- **可维护性**: 模块化设计，便于功能扩展和问题定位
-- **可测试性**: 各层可独立测试，提高代码质量
-
-#### 🔄 依赖管理
-- **清晰依赖**: 上层依赖下层，避免循环依赖
-- **接口抽象**: 层间通过接口交互，支持实现替换
-- **配置集中**: 统一配置管理，支持环境变量覆盖
-
-#### 🚀 扩展性
-- **插件化**: 支持新功能模块的即插即用
-- **多数据库**: 数据层抽象支持不同数据库后端
-- **AI 模型**: 支持多种嵌入模型和 LLM 服务
+- **email_config.py** 等：邮件服务配置与工具
 
 <a id="sec-dev-tips"></a>
 ## 九、开发提示
@@ -457,199 +441,7 @@ backend/
 <a id="sec-module-structure"></a>
 ## 十一、模块结构具体说明
 
-### 🏗️ 整体架构设计
-
-本项目采用前后端分离的模块化架构，每个模块职责明确，便于维护和扩展。
-
-#### 架构特点
-- **分层设计**: 按业务功能分层，降低模块间耦合
-- **接口抽象**: 模块间通过明确接口交互，支持实现替换
-- **配置集中**: 统一配置管理，支持环境变量覆盖
-- **扩展友好**: 支持新功能模块的即插即用
-
----
-
-### 🔧 后端模块结构详解
-
-#### 核心应用层 (core/)
-```
-backend/core/
-├── app.py            # Flask 主应用入口
-└── __init__.py       # 核心模块初始化
-```
-**职责**: 应用生命周期管理、中间件配置、错误处理、蓝图注册
-
-#### 数据层 (data/)
-```
-backend/data/
-├── db.py             # 数据库连接和会话管理
-├── models.py         # SQLAlchemy ORM 模型定义
-└── __init__.py       # 数据层初始化
-```
-**职责**: 
-- 数据库连接池管理、会话管理
-- 数据模型定义（用户、文章、RSS源、日志等）
-- 动态列添加、数据库模式管理
-- 提供数据访问抽象，支持 SQLite 和未来扩展
-
-#### AI 服务层 (ai/)
-```
-backend/ai/
-├── embeddings.py     # 文本嵌入服务（sentence-transformers）
-├── enrich.py         # 文本增强工具（摘要、关键词提取）
-├── qa.py             # 问答系统（LangChain）
-├── vectorstore.py    # 向量搜索功能（FAISS）
-└── __init__.py       # AI 层初始化
-```
-**职责**:
-- 实现 RAG 核心功能，支持语义搜索和智能问答
-- 文本向量化、相似度计算
-- 基于 LangChain 的问答系统
-- FAISS 向量数据库操作
-
-#### 数据采集层 (crawler/)
-```
-backend/crawler/
-├── fetcher.py        # HTTP 抓取器（限速、重试、robots.txt）
-├── ingest.py         # RSS 采集和内容处理
-├── ingest_utils.py   # 采集工具和数据库模式管理
-└── __init__.py       # 采集层初始化
-```
-**职责**:
-- 外部数据源的自动化采集和预处理
-- 智能 HTTP 抓取，支持限速、重试、robots.txt
-- RSS 源采集、内容解析、去重处理
-- SimHash 去重算法、数据库模式管理
-
-#### API 路由层 (routes/)
-```
-backend/routes/
-├── auth.py           # 认证端点
-├── users.py          # 用户管理端点
-├── rss.py            # RSS 源管理端点
-├── kb.py             # 知识库和搜索端点
-├── models_settings.py # AI 模型配置端点
-└── __init__.py       # 路由层初始化
-```
-**职责**:
-- 提供 RESTful API 接口，支持前后端分离
-- JWT 认证、权限验证、用户管理
-- RSS 源管理、采集触发、状态监控
-- 知识库管理、搜索接口、数据分析
-
-#### 工具层 (utils/)
-```
-backend/utils/
-├── test_rss.py       # RSS 功能测试工具
-└── __init__.py       # 工具层初始化
-```
-**职责**: 提供开发和测试支持工具
-
-#### 配置文件
-```
-backend/
-├── config.py          # 应用配置（Pydantic 设置）
-├── run.py             # 后端服务启动文件
-└── __init__.py        # 后端模块初始化
-```
-
----
-
-### 🎨 前端模块结构详解
-
-#### 应用结构 (app/)
-```
-frontend/app/
-├── layout.tsx         # 根布局组件
-├── page.tsx           # 首页
-├── dashboard/         # 仪表板页面
-├── kb/                # 知识库页面
-├── search/            # 搜索页面
-├── analytics/         # 数据分析页面
-├── settings/          # 设置页面
-│   ├── rss/           # RSS 源管理
-│   ├── models/        # AI 模型配置
-│   └── users/         # 用户管理
-└── globals.css        # 全局样式
-```
-
-#### 组件库 (components/)
-```
-frontend/components/
-├── ui/                # 基础 UI 组件
-│   ├── Button.tsx     # 按钮组件
-│   ├── Input.tsx      # 输入框组件
-│   ├── Modal.tsx      # 模态框组件
-│   └── Table.tsx      # 表格组件
-├── forms/             # 表单组件
-├── charts/            # 图表组件
-├── Notification.tsx   # 通知组件
-├── IngestProgress.tsx # 采集进度组件
-└── index.ts           # 组件导出
-```
-
-#### 工具库 (lib/)
-```
-frontend/lib/
-├── api.ts             # API 客户端封装
-├── auth.ts            # 认证工具
-├── utils.ts           # 通用工具函数
-├── constants.ts       # 常量定义
-└── types.ts           # TypeScript 类型定义
-```
-
-#### 配置文件
-```
-frontend/
-├── package.json       # 依赖配置
-├── next.config.mjs    # Next.js 配置
-├── tailwind.config.ts # Tailwind CSS 配置
-├── tsconfig.json      # TypeScript 配置
-└── .env.local         # 环境变量配置
-```
-
----
-
-### 🔄 模块间依赖关系
-
-#### 后端依赖流向
-```
-routes/ → ai/ → data/
-    ↓        ↓      ↓
-crawler/ → utils/ → config/
-```
-
-#### 前端依赖流向
-```
-pages/ → components/ → lib/
-    ↓         ↓         ↓
-  hooks/ → ui/ → types/
-```
-
-#### 前后端交互
-```
-前端 (React/Next.js) ↔ API 路由层 (Flask) ↔ 业务逻辑层 ↔ 数据层
-```
-
----
-
-### 🚀 快速启动指南
-
-```bash
-# 1. 启动后端服务
-cd backend
-source ../.venv/bin/activate
-python run.py
-
-# 2. 启动前端服务
-cd frontend
-npm run dev
-
-# 3. 访问系统
-# 前端界面: http://localhost:3000
-# 后端 API: http://localhost:5050
-# 健康检查: http://localhost:5050/api/health
-```
+（同上方“后端模块结构/模块职责说明”，此处不再重复）
 
 
 
