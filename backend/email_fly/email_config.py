@@ -98,6 +98,22 @@ CUSTOM_CONFIG = {
     "smtp_use_ssl": False
 }
 
+# ==================== 发件邮箱配置 ====================
+# 发件邮箱配置
+SENDER_EMAIL = "your-email@example.com"  # 替换为你的发件邮箱
+SENDER_PASSWORD = "your-password"        # 替换为你的邮箱密码或授权码
+
+# 邮件服务商选择
+EMAIL_PROVIDER = "163"  # 可选: gmail, qq, 163, outlook, yahoo, sina, custom
+
+# 自定义SMTP配置（当EMAIL_PROVIDER为custom时使用）
+CUSTOM_SMTP_CONFIG = {
+    "smtp_host": "smtp.your-server.com",      # 替换为你的SMTP服务器
+    "smtp_port": 587,
+    "smtp_use_tls": True,
+    "smtp_use_ssl": False
+}
+
 # ==================== 邮件通知配置 ====================
 # 是否启用邮件通知
 ENABLE_EMAIL_NOTIFICATION = True

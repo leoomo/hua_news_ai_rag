@@ -41,6 +41,15 @@ def get_email_config():
             'enable_email_notification': getattr(email_config, 'ENABLE_EMAIL_NOTIFICATION', True),
             'recipient_emails': getattr(email_config, 'RECIPIENT_EMAILS', []),
             'sender_name': getattr(email_config, 'SENDER_NAME', '华新AI知识库系统'),
+            'sender_email': getattr(email_config, 'SENDER_EMAIL', 'your-email@example.com'),
+            'sender_password': getattr(email_config, 'SENDER_PASSWORD', ''),
+            'email_provider': getattr(email_config, 'EMAIL_PROVIDER', '163'),
+            'custom_smtp_config': getattr(email_config, 'CUSTOM_SMTP_CONFIG', {
+                'smtp_host': 'smtp.your-server.com',
+                'smtp_port': 587,
+                'smtp_use_tls': True,
+                'smtp_use_ssl': False
+            }),
             'max_articles_in_email': getattr(email_config, 'MAX_ARTICLES_IN_EMAIL', 10),
             'email_template_language': getattr(email_config, 'EMAIL_TEMPLATE_LANGUAGE', 'zh_cn'),
             'email_format': getattr(email_config, 'EMAIL_FORMAT', 'markdown'),
@@ -74,7 +83,8 @@ def update_email_config():
         # 验证必需字段
         required_fields = [
             'enable_email_module', 'enable_email_notification', 'recipient_emails',
-            'sender_name', 'max_articles_in_email', 'email_template_language',
+            'sender_name', 'sender_email', 'sender_password', 'email_provider',
+            'max_articles_in_email', 'email_template_language',
             'email_format', 'email_send_timeout', 'email_retry_count', 'email_retry_delay'
         ]
         
@@ -109,6 +119,31 @@ def update_email_config():
                 'code': 1,
                 'message': 'sender_name 不能为空'
             }), 400
+
+        if not isinstance(data['sender_email'], str) or not data['sender_email'].strip():
+            return jsonify({
+                'code': 1,
+                'message': 'sender_email 不能为空'
+            }), 400
+
+        if not isinstance(data['sender_password'], str) or not data['sender_password'].strip():
+            return jsonify({
+                'code': 1,
+                'message': 'sender_password 不能为空'
+            }), 400
+
+        if data['email_provider'] not in ['gmail', 'qq', '163', 'outlook', 'yahoo', 'sina', 'custom']:
+            return jsonify({
+                'code': 1,
+                'message': 'email_provider 必须是有效的邮件服务商'
+            }), 400
+
+        if data['email_provider'] == 'custom':
+            if not isinstance(data.get('custom_smtp_config'), dict):
+                return jsonify({
+                    'code': 1,
+                    'message': 'custom_smtp_config 必须是对象'
+                }), 400
 
         if not isinstance(data['max_articles_in_email'], int) or data['max_articles_in_email'] < 1:
             return jsonify({
@@ -164,6 +199,15 @@ def update_email_config():
         content = _update_config_value(content, 'ENABLE_EMAIL_NOTIFICATION', str(data['enable_email_notification']))
         content = _update_config_value(content, 'RECIPIENT_EMAILS', _format_emails_list(data['recipient_emails']))
         content = _update_config_value(content, 'SENDER_NAME', f'"{data["sender_name"]}"')
+        content = _update_config_value(content, 'SENDER_EMAIL', f'"{data["sender_email"]}"')
+        content = _update_config_value(content, 'SENDER_PASSWORD', f'"{data["sender_password"]}"')
+        content = _update_config_value(content, 'EMAIL_PROVIDER', f'"{data["email_provider"]}"')
+        
+        # 更新自定义SMTP配置
+        if data['email_provider'] == 'custom' and data.get('custom_smtp_config'):
+            custom_config = data['custom_smtp_config']
+            content = _update_config_value(content, 'CUSTOM_SMTP_CONFIG', _format_smtp_config(custom_config))
+        
         content = _update_config_value(content, 'MAX_ARTICLES_IN_EMAIL', str(data['max_articles_in_email']))
         content = _update_config_value(content, 'EMAIL_TEMPLATE_LANGUAGE', f'"{data["email_template_language"]}"')
         content = _update_config_value(content, 'EMAIL_FORMAT', f'"{data["email_format"]}"')
@@ -219,3 +263,12 @@ def _format_emails_list(emails: list) -> str:
         formatted_emails.append(f'    "{email}",')
     
     return '[\n' + '\n'.join(formatted_emails) + '\n]'
+
+def _format_smtp_config(config: dict) -> str:
+    """格式化SMTP配置为Python代码格式"""
+    return f"""{{
+    "smtp_host": "{config.get('smtp_host', 'smtp.your-server.com')}",
+    "smtp_port": {config.get('smtp_port', 587)},
+    "smtp_use_tls": {str(config.get('smtp_use_tls', True))},
+    "smtp_use_ssl": {str(config.get('smtp_use_ssl', False))}
+}}"""
