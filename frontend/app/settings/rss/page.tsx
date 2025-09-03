@@ -342,14 +342,29 @@ export default function RssSettingsPage() {
                   )}
                 </td>
                 <td className="p-2 text-sm">
-                  {status[r.id] ? (
-                    <span className={status[r.id]?.status === 'success' ? 'text-green-600' : 'text-red-600'}>
-                      {status[r.id]?.status}
-                      {status[r.id]?.status === 'success' ? ` (+${status[r.id]?.created}/~${status[r.id]?.skipped})` : ''}
-                    </span>
-                  ) : (
-                    '-'
-                  )}
+                  {(() => {
+                    const s = status[r.id];
+                    if (!s) return <span className="text-gray-400">-</span>;
+                    const ok = s.status === 'success';
+                    const badgeBase = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium';
+                    const badgeCls = ok
+                      ? `${badgeBase} bg-green-100 text-green-700 border border-green-200`
+                      : `${badgeBase} bg-red-100 text-red-700 border border-red-200`;
+                    return (
+                      <div className="flex items-center gap-2">
+                        <span className={badgeCls} title={s.error_message || ''}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${ok ? 'bg-green-500' : 'bg-red-500'}`} />
+                          {ok ? '成功' : '失败'}
+                        </span>
+                        {ok && (
+                          <span className="text-gray-500">
+                            +{s.created}{s.skipped ? ` / ~${s.skipped}` : ''}
+                          </span>
+                        )}
+                        {/* 按需求：状态列不再显示时间 */}
+                      </div>
+                    );
+                  })()}
                 </td>
                 <td className="p-2 text-gray-600">
                   {r.last_fetch ? (
