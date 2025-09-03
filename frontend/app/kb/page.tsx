@@ -4,6 +4,7 @@ import { api } from '@/lib/api';
 import { Protected } from '@/components/Protected';
 import { Filter, X, Search, Calendar, Tag, Globe, ChevronDown, ChevronUp, Edit3, Trash2, Save, XCircle, CheckSquare, Square, Eye } from 'lucide-react';
 import ContentModal from '@/components/ContentModal';
+import * as XLSX from 'xlsx';
 
 type KbItem = {
   id: number;
@@ -42,6 +43,31 @@ export default function KbListPage() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [isSelectAll, setIsSelectAll] = useState(false);
   const [showBatchDeleteConfirm, setShowBatchDeleteConfirm] = useState(false);
+
+  // 导出为 Excel（导出当前筛选结果）
+  const exportToExcel = () => {
+    try {
+      const data = filteredItems.map((it) => ({
+        ID: it.id,
+        标题: it.title,
+        内容: it.content || '',
+        来源名称: it.source_name || '',
+        来源链接: it.source_url || '',
+        分类: it.category || '',
+        创建时间: it.created_at || '',
+        摘要: it.summary || ''
+      }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '知识库');
+      const now = new Date();
+      const ts = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+      XLSX.writeFile(wb, `知识库导出_${ts}.xlsx`);
+    } catch (err) {
+      console.error('导出失败', err);
+      alert('导出失败，请重试');
+    }
+  };
 
   // 内容弹窗状态
   const [contentModalOpen, setContentModalOpen] = useState(false);
@@ -285,9 +311,19 @@ export default function KbListPage() {
               </span>
             </div>
           </div>
-          <div className="flex items-center space-x-2 text-sm text-gray-500">
-            <Filter className="w-4 h-4" />
-            <span>智能筛选与分页</span>
+          <div className="flex items-center space-x-3 text-sm text-gray-500">
+            <button
+              onClick={exportToExcel}
+              className="inline-flex items-center space-x-2 px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+              title="导出当前筛选结果为 Excel"
+            >
+              <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M16.5 3h-13A1.5 1.5 0 002 4.5v11A1.5 1.5 0 003.5 17h13a1.5 1.5 0 001.5-1.5v-11A1.5 1.5 0 0016.5 3zm-7.9 9.7L6.6 10l2-2.7a.75.75 0 10-1.2-.9L5.5 8.8 3.8 6.4a.75.75 0 10-1.2.9L4.3 10l-1.7 2.7a.75.75 0 101.2.9l1.7-2.4 1.7 2.4a.75.75 0 101.2-.9zM17 15H9a1 1 0 110-2h8a1 1 0 110 2z"/></svg>
+              <span>导出 Excel</span>
+            </button>
+            <div className="flex items-center space-x-2">
+              <Filter className="w-4 h-4" />
+              <span>智能筛选与分页</span>
+            </div>
           </div>
         </div>
         
