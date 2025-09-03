@@ -226,6 +226,11 @@ python fix_imports.py
 # 测试邮件配置
 cd backend/email_fly
 python test_email.py
+
+# 生成 OpenAPI（自动扫描路由）
+cd backend
+uv run python scripts/export_openapi.py
+# 生成结果：doc/openapi.generated.yaml
 ```
 
 ### 邮件模块
@@ -242,6 +247,8 @@ python test_email.py
 <a id="sec-openapi"></a>
 ## 六、接口文档
 参见根目录 `openapi.yaml`，后端默认基准 URL：`http://localhost:5050`。
+
+- 更易读的接口说明文档（Markdown）：`doc/backend_api.md`
 
 ### 核心 API 端点
 - **健康检查**: `GET /api/health`
