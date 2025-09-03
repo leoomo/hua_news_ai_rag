@@ -75,9 +75,9 @@ export default function Page() {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4" style={{ height: 'calc(78vh - 8rem)' }}>
-              <div className="rounded border bg-white p-3 h-full flex flex-col">
+              <div className="rounded-xl border border-gray-100 bg-white/90 backdrop-blur-sm shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 p-4 h-full flex flex-col">
                 <div className="text-sm text-gray-500">文章总数</div>
-                <div className="text-3xl font-semibold mt-1">{total}</div>
+                <div className="text-3xl font-semibold mt-1 tracking-tight text-gray-900">{total}</div>
                 <div className="mt-2 text-xs text-gray-500">
                   最近更新时间：{(() => {
                     if (!latestUpdate) return '-';
@@ -95,7 +95,7 @@ export default function Page() {
                   })()}
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-                  <div className="rounded border border-gray-200 p-2 bg-gradient-to-b from-green-50 to-white">
+                  <div className="rounded-lg border border-green-100 p-2 bg-gradient-to-b from-green-50 to-white shadow-sm">
                     <div className="flex items-center justify-between text-gray-600">
                       <span>今日新增</span>
                       {(() => {
@@ -106,13 +106,13 @@ export default function Page() {
                         return <span className={`${color}`}>{arrow} {Math.abs(diff)}</span>;
                       })()}
                     </div>
-                    <div className="text-base font-semibold text-gray-900 mt-0.5">{today}</div>
+                    <div className="text-base font-semibold text-gray-900 mt-0.5 tracking-tight">{today}</div>
                   </div>
-                  <div className="rounded border border-gray-200 p-2 bg-gradient-to-b from-gray-50 to-white">
+                  <div className="rounded-lg border border-gray-100 p-2 bg-gradient-to-b from-gray-50 to-white shadow-sm">
                     <div className="text-gray-600">昨日新增</div>
                     <div className="text-base font-semibold text-gray-900 mt-0.5">{yesterday}</div>
                   </div>
-                  <div className="rounded border border-gray-200 p-2 bg-gradient-to-b from-blue-50 to-white">
+                  <div className="rounded-lg border border-blue-100 p-2 bg-gradient-to-b from-blue-50 to-white shadow-sm">
                     <div className="text-gray-600">近7天日均</div>
                     <div className="text-base font-semibold text-gray-900 mt-0.5">{Math.round((last7.reduce((s, x) => s + x.count, 0) / Math.max(1, last7.length)) || 0)}</div>
                   </div>
@@ -126,8 +126,8 @@ export default function Page() {
                         return topCats.map((c, i) => (
                           <div key={i} className="flex items-center gap-2">
                             <a href={`/kb?category=${encodeURIComponent(c.name)}`} className="truncate w-16 text-blue-600 hover:underline" title={c.name}>{c.name}</a>
-                            <div className="flex-1 h-2 bg-gray-100 rounded">
-                              <div className="h-2 rounded bg-green-500" style={{ width: `${Math.max(5, Math.round((c.count / maxV) * 100))}%` }} />
+                            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-2 rounded-full bg-gradient-to-r from-green-400 to-emerald-500" style={{ width: `${Math.max(5, Math.round((c.count / maxV) * 100))}%` }} />
                             </div>
                             <span className="w-8 text-right text-gray-700">{c.count}</span>
                           </div>
@@ -144,8 +144,8 @@ export default function Page() {
                         return topSrcs.map((s, i) => (
                           <div key={i} className="flex items-center gap-2">
                             <a href={`/kb?source=${encodeURIComponent(s.name)}`} className="truncate w-16 text-blue-600 hover:underline" title={s.name}>{s.name}</a>
-                            <div className="flex-1 h-2 bg-gray-100 rounded">
-                              <div className="h-2 rounded bg-blue-500" style={{ width: `${Math.max(5, Math.round((s.count / maxV) * 100))}%` }} />
+                            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-2 rounded-full bg-gradient-to-r from-blue-400 to-indigo-500" style={{ width: `${Math.max(5, Math.round((s.count / maxV) * 100))}%` }} />
                             </div>
                             <span className="w-8 text-right text-gray-700">{s.count}</span>
                           </div>
@@ -156,14 +156,14 @@ export default function Page() {
                   </div>
                 </div>
               </div>
-              <div className="rounded border bg-white p-3 h-full flex flex-col">
-                <div className="text-sm text-gray-500 mb-1">最新 8 篇</div>
+              <div className="rounded-xl border border-gray-100 bg-white/90 backdrop-blur-sm shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 p-4 h-full flex flex-col">
+                <div className="text-sm font-medium text-gray-700 mb-1">最新 8 篇</div>
                 <ul className="divide-y divide-gray-100 overflow-auto pr-0 flex-1">
                   {latest.map((a) => (
                     <li key={a.id} className="py-2 first:pt-0 last:pb-0">
-                      <div className="group flex items-start justify-between gap-3">
+                      <div className="group flex items-start justify-between gap-3 rounded-md px-2 hover:bg-gray-50 transition-colors">
                         <div className="min-w-0">
-                          <div className="text-sm font-medium text-gray-900 group-hover:text-blue-700 transition-colors duration-150 line-clamp-2" title={a.title}>
+                          <div className="text-sm font-medium text-gray-900 group-hover:text-blue-700 transition-colors duration-150 line-clamp-2 tracking-tight" title={a.title}>
                             {a.title}
                           </div>
                           <div className="mt-1 text-xs text-gray-500 flex items-center gap-2">
@@ -175,7 +175,7 @@ export default function Page() {
                                 href={a.source_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:text-blue-800"
+                                className="inline-flex items-center px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:text-blue-800 shadow-sm"
                                 title="打开源链接"
                               >
                                 源链接
@@ -199,20 +199,20 @@ export default function Page() {
                             </span>
                           </div>
                         </div>
-                        <span className="shrink-0 mt-0.5 w-2 h-2 rounded-full bg-blue-200 group-hover:bg-blue-400 transition-colors duration-150" />
+                        <span className="shrink-0 mt-0.5 w-2 h-2 rounded-full bg-blue-200 group-hover:bg-blue-400 transition-colors duration-150 shadow-inner" />
                       </div>
                     </li>
                   ))}
                 </ul>
               </div>
-              <div className="rounded border bg-white p-3 h-full flex flex-col">
-                <div className="text-sm text-gray-500 mb-1">最近 7 天入库</div>
+              <div className="rounded-xl border border-gray-100 bg-white/90 backdrop-blur-sm shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 p-4 h-full flex flex-col">
+                <div className="text-sm font-medium text-gray-700 mb-1">最近 7 天入库</div>
                 <div className="overflow-hidden flex-1">
                   <div className="grid grid-cols-7 gap-2 items-end h-full">
                   {last7.map((d) => (
                     <div key={d.date} className="text-center">
                       <div className="text-xs text-gray-500 mb-1">{d.count}</div>
-                      <div className="bg-gray-800 mx-auto" style={{ height: Math.max(4, d.count * 2), width: 10 }} />
+                      <div className="bg-gradient-to-b from-gray-700 to-gray-900 rounded-md mx-auto shadow-inner" style={{ height: Math.max(4, d.count * 2), width: 10 }} />
                       <div className="text-[10px] text-gray-400 mt-0.5">
                         {(() => {
                           const dt = new Date(d.date);
