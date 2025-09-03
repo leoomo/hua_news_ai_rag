@@ -281,15 +281,19 @@ def scheduler_status():
 def dashboard_summary():
     db = get_session()
     total_articles = db.query(func.count(NewsArticle.id)).scalar() or 0
-    # 最近7天入库量
+    # 最近7天入库量（补齐缺失日期）
     q7 = (
         db.query(func.date(NewsArticle.created_at).label('d'), func.count(NewsArticle.id))
         .group_by(func.date(NewsArticle.created_at))
         .order_by(func.date(NewsArticle.created_at).desc())
-        .limit(7)
+        .limit(14)
         .all()
     )
-    last7 = [{'date': str(d), 'count': int(c)} for d, c in reversed(q7)]
+    q7_map = {str(d): int(c) for d, c in q7}
+    from datetime import datetime, timedelta, timezone as _tz
+    today_utc = datetime.now(_tz.utc).date()
+    days = [today_utc - timedelta(days=i) for i in range(6, -1, -1)]
+    last7 = [{'date': d.isoformat(), 'count': int(q7_map.get(d.isoformat(), 0))} for d in days]
     # 取最新10篇
     latest = db.query(NewsArticle).order_by(NewsArticle.id.desc()).limit(10).all()
     latest_out = [

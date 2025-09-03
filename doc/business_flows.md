@@ -114,7 +114,7 @@ sequenceDiagram
   - GET `/api/kb/item?id=`（文章详情）
 - 分析与仪表盘：
   - GET `/api/analytics/keywords_top`、`/api/analytics/trend`（关键词Top、日趋势）
-  - GET `/api/dashboard/summary`（总数、近7天、最新5篇）
+  - GET `/api/dashboard/summary`（总数、近7天、最新10篇）
 - 调度控制：
   - POST `/api/scheduler/start`（创建周期任务并立即运行一次）
   - POST `/api/scheduler/stop`（删除周期任务）
