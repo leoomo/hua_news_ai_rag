@@ -1,4 +1,5 @@
 from flask import Blueprint, request
+import logging, traceback
 from data.db import get_session
 from data.models import RssSource, NewsArticle, IngestLog
 from crawler.ingest_utils import ensure_columns_for_enrich
@@ -88,23 +89,36 @@ def trigger_ingest():
     try:
         # 禁止对未启用的源进行采集
         db = get_session()
-        src = db.query(RssSource).get(source_id)
-        if not src:
-            return {'code': 404, 'msg': 'Source not found'}, 404
-        if not bool(src.is_active):
-            return {'code': 400, 'msg': 'Source is inactive, cannot ingest'}, 400
+        try:
+            src = db.query(RssSource).get(source_id)
+            if not src:
+                return {'code': 404, 'msg': 'Source not found'}, 404
+            if not bool(src.is_active):
+                return {'code': 400, 'msg': 'Source is inactive, cannot ingest'}, 400
+        finally:
+            try:
+                db.close()
+            except Exception:
+                pass
 
         result = ingest_rss_source(source_id)
         status = 200 if result.get('code') == 0 else 500
         return result, status
     except Exception as e:
+        logging.getLogger(__name__).error("Ingest endpoint error: %s\n%s", e, traceback.format_exc())
         return {'code': 500, 'msg': str(e)}, 500
 
 
 @rss_bp.post('/rss/ingest_all')
 def ingest_all():
     db = get_session()
-    ids = [r.id for r in db.query(RssSource).filter(RssSource.is_active == True).all()]
+    try:
+        ids = [r.id for r in db.query(RssSource).filter(RssSource.is_active == True).all()]
+    finally:
+        try:
+            db.close()
+        except Exception:
+            pass
     results = []
     for sid in ids:
         results.append({"id": sid, **ingest_rss_source(sid)})
