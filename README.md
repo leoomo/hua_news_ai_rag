@@ -6,7 +6,13 @@
 - [先决条件](#sec-prereq)
 - [后端（Flask API）](#sec-backend)
 - [前端（Next.js）](#sec-frontend)
+- [常用脚本](#sec-scripts)
 - [接口文档](#sec-openapi)
+- [常见问题（FAQ）](#sec-faq)
+- [目录结构（详细）](#sec-structure)
+- [开发提示](#sec-dev-tips)
+- [接口测试（API Tests）](#sec-api-tests)
+- [模块结构具体说明](#sec-module-structure)
 
 <a id="sec-snapshots"></a>
 ## 截图（Snapshots）
@@ -149,6 +155,7 @@ npm run dev
 ```
 默认访问：`http://localhost:3000`
 
+<a id="sec-scripts"></a>
 ## 五、常用脚本
 
 ### 后端服务
@@ -207,6 +214,7 @@ python test_email_config.py
 ```
 
 <a id="sec-openapi"></a>
+<a id="sec-openapi"></a>
 ## 六、接口文档
 参见根目录 `openapi.yaml`，后端默认基准 URL：`http://localhost:5050`。
 
@@ -223,6 +231,7 @@ python test_email_config.py
 - **冒烟测试**: `tests/smoke_test.py` (Python requests)
 - **测试报告**: `tests/api_test_report.md`
 
+<a id="sec-faq"></a>
 ## 七、常见问题（FAQ）
 
 ### 🔌 连接问题
@@ -276,6 +285,7 @@ python test_email_config.py
     - 重新安装依赖：`cd frontend && rm -rf node_modules && npm install`
     - 清除缓存：`npm run dev -- --clear`
 
+<a id="sec-structure"></a>
 ## 八、目录结构（详细）
 
 ### 项目根目录
@@ -382,11 +392,13 @@ backend/
 - **多数据库**: 数据层抽象支持不同数据库后端
 - **AI 模型**: 支持多种嵌入模型和 LLM 服务
 
+<a id="sec-dev-tips"></a>
 ## 九、开发提示
 - 后端已启用 CORS，支持跨域请求
 - 后端会定时抓取 RSS（后台任务），首次可等待一段时间以出现数据
 - 如需自定义模型/向量化配置，参考接口 `/api/settings/models`
 
+<a id="sec-api-tests"></a>
 ## 十、接口测试（API Tests）
 
 ### HTTP 集合测试
@@ -411,6 +423,7 @@ backend/
 - **文件**: `tests/api_test_report.md`
 - **内容**: 包含详细的测试结果和问题分析
 
+<a id="sec-module-structure"></a>
 ## 十一、模块结构具体说明
 
 ### 🏗️ 整体架构设计
