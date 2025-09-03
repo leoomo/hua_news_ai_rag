@@ -348,7 +348,7 @@ export default function RssSettingsPage() {
       <h1 className="text-2xl font-semibold">RSS 源管理</h1>
       <div className="rounded border bg-white p-4 flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <label className="text-sm">自动采集</label>
+          <label className="text-sm font-semibold text-gray-800 tracking-wide antialiased">自动采集</label>
           <input type="checkbox" checked={autoOn} onChange={onToggleAuto} />
           {autoOn && (
             <span
@@ -359,7 +359,6 @@ export default function RssSettingsPage() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60"></span>
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
               </span>
-              自动采集中
             </span>
           )}
         </div>
