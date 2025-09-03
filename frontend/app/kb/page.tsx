@@ -730,17 +730,17 @@ export default function KbListPage() {
                           <div className="flex items-center space-x-2">
                             <button
                               onClick={() => openContentModal(it)}
-                              className="inline-flex items-center space-x-1 px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors duration-200"
+                              className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-md text-xs font-medium bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border border-blue-200 hover:from-blue-100 hover:to-indigo-100 hover:border-blue-300 shadow-sm hover:shadow transition-all duration-200"
                             >
-                              <Eye className="w-3 h-3" />
-                              <span>查看</span>
+                              <Eye className="w-3.5 h-3.5" />
+                              <span className="tracking-wide">查看</span>
                             </button>
                             <button
                               onClick={() => setDeleteId(it.id)}
-                              className="inline-flex items-center space-x-1 px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 transition-colors duration-200"
+                              className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-md text-xs font-medium bg-gradient-to-r from-rose-50 to-red-50 text-red-700 border border-red-200 hover:from-rose-100 hover:to-red-100 hover:border-red-300 shadow-sm hover:shadow transition-all duration-200"
                             >
-                              <Trash2 className="w-3 h-3" />
-                              <span>删除</span>
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span className="tracking-wide">删除</span>
                             </button>
                           </div>
                         </td>
