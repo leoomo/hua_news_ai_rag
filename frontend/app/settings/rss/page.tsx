@@ -25,6 +25,8 @@ export default function RssSettingsPage() {
   const [showProgress, setShowProgress] = useState(false);
   const [progressType, setProgressType] = useState<'single' | 'batch'>('single');
   const [progressSourceName, setProgressSourceName] = useState<string>('');
+  // 新增：进度弹窗状态管理
+  const [progressStatus, setProgressStatus] = useState<'running' | 'success' | 'error'>('running');
   
   // 使用通知管理器
   const notification = useNotification();
@@ -113,6 +115,7 @@ export default function RssSettingsPage() {
     setShowProgress(false);
     setProgressType('single');
     setProgressSourceName(sourceName);
+    setProgressStatus('running');
     
     // 使用setTimeout确保状态重置完成后再显示
     setTimeout(() => {
@@ -122,13 +125,22 @@ export default function RssSettingsPage() {
     setIngestingIds(prev => new Set(prev).add(id));
     try {
       const response = await api.post(`/api/settings/rss/ingest?id=${id}`);
+      
+      // 设置成功状态，让进度弹窗显示完成
+      setProgressStatus('success');
+      
       // 延迟显示成功通知，让进度条先完成
       setTimeout(() => {
         notification.showSuccess('采集成功', `已触发RSS源"${sourceName}"的采集任务`);
       }, 2000);
+      
       refresh();
+      
+      // 注意：弹窗现在会自动隐藏，不需要手动设置setShowProgress(false)
     } catch (error: any) {
-      setShowProgress(false);
+      // 设置错误状态
+      setProgressStatus('error');
+      // 注意：弹窗现在会自动隐藏，不需要手动设置setShowProgress(false)
       // 显示具体的错误原因
       let errorMessage = '采集失败';
       if (error.response?.data?.msg) {
@@ -146,11 +158,16 @@ export default function RssSettingsPage() {
       }
       notification.showError('采集失败', errorMessage);
     } finally {
-      setIngestingIds(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(id);
-        return newSet;
-      });
+      // 延迟清除状态，确保与按钮恢复时机一致，然后关闭进度弹窗
+      setTimeout(() => {
+        setIngestingIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(id);
+          return newSet;
+        });
+        setShowProgress(false);
+        setProgressStatus('running');
+      }, 1500); // 与弹窗可见时间和按钮恢复保持一致
     }
   }
 
@@ -163,6 +180,7 @@ export default function RssSettingsPage() {
     // 先重置进度指示器状态
     setShowProgress(false);
     setProgressType('batch');
+    setProgressStatus('running');
     
     // 使用setTimeout确保状态重置完成后再显示
     setTimeout(() => {
@@ -172,13 +190,22 @@ export default function RssSettingsPage() {
     setIsIngestingAll(true);
     try {
       const response = await api.post('/api/settings/rss/ingest_all');
+      
+      // 设置成功状态，让进度弹窗显示完成
+      setProgressStatus('success');
+      
       // 延迟显示成功通知，让进度条先完成
       setTimeout(() => {
         notification.showSuccess('批量采集成功', '已触发所有RSS源的批量采集任务');
       }, 2000);
+      
       refresh();
+      
+      // 注意：弹窗现在会自动隐藏，不需要手动设置setShowProgress(false)
     } catch (error: any) {
-      setShowProgress(false);
+      // 设置错误状态
+      setProgressStatus('error');
+      // 注意：弹窗现在会自动隐藏，不需要手动设置setShowProgress(false)
       // 显示具体的错误原因
       let errorMessage = '批量采集失败';
       if (error.response?.data?.msg) {
@@ -196,12 +223,18 @@ export default function RssSettingsPage() {
       }
       notification.showError('批量采集失败', errorMessage);
     } finally {
-      setIsIngestingAll(false);
+      // 先重置批量状态，再关闭进度弹窗，二者保持同步
+      setTimeout(() => {
+        setIsIngestingAll(false);
+        setShowProgress(false);
+        setProgressStatus('running');
+      }, 1500); // 与按钮恢复时机一致
     }
   }
 
   const handleProgressComplete = () => {
     setShowProgress(false);
+    setProgressStatus('running');
   };
 
   function onEditStart(item: Rss) {
@@ -258,6 +291,8 @@ export default function RssSettingsPage() {
         type={progressType}
         sourceName={progressSourceName}
         onComplete={handleProgressComplete}
+        externalStatus={progressStatus}
+        onStatusChange={setProgressStatus}
       />
       
       <h1 className="text-2xl font-semibold">RSS 源管理</h1>
@@ -299,6 +334,17 @@ export default function RssSettingsPage() {
             {isIngestingAll ? '采集中...' : '批量采集'}
           </button>
         </div>
+        
+        {/* 状态说明 */}
+        {(isIngestingAll || ingestingIds.size > 0) && (
+          <div className="px-4 py-2 bg-blue-50 border-t border-blue-200 text-sm text-blue-700">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+              {isIngestingAll ? '批量采集中，所有RSS源暂时无法编辑/删除' : '部分RSS源采集中，相关条目暂时无法编辑/删除'}
+            </div>
+          </div>
+        )}
+        
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr>
@@ -313,7 +359,11 @@ export default function RssSettingsPage() {
           </thead>
           <tbody>
             {items.map((r) => (
-              <tr key={r.id} className="border-t">
+              <tr key={r.id} className={`border-t ${
+                ingestingIds.has(r.id) || isIngestingAll 
+                  ? 'bg-blue-50 border-blue-200' 
+                  : ''
+              }`}>
                 <td className="p-2">
                   {editingId === r.id ? (
                     <input className="w-full rounded border px-2 py-1" value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} />
@@ -400,13 +450,57 @@ export default function RssSettingsPage() {
                 <td className="p-2">
                   {editingId === r.id ? (
                     <div className="flex gap-2">
-                      <button onClick={onSaveEdit} className="rounded bg-black text-white px-3 py-1">保存</button>
-                      <button onClick={() => { setEditingId(null); setForm({ name: '', url: '', category: '', is_active: true }); }} className="rounded border px-3 py-1">取消</button>
+                      <button 
+                        onClick={onSaveEdit} 
+                        disabled={ingestingIds.has(r.id) || isIngestingAll}
+                        className={`rounded px-3 py-1 ${
+                          (ingestingIds.has(r.id) || isIngestingAll)
+                            ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                            : 'bg-black text-white hover:bg-gray-800'
+                        }`}
+                        title={ingestingIds.has(r.id) ? '采集中，无法保存' : isIngestingAll ? '批量采集中，无法保存' : '保存修改'}
+                      >
+                        保存
+                      </button>
+                      <button 
+                        onClick={() => { setEditingId(null); setForm({ name: '', url: '', category: '', is_active: true }); }} 
+                        disabled={ingestingIds.has(r.id) || isIngestingAll}
+                        className={`rounded border px-3 py-1 ${
+                          (ingestingIds.has(r.id) || isIngestingAll)
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+                            : 'hover:bg-gray-50'
+                        }`}
+                        title={ingestingIds.has(r.id) ? '采集中，无法取消' : isIngestingAll ? '批量采集中，无法取消' : '取消编辑'}
+                      >
+                        取消
+                      </button>
                     </div>
                   ) : (
                     <div className="flex gap-2">
-                      <button onClick={() => onEditStart(r)} className="rounded border px-3 py-1">编辑</button>
-                      <button onClick={() => onDelete(r.id)} className="rounded border px-3 py-1 text-red-600">删除</button>
+                      <button 
+                        onClick={() => onEditStart(r)} 
+                        disabled={ingestingIds.has(r.id) || isIngestingAll}
+                        className={`rounded border px-3 py-1 ${
+                          (ingestingIds.has(r.id) || isIngestingAll)
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+                            : 'hover:bg-gray-50'
+                        }`}
+                        title={ingestingIds.has(r.id) ? '采集中，无法编辑' : isIngestingAll ? '批量采集中，无法编辑' : '编辑RSS源'}
+                      >
+                        编辑
+                      </button>
+                      <button 
+                        onClick={() => onDelete(r.id)} 
+                        disabled={ingestingIds.has(r.id) || isIngestingAll}
+                        className={`rounded border px-3 py-1 ${
+                          (ingestingIds.has(r.id) || isIngestingAll)
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+                            : 'text-red-600 hover:bg-red-50'
+                        }`}
+                        title={ingestingIds.has(r.id) ? '采集中，无法删除' : isIngestingAll ? '批量采集中，无法删除' : '删除RSS源'}
+                      >
+                        删除
+                      </button>
                       <button 
                         onClick={() => onIngest(r.id)} 
                         disabled={ingestingIds.has(r.id) || isIngestingAll || !r.is_active}
@@ -415,7 +509,7 @@ export default function RssSettingsPage() {
                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
                             : 'text-green-700 hover:bg-green-50'
                         }`}
-                        title={!r.is_active ? '该源已停用，无法采集' : ''}
+                        title={!r.is_active ? '该源已停用，无法采集' : ingestingIds.has(r.id) ? '采集中...' : isIngestingAll ? '批量采集中，无法单个采集' : '手动采集RSS源'}
                       >
                         {ingestingIds.has(r.id) ? '采集中...' : '采集'}
                       </button>

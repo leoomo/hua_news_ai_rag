@@ -7,9 +7,19 @@ interface IngestProgressProps {
   type: 'single' | 'batch';
   sourceName?: string;
   onComplete?: () => void;
+  // 新增：外部状态控制
+  externalStatus?: 'running' | 'success' | 'error';
+  onStatusChange?: (status: 'running' | 'success' | 'error') => void;
 }
 
-export function IngestProgress({ isVisible, type, sourceName, onComplete }: IngestProgressProps) {
+export function IngestProgress({ 
+  isVisible, 
+  type, 
+  sourceName, 
+  onComplete, 
+  externalStatus,
+  onStatusChange 
+}: IngestProgressProps) {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState<'running' | 'success' | 'error'>('running');
 
@@ -19,12 +29,24 @@ export function IngestProgress({ isVisible, type, sourceName, onComplete }: Inge
       // 完全重置所有状态
       setProgress(0);
       setStatus('running');
+      // 通知外部状态变化
+      onStatusChange?.('running');
     } else {
       // 隐藏时也重置状态，为下次显示做准备
       setProgress(0);
       setStatus('running');
     }
-  }, [isVisible]);
+  }, [isVisible, onStatusChange]);
+
+  // 监听外部状态变化（仅同步状态与进度，不自动隐藏）
+  useEffect(() => {
+    if (externalStatus && externalStatus !== status) {
+      setStatus(externalStatus);
+      if (externalStatus === 'success' || externalStatus === 'error') {
+        setProgress(100);
+      }
+    }
+  }, [externalStatus, status]);
 
   useEffect(() => {
     if (isVisible && status === 'running') {
@@ -49,12 +71,36 @@ export function IngestProgress({ isVisible, type, sourceName, onComplete }: Inge
       setTimeout(() => {
         setProgress(100);
         setStatus('success');
-        setTimeout(() => {
-          onComplete?.();
-        }, 1500);
+        // 通知外部状态变化
+        onStatusChange?.('success');
+        // 不在组件内部自动隐藏，由父组件控制
       }, 500);
     }
-  }, [progress, status, onComplete]);
+  }, [progress, status, onStatusChange]);
+
+  // 新增：监听外部成功状态，自动隐藏弹窗
+  useEffect(() => {
+    if (externalStatus === 'success' && status === 'success') {
+      // 外部状态为成功且内部状态也为成功时，延迟自动隐藏（确保提示已弹出并可见一段时间）
+      const timer = setTimeout(() => {
+        onComplete?.();
+      }, 1500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [externalStatus, status, onComplete]);
+
+  // 新增：错误状态自动隐藏
+  useEffect(() => {
+    if (externalStatus === 'error' && status === 'error') {
+      // 外部状态为错误时，延迟自动隐藏（确保提示已弹出并可见一段时间）
+      const timer = setTimeout(() => {
+        onComplete?.();
+      }, 1500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [externalStatus, status, onComplete]);
 
   // 如果不可见，直接返回null，不渲染任何内容
   if (!isVisible) return null;

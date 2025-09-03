@@ -1,0 +1,53 @@
+
+> hua-news-frontend@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.5
+  - Local:        http://localhost:3000
+
+ ✓ Starting...
+ ✓ Ready in 4.2s
+ ✓ Compiled /middleware in 153ms (73 modules)
+ ○ Compiling /settings/rss ...
+ ✓ Compiled /settings/rss in 1276ms (728 modules)
+ GET /settings/rss 200 in 1374ms
+ ✓ Compiled in 245ms (728 modules)
+ ✓ Compiled in 335ms (728 modules)
+ ✓ Compiled in 149ms (728 modules)
+ ✓ Compiled in 279ms (728 modules)
+ ✓ Compiled in 246ms (728 modules)
+ ✓ Compiled in 235ms (728 modules)
+ ✓ Compiled in 272ms (728 modules)
+ ✓ Compiled in 134ms (728 modules)
+ ✓ Compiled in 536ms (728 modules)
+ ✓ Compiled in 141ms (728 modules)
+ GET /settings/rss 200 in 63ms
+ ✓ Compiled in 254ms (728 modules)
+ ✓ Compiled in 117ms (728 modules)
+ ✓ Compiled in 144ms (728 modules)
+ GET /settings/rss 200 in 56ms
+ ✓ Compiled in 318ms (728 modules)
+ ✓ Compiled in 101ms (728 modules)
+ ✓ Compiled in 132ms (728 modules)
+ GET /settings/rss 200 in 71ms
+ ✓ Compiled in 544ms (728 modules)
+ ✓ Compiled in 111ms (728 modules)
+ GET /settings/rss 200 in 75ms
+ ✓ Compiled in 506ms (728 modules)
+ ✓ Compiled in 134ms (728 modules)
+ GET /settings/rss 200 in 59ms
+ ✓ Compiled in 442ms (728 modules)
+ ✓ Compiled in 113ms (728 modules)
+ ✓ Compiled in 199ms (728 modules)
+ GET /settings/rss 200 in 66ms
+ ✓ Compiled in 508ms (728 modules)
+ ✓ Compiled in 122ms (728 modules)
+ ✓ Compiled in 328ms (728 modules)
+ GET /settings/rss 200 in 65ms
+ ✓ Compiled in 618ms (728 modules)
+ ✓ Compiled in 220ms (728 modules)
+ ✓ Compiled in 426ms (728 modules)
+ ✓ Compiled in 143ms (728 modules)
+ ✓ Compiled in 431ms (728 modules)
+ ✓ Compiled in 141ms (728 modules)
+ GET /settings/rss 200 in 49ms
