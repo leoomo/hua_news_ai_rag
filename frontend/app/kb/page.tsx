@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Protected } from '@/components/Protected';
-import { Filter, X, Search, Calendar, Tag, Globe, ChevronDown, ChevronUp, Edit3, Trash2, Save, XCircle } from 'lucide-react';
+import { Filter, X, Search, Calendar, Tag, Globe, ChevronDown, ChevronUp, Edit3, Trash2, Save, XCircle, CheckSquare, Square } from 'lucide-react';
 
 type KbItem = {
   id: number;
@@ -38,6 +38,11 @@ export default function KbListPage() {
 
   // 删除确认状态
   const [deleteId, setDeleteId] = useState<number | null>(null);
+
+  // 批量操作状态
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [isSelectAll, setIsSelectAll] = useState(false);
+  const [showBatchDeleteConfirm, setShowBatchDeleteConfirm] = useState(false);
 
   useEffect(() => {
     api
@@ -76,6 +81,9 @@ export default function KbListPage() {
     
     setFilteredItems(filtered);
     setCurrentPage(1); // 重置到第一页
+    // 重置选择状态
+    setSelectedIds(new Set());
+    setIsSelectAll(false);
   }, [items, categoryFilter, dateFilter, sourceFilter]);
 
   // 获取唯一的分类和来源列表
@@ -158,6 +166,51 @@ export default function KbListPage() {
     } catch (error) {
       console.error('删除失败:', error);
       alert('删除失败，请重试');
+    }
+  };
+
+  // 批量选择相关函数
+  const toggleSelectAll = () => {
+    if (isSelectAll) {
+      setSelectedIds(new Set());
+      setIsSelectAll(false);
+    } else {
+      const allIds = new Set(currentItems.map(item => item.id));
+      setSelectedIds(allIds);
+      setIsSelectAll(true);
+    }
+  };
+
+  const toggleSelectItem = (id: number) => {
+    const newSelectedIds = new Set(selectedIds);
+    if (newSelectedIds.has(id)) {
+      newSelectedIds.delete(id);
+    } else {
+      newSelectedIds.add(id);
+    }
+    setSelectedIds(newSelectedIds);
+    
+    // 检查是否全选
+    const allIds = new Set(currentItems.map(item => item.id));
+    setIsSelectAll(newSelectedIds.size === allIds.size);
+  };
+
+  const isItemSelected = (id: number) => selectedIds.has(id);
+
+  // 批量删除
+  const batchDelete = async () => {
+    try {
+      // 这里应该调用后端API批量删除数据
+      // await api.post('/api/kb/items/batch-delete', { ids: Array.from(selectedIds) });
+      
+      // 临时更新本地状态（实际项目中应该等待API响应）
+      setItems(prev => prev.filter(item => !selectedIds.has(item.id)));
+      setSelectedIds(new Set());
+      setIsSelectAll(false);
+      setShowBatchDeleteConfirm(false);
+    } catch (error) {
+      console.error('批量删除失败:', error);
+      alert('批量删除失败，请重试');
     }
   };
 
@@ -316,6 +369,34 @@ export default function KbListPage() {
           </div>
         </div>
 
+        {/* 批量操作工具栏 */}
+        {selectedIds.size > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <span className="text-sm text-blue-800">
+                  已选择 <span className="font-semibold">{selectedIds.size}</span> 项
+                </span>
+                <button
+                  onClick={() => setSelectedIds(new Set())}
+                  className="text-sm text-blue-600 hover:text-blue-800 underline"
+                >
+                  清除选择
+                </button>
+              </div>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => setShowBatchDeleteConfirm(true)}
+                  className="inline-flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 text-sm font-medium"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>批量删除</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -329,6 +410,19 @@ export default function KbListPage() {
                 <table className="w-full text-sm">
                   <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                     <tr>
+                      <th className="text-left p-4 font-semibold text-gray-700">
+                        <button
+                          onClick={toggleSelectAll}
+                          className="flex items-center space-x-2 hover:bg-gray-200 rounded p-1 transition-colors duration-200"
+                        >
+                          {isSelectAll ? (
+                            <CheckSquare className="w-4 h-4 text-blue-600" />
+                          ) : (
+                            <Square className="w-4 h-4 text-gray-400" />
+                          )}
+                          <span>全选</span>
+                        </button>
+                      </th>
                       <th className="text-left p-4 font-semibold text-gray-700">标题</th>
                       <th className="text-left p-4 font-semibold text-gray-700">内容</th>
                       {/* <th className="text-left p-4 font-semibold text-gray-700">摘要</th> */}
@@ -340,7 +434,23 @@ export default function KbListPage() {
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {currentItems.map((it) => (
-                      <tr key={it.id} className="hover:bg-gray-50 transition-colors duration-150">
+                      <tr key={it.id} className={`hover:bg-gray-50 transition-colors duration-150 ${
+                        isItemSelected(it.id) ? 'bg-blue-50' : ''
+                      }`}>
+                        {/* 选择列 */}
+                        <td className="p-4">
+                          <button
+                            onClick={() => toggleSelectItem(it.id)}
+                            className="flex items-center space-x-2 hover:bg-gray-200 rounded p-1 transition-colors duration-200"
+                          >
+                            {isItemSelected(it.id) ? (
+                              <CheckSquare className="w-4 h-4 text-blue-600" />
+                            ) : (
+                              <Square className="w-4 h-4 text-gray-400" />
+                            )}
+                          </button>
+                        </td>
+
                         {/* 标题列 */}
                         <td className="p-4">
                           {editingId === it.id ? (
@@ -529,6 +639,32 @@ export default function KbListPage() {
                   className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors duration-200"
                 >
                   删除
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 批量删除确认对话框 */}
+        {showBatchDeleteConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">确认批量删除</h3>
+              <p className="text-gray-600 mb-6">
+                确定要删除选中的 <span className="font-semibold text-red-600">{selectedIds.size}</span> 条知识库条目吗？此操作不可撤销。
+              </p>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowBatchDeleteConfirm(false)}
+                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={batchDelete}
+                  className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors duration-200"
+                >
+                  批量删除
                 </button>
               </div>
             </div>
