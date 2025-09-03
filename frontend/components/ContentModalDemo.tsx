@@ -32,6 +32,7 @@ const demoItems = [
    - 远程医疗和健康管理
 
 这些技术的应用不仅提高了医疗效率和质量，还为患者提供了更好的医疗体验。`,
+    source_url: "https://www.stdaily.com/",
     source_name: "科技日报",
     category: "人工智能",
     created_at: "2025-09-03T10:30:00Z",
@@ -70,6 +71,7 @@ const demoItems = [
 - 与物联网技术结合
 - 引入人工智能优化决策
 - 建立行业标准联盟`,
+    source_url: "https://www.eeo.com.cn/",
     source_name: "经济观察报",
     category: "区块链",
     created_at: "2025-09-03T14:15:00Z",

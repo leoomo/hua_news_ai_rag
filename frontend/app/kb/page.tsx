@@ -9,6 +9,7 @@ type KbItem = {
   id: number;
   title: string;
   content?: string;
+  source_url?: string;
   source_name?: string;
   category?: string;
   created_at?: string;
@@ -490,9 +491,24 @@ export default function KbListPage() {
 
                         {/* 来源列 */}
                         <td className="p-4">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                            {it.source_name || '-'}
-                          </span>
+                          {it.source_url ? (
+                            <a
+                              href={it.source_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center space-x-2 px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 hover:text-purple-900 transition-all duration-200 cursor-pointer group"
+                              title={`点击访问 ${it.source_name || '原始网站'}`}
+                            >
+                              <span>{it.source_name || '未知来源'}</span>
+                              <svg className="w-3 h-3 text-purple-600 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                            </a>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                              {it.source_name || '-'}
+                            </span>
+                          )}
                         </td>
 
                         {/* 分类列 */}
