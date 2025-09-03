@@ -35,6 +35,17 @@ export default function ContentModal({
 
   if (!isOpen || !item) return null;
 
+  // 调试信息
+  console.log('ContentModal render:', {
+    isOpen,
+    item,
+    isEditing,
+    editForm,
+    onSave: !!onSave,
+    categories: categories?.length,
+    sources: sources?.length
+  });
+
   // 初始化编辑表单
   const startEdit = () => {
     setEditForm({
@@ -109,68 +120,75 @@ export default function ContentModal({
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden animate-in slide-in-from-bottom-4 duration-300"
+        className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden animate-in slide-in-from-bottom-4 duration-300 border border-slate-100"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 弹窗头部 */}
-        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-6 py-4 text-white relative overflow-hidden">
+        <div className="bg-gradient-to-r from-slate-700 via-slate-600 to-slate-500 px-6 py-4 text-white relative overflow-hidden">
           {/* 装饰性背景元素 */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -translate-y-16 translate-x-16"></div>
-          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-5 rounded-full translate-y-12 -translate-x-12"></div>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -translate-y-16 translate-x-16"></div>
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-3 rounded-full translate-y-12 -translate-x-12"></div>
           
-          <div className="flex items-center justify-between relative z-10">
-            <div className="flex items-center space-x-3">
-              <div className="flex space-x-1">
-                <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
-                <div className="w-3 h-3 bg-white rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                <div className="w-3 h-3 bg-white rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+          <div className="flex flex-col space-y-3 relative z-10">
+            {/* 标题行 */}
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between space-y-3 lg:space-y-0">
+              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                <div className="flex space-x-1 flex-shrink-0">
+                  <div className="w-2 h-2 bg-white opacity-60 rounded-full"></div>
+                  <div className="w-2 h-2 bg-white opacity-40 rounded-full"></div>
+                  <div className="w-2 h-2 bg-white opacity-20 rounded-full"></div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editForm.title || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                      className="w-full text-lg lg:text-xl font-bold bg-white bg-opacity-20 rounded-lg px-3 py-1 text-white placeholder-white placeholder-opacity-70 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
+                      placeholder="输入标题..."
+                    />
+                  ) : (
+                    <h2 className="text-lg lg:text-xl font-bold drop-shadow-sm truncate max-w-[400px] lg:max-w-[500px]" title={item.title}>
+                      {item.title}
+                    </h2>
+                  )}
+                </div>
               </div>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={editForm.title || ''}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
-                  className="text-xl font-bold bg-white bg-opacity-20 rounded-lg px-3 py-1 text-white placeholder-white placeholder-opacity-70 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
-                  placeholder="输入标题..."
-                />
-              ) : (
-                <h2 className="text-xl font-bold drop-shadow-sm">{item.title}</h2>
-              )}
-            </div>
-            <div className="flex items-center space-x-2">
-              {isEditing ? (
-                <>
+              <div className="flex items-center justify-end space-x-2 flex-shrink-0 lg:ml-4">
+                {isEditing ? (
+                  <>
+                    <button
+                      onClick={saveEdit}
+                      disabled={isSaving}
+                      className="text-white hover:text-green-200 transition-all duration-200 p-2 rounded-full hover:bg-white hover:bg-opacity-20 hover:scale-110 disabled:opacity-50"
+                      title="保存"
+                    >
+                      <Save className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      className="text-white hover:text-red-200 transition-all duration-200 p-2 rounded-full hover:bg-white hover:bg-opacity-20 hover:scale-110"
+                      title="取消"
+                    >
+                      <XCircle className="w-5 h-5" />
+                    </button>
+                  </>
+                ) : (
                   <button
-                    onClick={saveEdit}
-                    disabled={isSaving}
-                    className="text-white hover:text-green-200 transition-all duration-200 p-2 rounded-full hover:bg-white hover:bg-opacity-20 hover:scale-110 disabled:opacity-50"
-                    title="保存"
+                    onClick={startEdit}
+                    className="text-white hover:text-blue-200 transition-all duration-200 p-2 rounded-full hover:bg-white hover:bg-opacity-20 hover:scale-110"
+                    title="编辑"
                   >
-                    <Save className="w-5 h-5" />
+                    <Edit3 className="w-5 h-5" />
                   </button>
-                  <button
-                    onClick={cancelEdit}
-                    className="text-white hover:text-red-200 transition-all duration-200 p-2 rounded-full hover:bg-white hover:bg-opacity-20 hover:scale-110"
-                    title="取消"
-                  >
-                    <XCircle className="w-5 h-5" />
-                  </button>
-                </>
-              ) : (
+                )}
                 <button
-                  onClick={startEdit}
-                  className="text-white hover:text-yellow-200 transition-all duration-200 p-2 rounded-full hover:bg-white hover:bg-opacity-20 hover:scale-110"
-                  title="编辑"
+                  onClick={onClose}
+                  className="text-white hover:text-gray-200 transition-all duration-200 p-2 rounded-full hover:bg-white hover:bg-opacity-20 hover:scale-110"
                 >
-                  <Edit3 className="w-5 h-5" />
+                  <X className="w-6 h-6" />
                 </button>
-              )}
-              <button
-                onClick={onClose}
-                className="text-white hover:text-gray-200 transition-all duration-200 p-2 rounded-full hover:bg-white hover:bg-opacity-20 hover:scale-110"
-              >
-                <X className="w-6 h-6" />
-              </button>
+              </div>
             </div>
           </div>
         </div>
@@ -179,8 +197,8 @@ export default function ContentModal({
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
           {/* 元信息卡片 */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-              <div className="flex items-center space-x-2 text-blue-700">
+            <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+              <div className="flex items-center space-x-2 text-slate-700">
                 <Globe className="w-4 h-4" />
                 <span className="text-sm font-medium">来源</span>
               </div>
@@ -211,7 +229,7 @@ export default function ContentModal({
                       </svg>
                     </a>
                   ) : (
-                    <p className="text-blue-900 font-semibold">
+                    <p className="text-slate-900 font-semibold">
                       {item.source_name || '-'}
                     </p>
                   )}
@@ -219,8 +237,8 @@ export default function ContentModal({
               )}
             </div>
             
-            <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-              <div className="flex items-center space-x-2 text-green-700">
+            <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+              <div className="flex items-center space-x-2 text-slate-700">
                 <Tag className="w-4 h-4" />
                 <span className="text-sm font-medium">分类</span>
               </div>
@@ -242,12 +260,12 @@ export default function ContentModal({
               )}
             </div>
             
-            <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
-              <div className="flex items-center space-x-2 text-orange-700">
+            <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+              <div className="flex items-center space-x-2 text-slate-700">
                 <Calendar className="w-4 h-4" />
                 <span className="text-sm font-medium">创建时间</span>
               </div>
-              <p className="text-orange-900 font-semibold mt-1 text-sm">
+              <p className="text-slate-900 font-semibold mt-1 text-sm">
                 {formatDate(item.created_at)}
               </p>
             </div>
@@ -255,9 +273,9 @@ export default function ContentModal({
 
           {/* 摘要信息 */}
           {(item.summary || isEditing) && (
-            <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200 mb-6">
-              <div className="flex items-center space-x-2 text-yellow-800 mb-2">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+            <div className="bg-slate-50 rounded-lg p-4 border border-slate-200 mb-6">
+              <div className="flex items-center space-x-2 text-slate-800 mb-2">
+                <div className="w-2 h-2 bg-slate-500 rounded-full"></div>
                 <span className="font-medium">摘要</span>
               </div>
               {isEditing ? (
@@ -269,7 +287,7 @@ export default function ContentModal({
                   placeholder="输入摘要..."
                 />
               ) : (
-                <p className="text-yellow-900 leading-relaxed">
+                <p className="text-slate-900 leading-relaxed">
                   {item.summary}
                 </p>
               )}
@@ -277,10 +295,10 @@ export default function ContentModal({
           )}
 
           {/* 主要内容 */}
-          <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+          <div className="bg-slate-50 rounded-lg p-6 border border-slate-200">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-800 flex items-center space-x-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <h3 className="text-lg font-semibold text-slate-800 flex items-center space-x-2">
+                <div className="w-2 h-2 bg-slate-500 rounded-full"></div>
                 <span>内容详情</span>
               </h3>
               {!isEditing && (
@@ -324,8 +342,8 @@ export default function ContentModal({
 
           {/* 内容统计信息 */}
           {item.content && !isEditing && (
-            <div className="mt-6 bg-gray-100 rounded-lg p-4">
-              <div className="flex items-center justify-between text-sm text-gray-600">
+            <div className="mt-6 bg-slate-100 rounded-lg p-4">
+              <div className="flex items-center justify-between text-sm text-slate-600">
                 <div className="flex items-center space-x-4">
                   <span>字符数: {item.content.length}</span>
                   <span>单词数: {item.content.split(/\s+/).filter(Boolean).length}</span>
@@ -340,11 +358,11 @@ export default function ContentModal({
         </div>
 
         {/* 弹窗底部 */}
-        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+        <div className="bg-slate-50 px-6 py-4 border-t border-slate-200">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-500">
-              点击外部区域或按 ESC 键关闭
-            </div>
+                          <div className="text-sm text-slate-500">
+                点击外部区域或按 ESC 键关闭
+              </div>
             <div className="flex items-center space-x-3">
               {isEditing ? (
                 <>
@@ -367,7 +385,7 @@ export default function ContentModal({
                 <>
                   <button
                     onClick={copyToClipboard}
-                    className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
+                    className="inline-flex items-center space-x-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md"
                   >
                     {copied ? (
                       <>
@@ -383,7 +401,7 @@ export default function ContentModal({
                   </button>
                   <button
                     onClick={startEdit}
-                    className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors duration-200 text-sm font-medium"
+                    className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md transform hover:scale-105"
                   >
                     <Edit3 className="w-4 h-4 inline mr-2" />
                     编辑
@@ -392,7 +410,7 @@ export default function ContentModal({
               )}
               <button
                 onClick={onClose}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 text-sm font-medium"
+                className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-all duration-200 text-sm font-medium border border-slate-200 hover:border-slate-300"
               >
                 关闭
               </button>
