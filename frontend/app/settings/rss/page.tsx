@@ -1,6 +1,6 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { isNonEmpty, isUrl } from '@/lib/validators';
 import { useNotification, NotificationContainer } from '@/components/Notification';
@@ -27,6 +27,14 @@ export default function RssSettingsPage() {
   const [progressSourceName, setProgressSourceName] = useState<string>('');
   // 新增：进度弹窗状态管理
   const [progressStatus, setProgressStatus] = useState<'running' | 'success' | 'error'>('running');
+  // 单条采集：每条源的进度（0-100）
+  const [singleProgress, setSingleProgress] = useState<Record<number, number>>({});
+  const singleTimers = useRef<Record<number, any>>({});
+  const [justCompletedIds, setJustCompletedIds] = useState<Set<number>>(new Set());
+  // 批量采集：整体进度（0-100）
+  const [batchProgress, setBatchProgress] = useState<number>(0);
+  const batchTimer = useRef<any>(null);
+  const [batchJustCompleted, setBatchJustCompleted] = useState<boolean>(false);
   
   // 使用通知管理器
   const notification = useNotification();
@@ -111,36 +119,53 @@ export default function RssSettingsPage() {
     
     const sourceName = items.find(item => item.id === id)?.name || 'RSS源';
     
-    // 先重置进度指示器状态
+    // 先重置进度指示器状态（仅用于弹窗；单条改为按钮内展示进度）
     setShowProgress(false);
     setProgressType('single');
     setProgressSourceName(sourceName);
     setProgressStatus('running');
     
-    // 使用setTimeout确保状态重置完成后再显示
-    setTimeout(() => {
-      setShowProgress(true);
-    }, 100);
-    
+    // 启动该条目的按钮内进度（模拟推进至90%）
+    setSingleProgress(prev => ({ ...prev, [id]: 0 }));
+    const timer = setInterval(() => {
+      setSingleProgress(prev => {
+        const cur = prev[id] ?? 0;
+        const next = Math.min(90, cur + Math.floor(5 + Math.random() * 10));
+        return { ...prev, [id]: next };
+      });
+    }, 300);
+    singleTimers.current[id] = timer;
+
     setIngestingIds(prev => new Set(prev).add(id));
     try {
       const response = await api.post(`/api/settings/rss/ingest?id=${id}`);
       
-      // 设置成功状态，让进度弹窗显示完成
+      // 设置成功状态
       setProgressStatus('success');
+      // 将该条目进度补到100%
+      setSingleProgress(prev => ({ ...prev, [id]: 100 }));
+      // 触发短暂完成动效
+      setJustCompletedIds(prev => new Set(prev).add(id));
+      setTimeout(() => {
+        setJustCompletedIds(prev => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      }, 500);
       
-      // 延迟显示成功通知，让进度条先完成
+      // 成功提示
       setTimeout(() => {
         notification.showSuccess('采集成功', `已触发RSS源"${sourceName}"的采集任务`);
-      }, 2000);
+      }, 200);
       
       refresh();
       
-      // 注意：弹窗现在会自动隐藏，不需要手动设置setShowProgress(false)
+      // 注意：弹窗不用于单条；此处仅按钮内进度展示
     } catch (error: any) {
-      // 设置错误状态
+      // 错误状态
       setProgressStatus('error');
-      // 注意：弹窗现在会自动隐藏，不需要手动设置setShowProgress(false)
+      setSingleProgress(prev => ({ ...prev, [id]: 100 }));
       // 显示具体的错误原因
       let errorMessage = '采集失败';
       if (error.response?.data?.msg) {
@@ -158,16 +183,25 @@ export default function RssSettingsPage() {
       }
       notification.showError('采集失败', errorMessage);
     } finally {
-      // 延迟清除状态，确保与按钮恢复时机一致，然后关闭进度弹窗
+      // 清理该条目的进度计时器与禁用状态，与按钮恢复同步
       setTimeout(() => {
+        if (singleTimers.current[id]) {
+          clearInterval(singleTimers.current[id]);
+          delete singleTimers.current[id];
+        }
         setIngestingIds(prev => {
           const newSet = new Set(prev);
           newSet.delete(id);
           return newSet;
         });
-        setShowProgress(false);
-        setProgressStatus('running');
-      }, 1500); // 与弹窗可见时间和按钮恢复保持一致
+        // 单条完成后，短暂保留100%展示，再移除进度
+        setTimeout(() => {
+          setSingleProgress(prev => {
+            const { [id]: _omit, ...rest } = prev;
+            return rest;
+          });
+        }, 600);
+      }, 1500);
     }
   }
 
@@ -177,35 +211,42 @@ export default function RssSettingsPage() {
     // 互斥：存在任意单个采集中则禁止批量采集
     if (ingestingIds.size > 0) return;
     
-    // 先重置进度指示器状态
-    setShowProgress(false);
+    // 不再使用弹窗显示批量进度（按钮内展示）
     setProgressType('batch');
     setProgressStatus('running');
     
-    // 使用setTimeout确保状态重置完成后再显示
-    setTimeout(() => {
-      setShowProgress(true);
-    }, 100);
-    
+    // 启动批量按钮内进度
+    setBatchProgress(0);
+    if (batchTimer.current) {
+      clearInterval(batchTimer.current);
+      batchTimer.current = null;
+    }
+    batchTimer.current = setInterval(() => {
+      setBatchProgress(prev => Math.min(90, prev + Math.floor(5 + Math.random() * 10)));
+    }, 300);
+
     setIsIngestingAll(true);
     try {
       const response = await api.post('/api/settings/rss/ingest_all');
       
-      // 设置成功状态，让进度弹窗显示完成
+      // 设置成功状态
       setProgressStatus('success');
+      // 批量进度补到100%
+      setBatchProgress(100);
+      setBatchJustCompleted(true);
+      setTimeout(() => setBatchJustCompleted(false), 500);
       
-      // 延迟显示成功通知，让进度条先完成
+      // 延迟显示成功通知
       setTimeout(() => {
         notification.showSuccess('批量采集成功', '已触发所有RSS源的批量采集任务');
-      }, 2000);
+      }, 200);
       
       refresh();
       
-      // 注意：弹窗现在会自动隐藏，不需要手动设置setShowProgress(false)
     } catch (error: any) {
       // 设置错误状态
       setProgressStatus('error');
-      // 注意：弹窗现在会自动隐藏，不需要手动设置setShowProgress(false)
+      setBatchProgress(100);
       // 显示具体的错误原因
       let errorMessage = '批量采集失败';
       if (error.response?.data?.msg) {
@@ -223,12 +264,14 @@ export default function RssSettingsPage() {
       }
       notification.showError('批量采集失败', errorMessage);
     } finally {
-      // 先重置批量状态，再关闭进度弹窗，二者保持同步
-      setTimeout(() => {
-        setIsIngestingAll(false);
-        setShowProgress(false);
-        setProgressStatus('running');
-      }, 1500); // 与按钮恢复时机一致
+      // 结束批量标记；
+      setIsIngestingAll(false);
+      if (batchTimer.current) {
+        clearInterval(batchTimer.current);
+        batchTimer.current = null;
+      }
+      // 完成后短暂保留100%再清零
+      setTimeout(() => setBatchProgress(0), 600);
     }
   }
 
@@ -279,15 +322,22 @@ export default function RssSettingsPage() {
       notification.showError('删除失败', errorMessage);
     }
   }
+  // 当批量状态结束且没有单个采集时，自动关闭进度弹窗，保持与按钮状态同步
+  useEffect(() => {
+    if (!isIngestingAll && ingestingIds.size === 0) {
+      setShowProgress(false);
+      setProgressStatus('running');
+    }
+  }, [isIngestingAll, ingestingIds]);
   return (
     <main className="space-y-4">
       {/* 通知容器 */}
       <NotificationContainer notifications={notification.notifications} />
       
-      {/* 进度指示器 */}
+      {/* 进度指示器（仅用于单条模式） */}
       <IngestProgress
         key={`${showProgress}-${progressType}-${progressSourceName}`}
-        isVisible={showProgress}
+        isVisible={showProgress && progressType === 'single'}
         type={progressType}
         sourceName={progressSourceName}
         onComplete={handleProgressComplete}
@@ -325,13 +375,26 @@ export default function RssSettingsPage() {
           <button 
             onClick={onIngestAll} 
             disabled={isIngestingAll || ingestingIds.size > 0}
-            className={`rounded px-3 py-1 ${
-              (isIngestingAll || ingestingIds.size > 0)
-                ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
-                : 'bg-black text-white hover:bg-gray-800'
+            className={`relative overflow-hidden rounded px-3 py-1 ${
+              (isIngestingAll)
+                ? `bg-blue-500 text-white border border-blue-500 cursor-wait ${batchJustCompleted ? 'animate-bounce' : 'animate-pulse'}` 
+                : (ingestingIds.size > 0)
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' 
+                  : 'bg-black text-white hover:bg-gray-800'
             }`}
           >
-            {isIngestingAll ? '采集中...' : '批量采集'}
+            {isIngestingAll ? (
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {`批量采集 ${Math.max(0, batchProgress)}%`}
+              </span>
+            ) : '批量采集'}
+            {isIngestingAll && (
+              <span
+                className="absolute bottom-0 left-0 h-0.5 bg-blue-300"
+                style={{ width: `${Math.max(5, batchProgress)}%` }}
+              />
+            )}
           </button>
         </div>
         
@@ -504,14 +567,31 @@ export default function RssSettingsPage() {
                       <button 
                         onClick={() => onIngest(r.id)} 
                         disabled={ingestingIds.has(r.id) || isIngestingAll || !r.is_active}
-                        className={`rounded border px-3 py-1 ${
-                          (ingestingIds.has(r.id) || isIngestingAll || !r.is_active)
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
-                            : 'text-green-700 hover:bg-green-50'
+                        className={`relative overflow-hidden rounded border px-3 py-1 ${
+                          ingestingIds.has(r.id)
+                            ? `bg-blue-500 text-white border-blue-500 cursor-wait ${justCompletedIds.has(r.id) ? 'animate-bounce' : 'animate-pulse'}`
+                            : (isIngestingAll || !r.is_active)
+                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+                              : 'text-green-700 hover:bg-green-50'
                         }`}
                         title={!r.is_active ? '该源已停用，无法采集' : ingestingIds.has(r.id) ? '采集中...' : isIngestingAll ? '批量采集中，无法单个采集' : '手动采集RSS源'}
                       >
-                        {ingestingIds.has(r.id) ? '采集中...' : '采集'}
+                        {ingestingIds.has(r.id)
+                          ? (
+                              <span className="inline-flex items-center gap-2">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                {typeof singleProgress[r.id] === 'number'
+                                  ? `采集 ${singleProgress[r.id]}%`
+                                  : '采集中...'}
+                              </span>
+                            )
+                          : '采集'}
+                        {ingestingIds.has(r.id) && typeof singleProgress[r.id] === 'number' && (
+                          <span
+                            className="absolute bottom-0 left-0 h-0.5 bg-blue-300"
+                            style={{ width: `${Math.max(5, singleProgress[r.id])}%` }}
+                          />
+                        )}
                       </button>
                     </div>
                   )}
