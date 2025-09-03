@@ -28,10 +28,14 @@ export default function KbListPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [dateFilter, setDateFilter] = useState<string>('');
   const [sourceFilter, setSourceFilter] = useState<string>('');
+  const [keyword, setKeyword] = useState<string>('');
+  const [sortBy, setSortBy] = useState<'created_at' | 'title'>('created_at');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   
   // 分页状态
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(20);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [jumpPage, setJumpPage] = useState<string>('');
 
   // 筛选器收缩状态
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
@@ -190,12 +194,34 @@ export default function KbListPage() {
       });
     }
     
+    // 关键词搜索（标题/内容）
+    if (keyword.trim()) {
+      const q = keyword.trim().toLowerCase();
+      filtered = filtered.filter(item => {
+        const t = (item.title || '').toLowerCase();
+        const c = (item.content || '').toLowerCase();
+        return t.includes(q) || c.includes(q);
+      });
+    }
+    
+    // 排序
+    filtered.sort((a, b) => {
+      if (sortBy === 'title') {
+        const av = (a.title || '').localeCompare(b.title || '');
+        return sortOrder === 'asc' ? av : -av;
+      } else {
+        const at = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const bt = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return sortOrder === 'asc' ? (at - bt) : (bt - at);
+      }
+    });
+    
     setFilteredItems(filtered);
     setCurrentPage(1); // 重置到第一页
     // 重置选择状态
     setSelectedIds(new Set());
     setIsSelectAll(false);
-  }, [items, categoryFilter, dateFilter, sourceFilter]);
+  }, [items, categoryFilter, dateFilter, sourceFilter, keyword, sortBy, sortOrder]);
 
   // 获取唯一的分类和来源列表
   const categories = [...new Set(items.map(item => item.category).filter(Boolean))];
@@ -212,10 +238,13 @@ export default function KbListPage() {
     setCategoryFilter('');
     setDateFilter('');
     setSourceFilter('');
+    setKeyword('');
+    setSortBy('created_at');
+    setSortOrder('desc');
   };
 
   // 检查是否有活跃的筛选条件
-  const hasActiveFilters = categoryFilter || dateFilter || sourceFilter;
+  const hasActiveFilters = categoryFilter || dateFilter || sourceFilter || keyword;
 
   // 切换筛选器展开状态
   const toggleFilterExpanded = () => {
@@ -502,48 +531,58 @@ export default function KbListPage() {
                   />
                 </div>
 
-                {/* 操作按钮 */}
-                <div className="flex items-end space-x-3">
-                  <button
-                    onClick={clearFilters}
-                    disabled={!hasActiveFilters}
-                    className="flex-1 bg-gray-100 text-gray-700 rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2"
-                  >
-                    <X className="w-4 h-4" />
-                    <span>清除筛选</span>
-                  </button>
+                {/* 关键词搜索 */}
+                <div className="space-y-2">
+                  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                    <Search className="w-4 h-4 text-blue-600" />
+                    <span>关键词</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
+                    placeholder="搜索标题或内容"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400"
+                  />
                 </div>
               </div>
               
-              {/* 筛选结果统计 */}
-              <div className="bg-gray-50 rounded-lg px-4 py-3 border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span>筛选结果：</span>
-                    <span className="font-semibold text-gray-800">{filteredItems.length}</span>
-                    <span>条记录</span>
-                  </div>
-                  
-                  {hasActiveFilters && (
-                    <div className="flex items-center space-x-2 text-xs">
-                      {categoryFilter && (
-                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                          分类: {categoryFilter}
-                        </span>
-                      )}
-                      {sourceFilter && (
-                        <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
-                          来源: {sourceFilter}
-                        </span>
-                      )}
-                      {dateFilter && (
-                        <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
-                          日期: {dateFilter}
-                        </span>
-                      )}
-                    </div>
-                  )}
+              {/* 排序与每页数量 */}
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">排序字段</label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as any)}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="created_at">时间</option>
+                    <option value="title">标题</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">排序方式</label>
+                  <select
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value as any)}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="desc">降序</option>
+                    <option value="asc">升序</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">每页数量</label>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => setItemsPerPage(parseInt(e.target.value) || 20)}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -722,6 +761,11 @@ export default function KbListPage() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <button
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                      className="px-3 py-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 text-sm"
+                    >首页</button>
+                    <button
                       onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                       disabled={currentPage === 1}
                       className="px-4 py-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors duration-200 text-sm font-medium"
@@ -752,6 +796,30 @@ export default function KbListPage() {
                     >
                       下一页
                     </button>
+                    <button
+                      onClick={() => setCurrentPage(totalPages)}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 text-sm"
+                    >末页</button>
+                    <div className="flex items-center space-x-2 ml-2">
+                      <span className="text-sm text-gray-600">跳至</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={totalPages}
+                        value={jumpPage}
+                        onChange={(e) => setJumpPage(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const v = Math.max(1, Math.min(totalPages, parseInt(jumpPage || '0') || 1));
+                            setCurrentPage(v);
+                            setJumpPage('');
+                          }
+                        }}
+                        className="w-16 rounded-lg border border-gray-300 px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      <span className="text-sm text-gray-600">/ {totalPages}</span>
+                    </div>
                   </div>
                 </div>
               </div>
