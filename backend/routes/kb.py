@@ -294,8 +294,8 @@ def dashboard_summary():
     today_utc = datetime.now(_tz.utc).date()
     days = [today_utc - timedelta(days=i) for i in range(6, -1, -1)]
     last7 = [{'date': d.isoformat(), 'count': int(q7_map.get(d.isoformat(), 0))} for d in days]
-    # 取最新10篇
-    latest = db.query(NewsArticle).order_by(NewsArticle.id.desc()).limit(10).all()
+    # 取最新8篇
+    latest = db.query(NewsArticle).order_by(NewsArticle.id.desc()).limit(8).all()
     latest_out = [
         {
             'id': a.id,
