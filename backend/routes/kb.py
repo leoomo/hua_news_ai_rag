@@ -152,14 +152,20 @@ def kb_items_import():
 @kb_bp.post('/search/semantic')
 def search_semantic():
     data = request.get_json(force=True)
-    query = data.get('query', '')
+    query = (data.get('query', '') or '').strip()
+    top_k = int(data.get('top_k') or 10)
+    # 可配置的相似度阈值（默认 0.8）
+    try:
+        min_score = float(data.get('min_score') or 0.8)
+    except Exception:
+        min_score = 0.8
     index, id_map = build_index_from_recent_articles(limit_articles=200)
     if not index:
         # fallback to LIKE if embeddings missing
         db = get_session()
         q = f"%{query}%"
-        rows = db.query(NewsArticle).filter((NewsArticle.title.like(q)) | (NewsArticle.content.like(q))).limit(10).all()
-        return {'code': 0, 'data': [
+        rows = db.query(NewsArticle).filter((NewsArticle.title.like(q)) | (NewsArticle.content.like(q))).limit(top_k).all()
+        data_like = [
             {
                 'id': a.id,
                 'title': a.title,
@@ -167,8 +173,10 @@ def search_semantic():
                 'source_url': a.source_url,
                 'score': 0.5,
             } for a in rows
-        ]}
-    results = search_index(index, id_map, query, top_k=10)
+        ]
+        data_like = [r for r in data_like if r['score'] >= min_score]
+        return {'code': 0, 'data': data_like[:top_k]}
+    results = search_index(index, id_map, query, top_k=max(50, top_k * 5))
     db = get_session()
     id_to_score = {i: s for i, s in results}
     arts = db.query(NewsArticle).filter(NewsArticle.id.in_(id_to_score.keys())).all()
@@ -182,7 +190,33 @@ def search_semantic():
             return score
         text = (article.title or "") + (article.content or "")
         return score + (0.05 if re.search(r"[\u4e00-\u9fff]", text) else -0.05)
-    arts.sort(key=lambda a: zh_pref_score(a, id_to_score.get(a.id, 0.0)), reverse=True)
+    # 语义分数基础上：
+    # 1) 标题/内容包含关键词 → 强力加权
+    # 2) 标题过短（≤2）且不包含关键词 → 降权，避免“是/的/了”等噪声
+    # 3) 标题/内容与查询的中文字符交集为0 → 降权
+    q_lower = query.lower()
+    def boosted_score(article: NewsArticle) -> float:
+        base = id_to_score.get(article.id, 0.0)
+        base = zh_pref_score(article, base)
+        title = (article.title or '')
+        content = (article.content or '')
+        t_lower = title.lower()
+        c_lower = content.lower()
+        boost = 0.0
+        if q_lower and (q_lower in t_lower or q_lower in c_lower):
+            boost += 0.3
+        if len(title.strip()) <= 2 and q_lower not in t_lower:
+            boost -= 0.3
+        # 中文字符交集
+        try:
+            q_zh = set(re.findall(r"[\u4e00-\u9fff]", query))
+            a_zh = set(re.findall(r"[\u4e00-\u9fff]", title + content))
+            if q_zh and not (q_zh & a_zh):
+                boost -= 0.2
+        except Exception:
+            pass
+        return base + boost
+    arts.sort(key=lambda a: boosted_score(a), reverse=True)
     # If query is Chinese-only, strictly filter to results containing Chinese.
     if is_zh_only:
         arts = [a for a in arts if re.search(r"[\u4e00-\u9fff]", (a.title or "") + (a.content or ""))]
@@ -192,16 +226,18 @@ def search_semantic():
             'title': a.title,
             'snippet': (a.content or '')[:160],
             'source_url': a.source_url,
-            'score': id_to_score.get(a.id, 0),
+            'score': round(boosted_score(a), 4),
         } for a in arts
     ]
+    # 过滤掉低于阈值的结果
+    data_out = [r for r in data_out if r['score'] >= min_score]
     # secondary fallback: if语义检索为空，则执行LIKE
     if not data_out:
         q = f"%{query}%"
         base_q = db.query(NewsArticle).filter((NewsArticle.title.like(q)) | (NewsArticle.content.like(q)))
         if is_zh_only:
             base_q = base_q.filter((NewsArticle.title.op('REGEXP')(r"[\u4e00-\u9fff]")) | (NewsArticle.content.op('REGEXP')(r"[\u4e00-\u9fff]")))
-        rows = base_q.limit(10).all()
+        rows = base_q.limit(top_k).all()
         data_out = [
             {
                 'id': a.id,
@@ -211,7 +247,9 @@ def search_semantic():
                 'score': 0.4,
             } for a in rows
         ]
-    return {'code': 0, 'data': data_out}
+    # 对所有结果统一应用阈值过滤
+    data_out = [r for r in data_out if r['score'] >= min_score]
+    return {'code': 0, 'data': data_out[:top_k]}
 
 
 @kb_bp.get('/analytics/keywords_top')

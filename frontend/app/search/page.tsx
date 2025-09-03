@@ -28,16 +28,19 @@ export default function SearchPage() {
     // 防止重复点击
     if (loading) return;
     
-    // 验证搜索内容
-    if (!q.trim()) {
-      notification.showWarning('搜索提示', '请输入搜索关键词');
+    // 验证搜索内容（避免过短、含糊查询导致噪声过大）
+    const text = q.trim();
+    const isCJK = /[\u4e00-\u9fff]/.test(text);
+    const minLen = isCJK ? 2 : 3;
+    if (!text || text.length < minLen) {
+      notification.showWarning('搜索提示', `请输入至少 ${minLen} 个字符的关键词`);
       return;
     }
     
     setLoading(true);
     setHasSearched(true);
     try {
-      const res = await api.post('/api/search/semantic', { query: q, top_k: 10 });
+      const res = await api.post('/api/search/semantic', { query: text, top_k: 10 });
       setResults(res.data?.data || res.data || []);
       
       if (res.data?.data?.length > 0 || res.data?.length > 0) {
