@@ -326,12 +326,57 @@ def dashboard_summary():
     else:
         latest_update_dt = latest_manual or latest_auto
 
+    # 衍生指标：今日/昨日新增、分类与来源 Top3
+    # 以 UTC 日期为准（前端展示时转本地时区）
+    from datetime import datetime, timezone, timedelta
+    today_utc = datetime.now(timezone.utc).date()
+    yesterday_utc = today_utc - timedelta(days=1)
+
+    def _count_on(d):
+        return (
+            db.query(func.count(NewsArticle.id))
+            .filter(func.date(NewsArticle.created_at) == str(d))
+            .scalar()
+            or 0
+        )
+
+    today_count = int(_count_on(today_utc))
+    yesterday_count = int(_count_on(yesterday_utc))
+
+    # Top3 分类
+    cat_rows = (
+        db.query(NewsArticle.category, func.count(NewsArticle.id))
+        .group_by(NewsArticle.category)
+        .order_by(func.count(NewsArticle.id).desc())
+        .limit(3)
+        .all()
+    )
+    top_categories = [
+        {"name": (c or "-"), "count": int(n)} for c, n in cat_rows if (c or "").strip() or n
+    ]
+
+    # Top3 来源
+    src_rows = (
+        db.query(NewsArticle.source_name, func.count(NewsArticle.id))
+        .group_by(NewsArticle.source_name)
+        .order_by(func.count(NewsArticle.id).desc())
+        .limit(3)
+        .all()
+    )
+    top_sources = [
+        {"name": (s or "-"), "count": int(n)} for s, n in src_rows if (s or "").strip() or n
+    ]
+
     from flask import make_response
     resp = make_response({'code': 0, 'data': {
         'total_articles': total_articles,
         'last7': last7,
         'latest': latest_out,
         'latest_update': to_iso_utc(latest_update_dt),
+        'today_count': today_count,
+        'yesterday_count': yesterday_count,
+        'top_categories': top_categories,
+        'top_sources': top_sources,
     }})
     # 禁止缓存，确保删除后立刻反映
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'

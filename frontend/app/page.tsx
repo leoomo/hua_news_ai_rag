@@ -11,6 +11,11 @@ export default function Page() {
   const [total, setTotal] = useState(0);
   const [latest, setLatest] = useState<Latest[]>([]);
   const [last7, setLast7] = useState<Last7[]>([]);
+  const [latestUpdate, setLatestUpdate] = useState<string | null>(null);
+  const [today, setToday] = useState<number>(0);
+  const [yesterday, setYesterday] = useState<number>(0);
+  const [topCats, setTopCats] = useState<{name: string; count: number}[]>([]);
+  const [topSrcs, setTopSrcs] = useState<{name: string; count: number}[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -24,6 +29,11 @@ export default function Page() {
         setTotal(d.total_articles || 0);
         setLatest(d.latest || []);
         setLast7(d.last7 || []);
+        setLatestUpdate(d.latest_update || null);
+        setToday(d.today_count || 0);
+        setYesterday(d.yesterday_count || 0);
+        setTopCats(d.top_categories || []);
+        setTopSrcs(d.top_sources || []);
       } finally {
         setLoading(false);
       }
@@ -68,6 +78,62 @@ export default function Page() {
               <div className="rounded border bg-white p-4 h-full flex flex-col">
                 <div className="text-sm text-gray-500">文章总数</div>
                 <div className="text-3xl font-semibold mt-1">{total}</div>
+                <div className="mt-2 text-xs text-gray-500">
+                  最近更新时间：{(() => {
+                    if (!latestUpdate) return '-';
+                    const dt = new Date(latestUpdate);
+                    if (isNaN(dt.getTime())) return '-';
+                    return dt.toLocaleString('zh-CN', {
+                      timeZone: 'Asia/Shanghai',
+                      hour12: false,
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }).replace(/-/g, '/');
+                  })()}
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                  <div className="rounded border border-gray-200 p-2 bg-gray-50">
+                    <div className="text-gray-500">今日新增</div>
+                    <div className="text-base font-semibold text-gray-900 mt-0.5">{today}</div>
+                  </div>
+                  <div className="rounded border border-gray-200 p-2 bg-gray-50">
+                    <div className="text-gray-500">昨日新增</div>
+                    <div className="text-base font-semibold text-gray-900 mt-0.5">{yesterday}</div>
+                  </div>
+                  <div className="rounded border border-gray-200 p-2 bg-gray-50">
+                    <div className="text-gray-500">近7天日均</div>
+                    <div className="text-base font-semibold text-gray-900 mt-0.5">{Math.round((last7.reduce((s, x) => s + x.count, 0) / Math.max(1, last7.length)) || 0)}</div>
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <div className="text-gray-500 mb-1">分类 Top3</div>
+                    <div className="space-y-1">
+                      {topCats.map((c, i) => (
+                        <div key={i} className="flex items-center justify-between">
+                          <span className="truncate mr-2">{c.name}</span>
+                          <span className="text-gray-700">{c.count}</span>
+                        </div>
+                      ))}
+                      {topCats.length === 0 && <div className="text-gray-400">-</div>}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500 mb-1">来源 Top3</div>
+                    <div className="space-y-1">
+                      {topSrcs.map((s, i) => (
+                        <div key={i} className="flex items-center justify-between">
+                          <span className="truncate mr-2">{s.name}</span>
+                          <span className="text-gray-700">{s.count}</span>
+                        </div>
+                      ))}
+                      {topSrcs.length === 0 && <div className="text-gray-400">-</div>}
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className="rounded border bg-white p-4 h-full flex flex-col">
                 <div className="text-sm text-gray-500 mb-2">最新 8 篇</div>
