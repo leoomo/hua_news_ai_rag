@@ -226,6 +226,95 @@ def analytics_trend():
     return {'code': 0, 'data': data}
 
 
+@kb_bp.get('/analytics/sources_trend')
+def analytics_sources_trend():
+    days = request.args.get('days', default=14, type=int)
+    topk = request.args.get('topk', default=5, type=int)
+    db = get_session()
+    # 选出近days天内的来源TopK
+    q_top = (
+        db.query(NewsArticle.source_name, func.count(NewsArticle.id).label('c'))
+        .filter(func.date(NewsArticle.created_at) >= func.date(func.datetime('now', f'-{days} day')))
+        .group_by(NewsArticle.source_name)
+        .order_by(func.count(NewsArticle.id).desc())
+        .limit(topk)
+        .all()
+    )
+    top_sources = [(s or '-') for s, _ in q_top]
+    # 按天 × 来源 聚合
+    q = (
+        db.query(
+            func.date(NewsArticle.created_at).label('d'),
+            NewsArticle.source_name.label('s'),
+            func.count(NewsArticle.id).label('c'),
+        )
+        .filter(func.date(NewsArticle.created_at) >= func.date(func.datetime('now', f'-{days} day')))
+        .filter(NewsArticle.source_name.in_(top_sources))
+        .group_by(func.date(NewsArticle.created_at), NewsArticle.source_name)
+        .all()
+    )
+    # 生成连续日期
+    from datetime import datetime, timedelta, timezone as _tz
+    today = datetime.now(_tz.utc).date()
+    day_list = [str(today - timedelta(days=i)) for i in range(days-1, -1, -1)]
+    # 填充矩阵 {source: {date: count}}
+    matrix: dict[str, dict[str, int]] = {s: {d: 0 for d in day_list} for s in top_sources}
+    for d, s, c in q:
+        s1 = s or '-'
+        matrix.setdefault(s1, {d2:0 for d2 in day_list})
+        matrix[s1][str(d)] = int(c)
+    series = [
+        { 'name': s, 'data': [matrix.get(s, {}).get(d, 0) for d in day_list] }
+        for s in top_sources
+    ]
+    return {'code': 0, 'data': { 'dates': day_list, 'series': series }}
+
+
+@kb_bp.get('/analytics/failures_top')
+def analytics_failures_top():
+    days = request.args.get('days', default=14, type=int)
+    db = get_session()
+    # 近days天失败原因Top
+    q = (
+        db.query(
+            func.coalesce(IngestLog.error_message, 'unknown').label('err'),
+            func.count(IngestLog.id).label('c')
+        )
+        .filter(IngestLog.status == 'failed')
+        .filter(func.date(IngestLog.created_at) >= func.date(func.datetime('now', f'-{days} day')))
+        .group_by(func.coalesce(IngestLog.error_message, 'unknown'))
+        .order_by(func.count(IngestLog.id).desc())
+        .limit(10)
+        .all()
+    )
+    rows = [{ 'error': (e or 'unknown')[:80], 'count': int(c) } for e, c in q]
+    return {'code': 0, 'data': rows}
+
+
+@kb_bp.get('/analytics/hour_week_heat')
+def analytics_hour_week_heat():
+    days = request.args.get('days', default=14, type=int)
+    db = get_session()
+    # SQLite: %w 0-6 (周日=0), %H 00-23
+    q = (
+        db.query(
+            func.strftime('%w', NewsArticle.created_at).label('w'),
+            func.strftime('%H', NewsArticle.created_at).label('h'),
+            func.count(NewsArticle.id).label('c'),
+        )
+        .filter(func.date(NewsArticle.created_at) >= func.date(func.datetime('now', f'-{days} day')))
+        .group_by(func.strftime('%w', NewsArticle.created_at), func.strftime('%H', NewsArticle.created_at))
+        .all()
+    )
+    # 构建 7x24 矩阵，周一=1放前，可根据需要调整
+    heat = [[0 for _ in range(24)] for _ in range(7)]
+    for w, h, c in q:
+        wi = int(w)  # 0..6，0是周日
+        hi = int(h)
+        heat[wi][hi] = int(c)
+    return {'code': 0, 'data': { 'matrix': heat, 'weekday0_is_sun': True }}
+
+
 @kb_bp.post('/scheduler/start')
 def scheduler_start():
     sched = current_app.config.get('scheduler')
