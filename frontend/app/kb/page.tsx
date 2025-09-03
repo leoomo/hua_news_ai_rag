@@ -20,6 +20,8 @@ export default function KbListPage() {
   const [items, setItems] = useState<KbItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filteredItems, setFilteredItems] = useState<KbItem[]>([]);
+  // 仪表盘汇总中的“知识库最近更新”(后端已综合手动/自动采集时间)
+  const [latestUpdateISO, setLatestUpdateISO] = useState<string | null>(null);
   
   // 筛选状态
   const [categoryFilter, setCategoryFilter] = useState<string>('');
@@ -54,6 +56,17 @@ export default function KbListPage() {
         setFilteredItems(data);
       })
       .finally(() => setLoading(false));
+  }, []);
+
+  // 获取“知识库最近更新”时间（后端已取手动与自动采集的较新者）
+  useEffect(() => {
+    api
+      .get('/api/dashboard/summary', { params: { t: Date.now() } })
+      .then((res) => {
+        const d = res.data?.data || res.data || {};
+        setLatestUpdateISO(d.latest_update || null);
+      })
+      .catch(() => {})
   }, []);
 
   // 应用筛选
@@ -252,20 +265,14 @@ export default function KbListPage() {
         <div className="flex items-center justify-between">
           <div className="flex flex-col space-y-2">
             <h1 className="text-3xl font-bold text-gray-900">知识库</h1>
-            {items.length > 0 && (
-              <div className="flex items-center space-x-2 text-sm text-gray-500">
-                <Calendar className="w-4 h-4" />
-                <span>最近更新: {(() => {
-                  const validDates = items
-                    .map(item => item.created_at)
-                    .filter(date => date)
-                    .map(date => new Date(date!).getTime());
-                  
-                  if (validDates.length === 0) return '暂无数据';
-                  
-                  const latestDate = new Date(Math.max(...validDates));
-                  // 以北京时间渲染（不手动 +8，使用时区格式化，24小时制）
-                  const displayTime = latestDate.toLocaleString('zh-CN', {
+            <div className="flex items-center space-x-2 text-sm text-gray-500">
+              <Calendar className="w-4 h-4" />
+              <span>
+                最近更新: {(() => {
+                  if (!latestUpdateISO) return '暂无数据';
+                  const dt = new Date(latestUpdateISO);
+                  if (isNaN(dt.getTime())) return '暂无数据';
+                  return dt.toLocaleString('zh-CN', {
                     timeZone: 'Asia/Shanghai',
                     hour12: false,
                     year: 'numeric',
@@ -274,11 +281,9 @@ export default function KbListPage() {
                     hour: '2-digit',
                     minute: '2-digit'
                   }).replace(/-/g, '/');
-                  
-                  return displayTime;
-                })()}</span>
-              </div>
-            )}
+                })()}
+              </span>
+            </div>
           </div>
           <div className="flex items-center space-x-2 text-sm text-gray-500">
             <Filter className="w-4 h-4" />

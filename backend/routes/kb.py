@@ -1,7 +1,7 @@
 from flask import Blueprint, request
 from datetime import timezone
 from data.db import get_session
-from data.models import NewsArticle
+from data.models import NewsArticle, IngestLog
 from ai.vectorstore import build_index_from_recent_articles, search_index
 from ai.qa import build_retrieval_qa
 from sqlalchemy import func
@@ -219,11 +219,34 @@ def dashboard_summary():
             'created_at': a.created_at.isoformat() if a.created_at else None,
         } for a in latest
     ]
+    # 计算“知识库更新时间”：手动入库(articles.created_at 最大) 与 自动采集日志(ingest_logs.created_at 最大) 取较新者
+    latest_manual = db.query(func.max(NewsArticle.created_at)).scalar()
+    latest_auto = db.query(func.max(IngestLog.created_at)).scalar()
+
+    def to_iso_utc(dt):
+        if not dt:
+            return None
+        # 若为 naive 时间，视为 UTC；若有时区，则转 UTC
+        if getattr(dt, 'tzinfo', None) is None:
+            from datetime import timezone
+            dt = dt.replace(tzinfo=timezone.utc)
+        else:
+            dt = dt.astimezone(timezone.utc)
+        iso = dt.isoformat()
+        return iso if iso.endswith('Z') else iso.replace('+00:00', 'Z')
+
+    latest_update_dt = None
+    if latest_manual and latest_auto:
+        latest_update_dt = max(latest_manual, latest_auto)
+    else:
+        latest_update_dt = latest_manual or latest_auto
+
     from flask import make_response
     resp = make_response({'code': 0, 'data': {
         'total_articles': total_articles,
         'last7': last7,
         'latest': latest_out,
+        'latest_update': to_iso_utc(latest_update_dt),
     }})
     # 禁止缓存，确保删除后立刻反映
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
