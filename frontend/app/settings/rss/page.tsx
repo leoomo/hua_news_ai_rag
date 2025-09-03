@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { CheckCircle, XCircle } from 'lucide-react';
 import { api } from '@/lib/api';
 import { isNonEmpty, isUrl } from '@/lib/validators';
 import { useNotification, NotificationContainer } from '@/components/Notification';
@@ -338,7 +339,15 @@ export default function RssSettingsPage() {
                   {editingId === r.id ? (
                     <input type="checkbox" checked={!!form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
                   ) : (
-                    r.is_active ? '是' : '否'
+                    r.is_active ? (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200" title="启用">
+                        <CheckCircle className="w-4 h-4" />
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200" title="停用">
+                        <XCircle className="w-4 h-4" />
+                      </span>
+                    )
                   )}
                 </td>
                 <td className="p-2 text-sm">
