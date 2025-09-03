@@ -9,7 +9,7 @@ from typing import Dict, Optional
 
 import requests
 
-from .config import Settings
+from config import Settings
 
 
 @dataclass

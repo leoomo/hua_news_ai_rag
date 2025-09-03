@@ -7,10 +7,10 @@ import feedparser
 import hashlib
 import logging
 
-from .db import get_session
-from .models import RssSource, NewsArticle, IngestLog
+from data.db import get_session
+from data.models import RssSource, NewsArticle, IngestLog
 from .ingest_utils import clean_html_to_text, url_sha256, simhash, ensure_columns_for_dedup, ensure_columns_for_enrich, ensure_ingest_log_table
-from .enrich import summarize_text, extract_keywords
+from ai.enrich import summarize_text, extract_keywords
 from .fetcher import Fetcher
 
 logger = logging.getLogger(__name__)

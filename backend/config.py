@@ -3,7 +3,7 @@ import os
 
 
 class Settings(BaseModel):
-    database_url: str = os.getenv('DATABASE_URL', f'sqlite:///{os.path.abspath("hua_news.db")}')
+    database_url: str = os.getenv('DATABASE_URL', f'sqlite:///{os.path.abspath("../hua_news.db")}')
     secret_key: str = os.getenv('SECRET_KEY', 'dev-secret-key')
     
     # 数据库连接池配置

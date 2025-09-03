@@ -9,10 +9,10 @@ try:
 except Exception:  # pragma: no cover
     faiss = None  # type: ignore
 
-from .db import get_session
-from .models import NewsArticle
+from data.db import get_session
+from data.models import NewsArticle
 from .embeddings import EmbeddingService, chunk_text
-from .config import Settings
+from config import Settings
 
 
 def build_index_from_recent_articles(limit_articles: int = 200) -> Tuple[object | None, List[Tuple[int, int]]]:

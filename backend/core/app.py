@@ -3,14 +3,14 @@ from flask import Flask
 from apscheduler.schedulers.background import BackgroundScheduler  # type: ignore
 import os
 from flask_cors import CORS  # type: ignore
-from .config import Settings
-from .db import init_db, engine, Base, close_db
-from .ingest_utils import ensure_columns_for_dedup, ensure_columns_for_enrich
-from .routes.auth import auth_bp
-from .routes.users import users_bp
-from .routes.rss import rss_bp
-from .routes.kb import kb_bp
-from .routes.models_settings import models_bp
+from config import Settings
+from data.db import init_db, engine, Base, close_db
+from crawler.ingest_utils import ensure_columns_for_dedup, ensure_columns_for_enrich
+from routes.auth import auth_bp
+from routes.users import users_bp
+from routes.rss import rss_bp
+from routes.kb import kb_bp
+from routes.models_settings import models_bp
 
 
 def create_app() -> Flask:
@@ -40,10 +40,10 @@ def create_app() -> Flask:
     
     # import models so SQLAlchemy knows all tables
     try:
-        from backend import models as _models  # noqa: F401
+        from data import models as _models  # noqa: F401
     except Exception:
         try:
-            from . import models as _models  # type: ignore # noqa: F401
+            from data import models as _models  # type: ignore # noqa: F401
         except Exception:
             pass
     # ensure all tables exist (long-term approach)
@@ -69,9 +69,9 @@ def create_app() -> Flask:
     try:
         scheduler = BackgroundScheduler(daemon=True, timezone='UTC')
         try:
-            from backend.routes.rss import ingest_all_sources
+            from routes.rss import ingest_all_sources
         except Exception:
-            from .routes.rss import ingest_all_sources  # type: ignore
+            from routes.rss import ingest_all_sources  # type: ignore
 
         def _job():
             try:

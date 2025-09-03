@@ -11,10 +11,10 @@ try:
 except Exception:  # pragma: no cover
     LCFAISS = None  # type: ignore
 
-from .db import get_session
-from .models import NewsArticle
+from data.db import get_session
+from data.models import NewsArticle
 from .embeddings import chunk_text
-from .config import Settings
+from config import Settings
 
 
 def build_langchain_retriever(limit_articles: int = 200):

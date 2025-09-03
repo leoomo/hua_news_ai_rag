@@ -1,6 +1,6 @@
 from flask import Blueprint, request
-from ..db import get_session
-from ..models import User
+from data.db import get_session
+from data.models import User
 
 users_bp = Blueprint('users', __name__)
 

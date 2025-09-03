@@ -1,11 +1,11 @@
 from flask import Blueprint, request
-from ..db import get_session
-from ..models import RssSource, NewsArticle, IngestLog
-from ..ingest_utils import ensure_columns_for_enrich
-from ..enrich import summarize_text, extract_keywords
-from ..embeddings import EmbeddingService, chunk_text
-from ..config import Settings
-from ..ingest import ingest_rss_source
+from data.db import get_session
+from data.models import RssSource, NewsArticle, IngestLog
+from crawler.ingest_utils import ensure_columns_for_enrich
+from ai.enrich import summarize_text, extract_keywords
+from ai.embeddings import EmbeddingService, chunk_text
+from config import Settings
+from crawler.ingest import ingest_rss_source
 
 rss_bp = Blueprint('rss', __name__)
 

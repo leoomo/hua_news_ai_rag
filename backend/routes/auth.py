@@ -2,8 +2,8 @@ from flask import Blueprint, request
 from passlib.hash import bcrypt
 import jwt
 from datetime import datetime, timedelta
-from ..db import get_session
-from ..models import User
+from data.db import get_session
+from data.models import User
 from flask import current_app as app
 
 auth_bp = Blueprint('auth', __name__)

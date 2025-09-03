@@ -6,7 +6,7 @@ import hashlib
 from typing import Iterable
 
 from sqlalchemy import text
-from .db import get_session, engine, Base
+from data.db import get_session, engine, Base
 
 
 TAG_RE = re.compile(r"<[^>]+>")

@@ -1,10 +1,10 @@
 from flask import Blueprint, request
-from ..db import get_session
-from ..models import NewsArticle
-from ..vectorstore import build_index_from_recent_articles, search_index
-from ..qa import build_retrieval_qa
+from data.db import get_session
+from data.models import NewsArticle
+from ai.vectorstore import build_index_from_recent_articles, search_index
+from ai.qa import build_retrieval_qa
 from sqlalchemy import func
-from ..enrich import extract_keywords
+from ai.enrich import extract_keywords
 from flask import current_app
 
 kb_bp = Blueprint('kb', __name__)
@@ -136,7 +136,7 @@ def scheduler_start():
     if not sched:
         return {'code': 500, 'msg': 'scheduler unavailable'}, 500
     # ensure the ingest job exists
-    from ..routes.rss import ingest_all_sources
+    from routes.rss import ingest_all_sources
     try:
         if not any(j.id == 'rss_ingest_all' for j in sched.get_jobs()):
             sched.add_job(ingest_all_sources, 'interval', minutes=30, id='rss_ingest_all', replace_existing=True)
