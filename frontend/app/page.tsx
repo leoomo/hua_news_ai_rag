@@ -15,7 +15,11 @@ export default function Page() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await api.get('/api/dashboard/summary');
+        const res = await api.get('/api/dashboard/summary', {
+          // 防缓存
+          headers: { 'Cache-Control': 'no-cache' },
+          params: { t: Date.now() },
+        });
         const d = res.data?.data || res.data || {};
         setTotal(d.total_articles || 0);
         setLatest(d.latest || []);
@@ -24,7 +28,32 @@ export default function Page() {
         setLoading(false);
       }
     }
+
     load();
+
+    // 监听知识库变更事件
+    const onKbChanged = (e: Event) => {
+      // 若删除方已提供最新总数，先行更新避免闪烁
+      const detail = (e as CustomEvent)?.detail as { total?: number } | undefined;
+      if (detail && typeof detail.total === 'number') {
+        setTotal(detail.total);
+      }
+      setLoading(true);
+      load();
+    };
+    window.addEventListener('kb:changed', onKbChanged);
+
+    // 页面获得焦点时刷新
+    const onFocus = () => {
+      setLoading(true);
+      load();
+    };
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      window.removeEventListener('kb:changed', onKbChanged);
+      window.removeEventListener('focus', onFocus);
+    };
   }, []);
 
   return (

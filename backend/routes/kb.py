@@ -14,7 +14,7 @@ kb_bp = Blueprint('kb', __name__)
 @kb_bp.get('/kb/items')
 def kb_items():
     db = get_session()
-    rows = db.query(NewsArticle).order_by(NewsArticle.created_at.desc()).limit(50).all()
+    rows = db.query(NewsArticle).order_by(NewsArticle.created_at.desc()).all()
     def to_iso_utc(dt):
         if not dt:
             return None
@@ -209,8 +209,8 @@ def dashboard_summary():
         .all()
     )
     last7 = [{'date': str(d), 'count': int(c)} for d, c in reversed(q7)]
-    # 取最新5篇
-    latest = db.query(NewsArticle).order_by(NewsArticle.id.desc()).limit(5).all()
+    # 取最新10篇
+    latest = db.query(NewsArticle).order_by(NewsArticle.id.desc()).limit(10).all()
     latest_out = [
         {
             'id': a.id,
@@ -219,11 +219,15 @@ def dashboard_summary():
             'created_at': a.created_at.isoformat() if a.created_at else None,
         } for a in latest
     ]
-    return {'code': 0, 'data': {
+    from flask import make_response
+    resp = make_response({'code': 0, 'data': {
         'total_articles': total_articles,
         'last7': last7,
         'latest': latest_out,
-    }}
+    }})
+    # 禁止缓存，确保删除后立刻反映
+    resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    return resp
 
 
 @kb_bp.post('/search/qa')
@@ -280,4 +284,32 @@ def kb_item_detail():
         'published_at': to_iso_utc(a.published_at),
         'created_at': to_iso_utc(a.created_at),
     }}
+
+
+@kb_bp.delete('/kb/items/<int:item_id>')
+def kb_item_delete(item_id: int):
+    db = get_session()
+    a = db.query(NewsArticle).get(item_id)
+    if not a:
+        return {'code': 404, 'msg': 'Not Found'}, 404
+    db.delete(a)
+    db.commit()
+    # 删除后返回最新总数，避免前端再次请求
+    total_articles = db.query(func.count(NewsArticle.id)).scalar() or 0
+    return {'code': 0, 'data': {'id': item_id, 'total': int(total_articles)}}
+
+
+@kb_bp.post('/kb/items/batch-delete')
+def kb_items_batch_delete():
+    payload = request.get_json(silent=True) or {}
+    ids = payload.get('ids') or []
+    if not isinstance(ids, list) or not ids:
+        return {'code': 400, 'msg': 'ids is required (non-empty list)'}, 400
+    db = get_session()
+    # 仅删除存在的记录
+    q = db.query(NewsArticle).filter(NewsArticle.id.in_(ids))
+    deleted = q.delete(synchronize_session=False)
+    db.commit()
+    total_articles = db.query(func.count(NewsArticle.id)).scalar() or 0
+    return {'code': 0, 'data': {'deleted': int(deleted), 'total': int(total_articles)}}
 

@@ -154,12 +154,18 @@ export default function KbListPage() {
   // 删除条目
   const deleteItem = async (id: number) => {
     try {
-      // 这里应该调用后端API删除数据
-      // await api.delete(`/api/kb/items/${id}`);
+      // 调用后端API删除数据
+      const resp = await api.delete(`/api/kb/items/${id}`);
+      const newTotal = resp.data?.data?.total as number | undefined;
       
       // 临时更新本地状态（实际项目中应该等待API响应）
       setItems(prev => prev.filter(item => item.id !== id));
       setDeleteId(null);
+      // 通知仪表盘刷新（带最新总数，尽量避免短暂不同步）
+      if (typeof window !== 'undefined') {
+        const evt = new CustomEvent('kb:changed', { detail: { total: typeof newTotal === 'number' ? newTotal : undefined } });
+        window.dispatchEvent(evt);
+      }
     } catch (error) {
       console.error('删除失败:', error);
       alert('删除失败，请重试');
@@ -197,14 +203,22 @@ export default function KbListPage() {
   // 批量删除
   const batchDelete = async () => {
     try {
-      // 这里应该调用后端API批量删除数据
-      // await api.post('/api/kb/items/batch-delete', { ids: Array.from(selectedIds) });
+      // 调用后端API批量删除数据
+      const ids = Array.from(selectedIds);
+      if (ids.length === 0) return;
+      const resp = await api.post('/api/kb/items/batch-delete', { ids });
+      const newTotal = resp.data?.data?.total as number | undefined;
       
       // 临时更新本地状态（实际项目中应该等待API响应）
       setItems(prev => prev.filter(item => !selectedIds.has(item.id)));
       setSelectedIds(new Set());
       setIsSelectAll(false);
       setShowBatchDeleteConfirm(false);
+      // 通知仪表盘刷新（带最新总数）
+      if (typeof window !== 'undefined') {
+        const evt = new CustomEvent('kb:changed', { detail: { total: typeof newTotal === 'number' ? newTotal : undefined } });
+        window.dispatchEvent(evt);
+      }
     } catch (error) {
       console.error('批量删除失败:', error);
       alert('批量删除失败，请重试');
