@@ -484,17 +484,8 @@ def dashboard_summary():
     today_utc = datetime.now(_tz.utc).date()
     days = [today_utc - timedelta(days=i) for i in range(6, -1, -1)]
     last7 = [{'date': d.isoformat(), 'count': int(q7_map.get(d.isoformat(), 0))} for d in days]
-    # 取最新8篇
+    # 取最新8篇（latest_out 在定义 to_iso_utc 之后再构建）
     latest = db.query(NewsArticle).order_by(NewsArticle.id.desc()).limit(8).all()
-    latest_out = [
-        {
-            'id': a.id,
-            'title': a.title,
-            'source_name': a.source_name,
-            'source_url': a.source_url,
-            'created_at': a.created_at.isoformat() if a.created_at else None,
-        } for a in latest
-    ]
     # 计算“知识库更新时间”：手动入库(articles.created_at 最大) 与 自动采集日志(ingest_logs.created_at 最大) 取较新者
     latest_manual = db.query(func.max(NewsArticle.created_at)).scalar()
     latest_auto = db.query(func.max(IngestLog.created_at)).scalar()
@@ -556,6 +547,17 @@ def dashboard_summary():
     )
     top_sources = [
         {"name": (s or "-"), "count": int(n)} for s, n in src_rows if (s or "").strip() or n
+    ]
+
+    # 构建 latest_out（此时 to_iso_utc 已定义）
+    latest_out = [
+        {
+            'id': a.id,
+            'title': a.title,
+            'source_name': a.source_name,
+            'source_url': a.source_url,
+            'created_at': to_iso_utc(a.created_at),
+        } for a in latest
     ]
 
     from flask import make_response
