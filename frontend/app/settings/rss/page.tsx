@@ -357,9 +357,18 @@ export default function RssSettingsPage() {
                           {ok ? '成功' : '失败'}
                         </span>
                         {ok && (
-                          <span className="text-gray-500">
-                            +{s.created}{s.skipped ? ` / ~${s.skipped}` : ''}
-                          </span>
+                          <div className="flex items-center gap-1" title="本次采集统计：新增/跳过">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                              新增 {s.created}
+                            </span>
+                            {typeof s.skipped === 'number' && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-50 text-gray-700 border border-gray-200">
+                                <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                                跳过 {s.skipped}
+                              </span>
+                            )}
+                          </div>
                         )}
                         {/* 按需求：状态列不再显示时间 */}
                       </div>

@@ -55,14 +55,31 @@ export default function AnalyticsPage() {
 
           <div className="rounded border bg-white p-4">
             <h2 className="font-medium mb-3">近14天文章数量趋势</h2>
-            <div className="grid grid-cols-14 gap-2 items-end">
-              {trend.map((d) => (
-                <div key={d.date} className="text-center">
-                  <div className="bg-gray-800 mx-auto" style={{ height: Math.max(4, d.count * 4), width: 16 }} />
-                  <div className="text-xs text-gray-500 mt-1">{d.count}</div>
-                </div>
-              ))}
+            <div className="mb-3 text-xs text-gray-600">
+              总计：{trend.reduce((s, x) => s + x.count, 0)}，日均：{Math.round(trend.reduce((s, x) => s + x.count, 0) / Math.max(1, trend.length))}
             </div>
+            {(() => {
+              const maxV = Math.max(1, ...trend.map(t => t.count));
+              const barMaxH = 120; // px
+              return (
+                <div className="flex items-end gap-3 overflow-x-auto py-2">
+                  {trend.map((d) => {
+                    const h = Math.max(4, Math.round((d.count / maxV) * barMaxH));
+                    const dt = new Date(d.date);
+                    const label = isNaN(dt.getTime())
+                      ? d.date
+                      : dt.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }).replace(/-/g, '/');
+                    return (
+                      <div key={d.date} className="text-center min-w-[28px]" title={`${label}：${d.count}`}>
+                        <div className="text-[11px] text-gray-600 mb-1">{d.count}</div>
+                        <div className="mx-auto w-3.5 bg-gray-800 hover:bg-blue-600 transition-colors" style={{ height: h }} />
+                        <div className="text-[10px] text-gray-400 mt-1">{label}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
         </>
       )}
