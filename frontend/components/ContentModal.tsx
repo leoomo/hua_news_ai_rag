@@ -18,6 +18,7 @@ type ContentModalProps = {
   onSave?: (id: number, data: Partial<ContentModalProps['item']>) => Promise<void>;
   categories?: string[];
   sources?: string[];
+  defaultEditing?: boolean;
 };
 
 export default function ContentModal({ 
@@ -26,10 +27,11 @@ export default function ContentModal({
   item, 
   onSave,
   categories = [],
-  sources = []
+  sources = [],
+  defaultEditing = false
 }: ContentModalProps) {
   const [copied, setCopied] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(!!defaultEditing);
   const [editForm, setEditForm] = useState<Partial<ContentModalProps['item']>>({});
   const [isSaving, setIsSaving] = useState(false);
 
@@ -73,6 +75,8 @@ export default function ContentModal({
       await onSave(item.id, editForm);
       setIsEditing(false);
       setEditForm({});
+      // 保存成功后直接关闭弹窗，避免回到“查看”态
+      onClose();
       // 可以在这里添加成功提示
     } catch (error) {
       console.error('保存失败:', error);
@@ -203,16 +207,12 @@ export default function ContentModal({
                 <span className="text-sm font-medium">来源</span>
               </div>
               {isEditing ? (
-                <select
+                <input
                   value={editForm.source_name || ''}
                   onChange={(e) => setEditForm(prev => ({ ...prev, source_name: e.target.value }))}
                   className="w-full mt-1 rounded border border-blue-300 px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">选择来源</option>
-                  {sources.map(source => (
-                    <option key={source} value={source}>{source}</option>
-                  ))}
-                </select>
+                  placeholder="输入来源名称"
+                />
               ) : (
                 <div className="mt-1">
                   {item.source_url ? (
@@ -243,16 +243,12 @@ export default function ContentModal({
                 <span className="text-sm font-medium">分类</span>
               </div>
               {isEditing ? (
-                <select
+                <input
                   value={editForm.category || ''}
                   onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
                   className="w-full mt-1 rounded border border-green-300 px-2 py-1 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                >
-                  <option value="">选择分类</option>
-                  {categories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
+                  placeholder="输入分类"
+                />
               ) : (
                 <p className="text-green-900 font-semibold mt-1">
                   {item.category || '-'}

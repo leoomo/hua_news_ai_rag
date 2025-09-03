@@ -426,7 +426,10 @@ export default function KbListPage() {
           </div>
           <div className="flex items-center space-x-3 text-sm text-gray-500">
             <button
-              onClick={() => setCreateOpen(true)}
+              onClick={() => {
+                setSelectedItem({ id: -1, title: '', content: '', source_name: '', source_url: '', category: '', summary: '' } as any);
+                setContentModalOpen(true);
+              }}
               className="inline-flex items-center space-x-2 px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
             >
               <span>新增知识</span>
@@ -903,83 +906,35 @@ export default function KbListPage() {
           <ContentModal
             isOpen={contentModalOpen}
             onClose={closeContentModal}
-            item={selectedItem}
-            onSave={handleSaveContent}
+            item={selectedItem as any}
+            defaultEditing={selectedItem?.id === -1}
+            onSave={async (id, data) => {
+              if (id === -1) {
+                if (!data.title?.trim() || !data.content?.trim()) {
+                  notification.showError('校验失败', '标题与内容为必填');
+                  throw new Error('validation');
+                }
+                try {
+                  await api.post('/api/kb/items', data);
+                  notification.showSuccess('新增成功', '知识已创建');
+                  const res = await api.get('/api/kb/items');
+                  const dd = res.data?.data || res.data || [];
+                  setItems(dd);
+                  setFilteredItems(dd);
+                  setContentModalOpen(false);
+                  setSelectedItem(null);
+                } catch (e: any) {
+                  notification.showError('新增失败', e?.response?.data?.msg || e?.message || '');
+                  throw e;
+                }
+              } else {
+                await handleSaveContent(id as number, data as any);
+                notification.showSuccess('保存成功', '内容已更新');
+              }
+            }}
             categories={categories}
             sources={sources}
           />
-        )}
-
-        {/* 新增弹窗（与编辑字段一致） */}
-        {createOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">新增知识</h3>
-                <button onClick={() => setCreateOpen(false)} className="text-gray-500 hover:text-gray-700">×</button>
-              </div>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm text-gray-700 mb-1">标题</label>
-                  <input className="w-full rounded border px-3 py-2" value={createForm.title} onChange={e => setCreateForm({ ...createForm, title: e.target.value })} placeholder="请输入标题" />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-700 mb-1">内容</label>
-                  <textarea className="w-full rounded border px-3 py-2 h-40" value={createForm.content} onChange={e => setCreateForm({ ...createForm, content: e.target.value })} placeholder="请输入内容" />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-sm text-gray-700 mb-1">分类</label>
-                    <select className="w-full rounded border px-2 py-2" value={createForm.category || ''} onChange={e => setCreateForm({ ...createForm, category: e.target.value })}>
-                      <option value="">选择分类</option>
-                      {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-700 mb-1">来源名称</label>
-                    <select className="w-full rounded border px-2 py-2" value={createForm.source_name || ''} onChange={e => setCreateForm({ ...createForm, source_name: e.target.value })}>
-                      <option value="">选择来源</option>
-                      {sources.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-700 mb-1">来源链接</label>
-                    <input className="w-full rounded border px-2 py-2" value={createForm.source_url || ''} onChange={e => setCreateForm({ ...createForm, source_url: e.target.value })} placeholder="https://..." />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-700 mb-1">摘要（可选）</label>
-                  <textarea className="w-full rounded border px-3 py-2 h-20" value={createForm.summary || ''} onChange={e => setCreateForm({ ...createForm, summary: e.target.value })} placeholder="简要摘要..." />
-                </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <button onClick={() => setCreateOpen(false)} className="px-4 py-2 rounded border">取消</button>
-                <button
-                  onClick={async () => {
-                    if (!createForm.title.trim() || !createForm.content.trim()) {
-                      notification.showError('校验失败', '标题与内容为必填');
-                      return;
-                    }
-                    try {
-                      await api.post('/api/kb/items', createForm);
-                      notification.showSuccess('新增成功', '知识已创建');
-                      setCreateOpen(false);
-                      setCreateForm({ title: '', content: '' });
-                      const res = await api.get('/api/kb/items');
-                      const data = res.data?.data || res.data || [];
-                      setItems(data);
-                      setFilteredItems(data);
-                    } catch (e: any) {
-                      notification.showError('新增失败', e?.response?.data?.msg || e?.message || '');
-                    }
-                  }}
-                  className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
-                >
-                  保存
-                </button>
-              </div>
-            </div>
-          </div>
         )}
 
         {/* 导入弹窗 */}
