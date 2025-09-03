@@ -48,7 +48,6 @@ export default function KbListPage() {
   const exportToExcel = () => {
     try {
       const data = filteredItems.map((it) => ({
-        ID: it.id,
         标题: it.title,
         内容: it.content || '',
         来源名称: it.source_name || '',
@@ -66,6 +65,78 @@ export default function KbListPage() {
     } catch (err) {
       console.error('导出失败', err);
       alert('导出失败，请重试');
+    }
+  };
+
+  // 导入弹窗状态
+  const [importOpen, setImportOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importErrors, setImportErrors] = useState<string[]>([]);
+
+  // 模板生成（与导出字段一致）
+  const downloadTemplate = () => {
+    const headers = [{
+      标题: '必填',
+      内容: '必填',
+      来源名称: '',
+      来源链接: '',
+      分类: '',
+      创建时间: '可留空，系统会自动填入',
+      摘要: ''
+    }];
+    const ws = XLSX.utils.json_to_sheet(headers);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '模板');
+    XLSX.writeFile(wb, '知识库导入模板.xlsx');
+  };
+
+  // 解析与上传
+  const handleImportFile = async (file: File) => {
+    setImportErrors([]);
+    try {
+      const data = await file.arrayBuffer();
+      const wb = XLSX.read(data, { type: 'array' });
+      const sheetName = wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json<any>(ws, { defval: '' });
+      // 支持两种表头：中文表头 或 后端字段名
+      const norm = rows.map((r, idx) => {
+        const title = r['标题'] ?? r['title'] ?? '';
+        const content = r['内容'] ?? r['content'] ?? '';
+        const source_name = r['来源名称'] ?? r['source_name'] ?? '';
+        const source_url = r['来源链接'] ?? r['source_url'] ?? '';
+        const category = r['分类'] ?? r['category'] ?? '';
+        const published_at = r['发布时间'] ?? r['published_at'] ?? '';
+        return { title, content, source_name, source_url, category, published_at, __row: idx + 2 };
+      });
+      // 基本校验：title/content 必填
+      const errs: string[] = [];
+      const validItems = norm.filter((it) => {
+        const ok = String(it.title).trim() && String(it.content).trim();
+        if (!ok) errs.push(`第 ${it.__row} 行: 标题或内容为空`);
+        return ok;
+      }).map(({ __row, ...rest }) => rest);
+
+      if (errs.length) {
+        setImportErrors(errs);
+        return;
+      }
+
+      setImporting(true);
+      const resp = await api.post('/api/kb/items/import', { items: validItems });
+      const d = resp.data?.data || {};
+      // 成功后刷新列表
+      const res = await api.get('/api/kb/items');
+      const dataItems = res.data?.data || res.data || [];
+      setItems(dataItems);
+      setFilteredItems(dataItems);
+      alert(`导入完成：新增 ${d.inserted || 0} 条，跳过 ${d.skipped || 0} 条`);
+      setImportOpen(false);
+    } catch (e: any) {
+      console.error('导入失败', e);
+      setImportErrors([e?.message || '导入失败']);
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -320,6 +391,14 @@ export default function KbListPage() {
               <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M16.5 3h-13A1.5 1.5 0 002 4.5v11A1.5 1.5 0 003.5 17h13a1.5 1.5 0 001.5-1.5v-11A1.5 1.5 0 0016.5 3zm-7.9 9.7L6.6 10l2-2.7a.75.75 0 10-1.2-.9L5.5 8.8 3.8 6.4a.75.75 0 10-1.2.9L4.3 10l-1.7 2.7a.75.75 0 101.2.9l1.7-2.4 1.7 2.4a.75.75 0 101.2-.9zM17 15H9a1 1 0 110-2h8a1 1 0 110 2z"/></svg>
               <span>导出 Excel</span>
             </button>
+            <button
+              onClick={() => { setImportErrors([]); setImportOpen(true); }}
+              className="inline-flex items-center space-x-2 px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+              title="从 Excel 导入"
+            >
+              <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3a2 2 0 00-2 2v3a1 1 0 102 0V5h12v10H3v-3a1 1 0 10-2 0v3a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H3z"></path><path d="M7 9a1 1 0 011-1h2V6a1 1 0 112 0v2h2a1 1 0 110 2h-2v2a1 1 0 11-2 0v-2H8a1 1 0 01-1-1z"></path></svg>
+              <span>导入 Excel</span>
+            </button>
             <div className="flex items-center space-x-2">
               <Filter className="w-4 h-4" />
               <span>智能筛选与分页</span>
@@ -509,7 +588,7 @@ export default function KbListPage() {
             {/* 数据表格 */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+            <table className="w-full text-sm">
                   <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                     <tr>
                       <th className="text-left p-4 font-semibold text-gray-700">
@@ -531,8 +610,8 @@ export default function KbListPage() {
                       <th className="text-left p-4 font-semibold text-gray-700">分类</th>
                       <th className="text-left p-4 font-semibold text-gray-700">时间</th>
                       <th className="text-left p-4 font-semibold text-gray-700">操作</th>
-                    </tr>
-                  </thead>
+                </tr>
+              </thead>
                   <tbody className="divide-y divide-gray-200">
                     {currentItems.map((it) => (
                       <tr key={it.id} className={`hover:bg-gray-50 transition-colors duration-150 ${
@@ -626,10 +705,10 @@ export default function KbListPage() {
                             </button>
                           </div>
                         </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
               </div>
             </div>
 
@@ -742,6 +821,54 @@ export default function KbListPage() {
             categories={categories}
             sources={sources}
           />
+        )}
+
+        {/* 导入弹窗 */}
+        {importOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">导入 Excel 到知识库</h3>
+                <button onClick={() => setImportOpen(false)} className="text-gray-500 hover:text-gray-700">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="space-y-3 text-sm text-gray-700">
+                <div className="bg-gray-50 border border-gray-200 rounded p-3">
+                  <p className="font-medium mb-2">格式要求：</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>必填列：标题、内容</li>
+                    <li>可选列：来源名称、来源链接、分类、发布时间</li>
+                    <li>发布时间格式建议：ISO 8601（例如 2025-09-03T08:00:00Z）</li>
+                    <li>若提供来源链接，与现有记录链接重复将跳过</li>
+                  </ul>
+                  <button onClick={downloadTemplate} className="mt-3 inline-flex items-center px-3 py-1.5 rounded border border-gray-300 hover:bg-gray-100">下载模板</button>
+                </div>
+                <div>
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleImportFile(f);
+                    }}
+                    className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                </div>
+                {importing && <div className="text-blue-600">正在导入，请稍候...</div>}
+                {importErrors.length > 0 && (
+                  <div className="text-red-600 space-y-1">
+                    {importErrors.map((m, i) => (
+                      <div key={i}>• {m}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button onClick={() => setImportOpen(false)} className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">关闭</button>
+              </div>
+            </div>
+          </div>
         )}
       </main>
     </Protected>

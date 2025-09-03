@@ -7,6 +7,7 @@ from ai.qa import build_retrieval_qa
 from sqlalchemy import func
 from ai.enrich import extract_keywords
 from flask import current_app
+from datetime import datetime, timezone
 
 kb_bp = Blueprint('kb', __name__)
 
@@ -40,6 +41,86 @@ def kb_items():
             'summary': getattr(a, 'summary', None),
         } for a in rows
     ]}
+
+
+@kb_bp.post('/kb/items/import')
+def kb_items_import():
+    """批量导入知识库条目。
+    请求体 JSON: { items: [ {title, content, source_name?, source_url?, category?, published_at?} ] }
+    返回: { code, data: { inserted, skipped, errors: [ {rowIndex, message} ] } }
+    规则:
+      - 必填: title, content
+      - 去重: 若 source_url 存在且与现有记录重复则跳过
+      - 时间: published_at 若存在，解析为 UTC; created_at 由数据库默认/当前时间提供
+    """
+    payload = request.get_json(silent=True) or {}
+    items = payload.get('items') or []
+    if not isinstance(items, list) or not items:
+        return {'code': 400, 'msg': 'items is required (non-empty list)'}, 400
+
+    db = get_session()
+    inserted = 0
+    skipped = 0
+    errors: list[dict] = []
+
+    def parse_dt(val):
+        if not val:
+            return None
+        try:
+            # 接受 ISO 字符串或常见格式
+            if isinstance(val, (int, float)):
+                return datetime.fromtimestamp(float(val), tz=timezone.utc)
+            s = str(val).strip()
+            dt = datetime.fromisoformat(s.replace('Z', '+00:00'))
+            # 统一转为 UTC
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            else:
+                dt = dt.astimezone(timezone.utc)
+            return dt
+        except Exception:
+            return None
+
+    for idx, it in enumerate(items):
+        title = (it.get('title') or '').strip()
+        content = (it.get('content') or '').strip()
+        if not title or not content:
+            errors.append({'rowIndex': idx, 'message': 'title/content 不能为空'})
+            skipped += 1
+            continue
+
+        source_url = (it.get('source_url') or None) or None
+        if source_url:
+            existed = db.query(NewsArticle).filter(NewsArticle.source_url == source_url).first()
+            if existed:
+                skipped += 1
+                continue
+
+        try:
+            a = NewsArticle(
+                title=title,
+                content=content,
+                source_name=it.get('source_name'),
+                source_url=source_url,
+                category=it.get('category'),
+                published_at=parse_dt(it.get('published_at')),
+            )
+            db.add(a)
+            inserted += 1
+        except Exception as e:
+            errors.append({'rowIndex': idx, 'message': f'插入失败: {str(e)}'})
+            skipped += 1
+
+    try:
+        db.commit()
+    except Exception as e:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        return {'code': 500, 'msg': f'db commit failed: {e}'}, 500
+
+    return {'code': 0, 'data': {'inserted': inserted, 'skipped': skipped, 'errors': errors}}
 
 
 @kb_bp.post('/search/semantic')
