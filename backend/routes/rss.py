@@ -14,6 +14,17 @@ rss_bp = Blueprint('rss', __name__)
 def list_rss():
     db = get_session()
     rows = db.query(RssSource).all()
+    def to_iso_utc(dt):
+        if not dt:
+            return None
+        if dt.tzinfo is None:
+            from datetime import timezone
+            dt = dt.replace(tzinfo=timezone.utc)
+        else:
+            dt = dt.astimezone(timezone.utc)
+        iso = dt.isoformat()
+        return iso if iso.endswith('Z') else iso.replace('+00:00', 'Z')
+
     return {'code': 0, 'data': [
         {
             'id': r.id,
@@ -21,6 +32,7 @@ def list_rss():
             'url': r.url,
             'category': r.category,
             'is_active': r.is_active,
+            'last_fetch': to_iso_utc(getattr(r, 'last_fetch', None)),
         } for r in rows
     ]}
 
