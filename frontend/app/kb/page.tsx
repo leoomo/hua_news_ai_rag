@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Protected } from '@/components/Protected';
-import { Filter, X, Search, Calendar, Tag, Globe, ChevronDown, ChevronUp, Edit3, Trash2, Save, XCircle, CheckSquare, Square, Eye, PlusCircle } from 'lucide-react';
+import { Filter, X, Search, Calendar, Tag, Globe, ChevronDown, ChevronUp, Edit3, Trash2, Save, XCircle, CheckSquare, Square, Eye, PlusCircle, ExternalLink } from 'lucide-react';
 import ContentModal from '@/components/ContentModal';
 import { useNotification, NotificationContainer } from '@/components/Notification';
 import * as XLSX from 'xlsx';
@@ -721,13 +721,11 @@ export default function KbListPage() {
                               href={it.source_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center space-x-2 px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 hover:text-purple-900 transition-all duration-200 cursor-pointer group"
-                              title={`点击访问 ${it.source_name || '原始网站'}`}
+                              className="inline-flex items-center gap-1.5 max-w-[200px] px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:text-blue-800 hover:border-blue-300 transition-all duration-200 cursor-pointer group"
+                              title={`${it.source_name || '原始网站'} | 打开源链接`}
                             >
-                              <span>{it.source_name || '未知来源'}</span>
-                              <svg className="w-3 h-3 text-purple-600 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                              </svg>
+                              <span className="truncate">{it.source_name || '未知来源'}</span>
+                              <ExternalLink className="w-3.5 h-3.5 text-blue-600 group-hover:scale-110 transition-transform" />
                             </a>
                           ) : (
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
