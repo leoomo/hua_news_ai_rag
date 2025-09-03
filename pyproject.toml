@@ -1,7 +1,7 @@
 [project]
 name = "hua-news-ai-rag"
 version = "0.1.0"
-description = "just use to test"
+description = "just use to play"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -17,6 +17,7 @@ dependencies = [
   "sentence-transformers==2.7.0",
   "faiss-cpu==1.8.0",
   "apscheduler>=3.11.0",
+  "markdown>=3.8.2",
 ]
 
 [project.optional-dependencies]

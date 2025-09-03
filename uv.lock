@@ -615,6 +615,7 @@ dependencies = [
     { name = "feedparser" },
     { name = "flask" },
     { name = "flask-cors" },
+    { name = "markdown" },
     { name = "numpy" },
     { name = "passlib", extra = ["bcrypt"] },
     { name = "pydantic" },
@@ -648,6 +649,7 @@ requires-dist = [
     { name = "flask-cors", specifier = ">=4.0.0" },
     { name = "langchain", marker = "extra == 'langchain'", specifier = ">=0.2.12" },
     { name = "langchain-community", marker = "extra == 'langchain'", specifier = ">=0.2.10" },
+    { name = "markdown", specifier = ">=3.8.2" },
     { name = "numpy", specifier = "==1.26.4" },
     { name = "numpy", marker = "extra == 'embeddings'", specifier = ">=1.26.0" },
     { name = "ollama", marker = "extra == 'langchain'", specifier = ">=0.3.0" },
@@ -885,6 +887,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/20/ad/2c89c128b575d89ba7c7af05de6d715703fe9648110f2ec3c90255956681/langsmith-0.4.21.tar.gz", hash = "sha256:eabfb66970d50964918acba524b407e8cfe585448013e3135ca92388c858d009", size = 938666 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7d/79/5ccad558563861f7ae6a77aeba259578c35192e9c109b0142fcf490b3c50/langsmith-0.4.21-py3-none-any.whl", hash = "sha256:15b189e2e7a3337a07cf250d91e158efcd0b39458735dc9e583c56dd0f21e4e0", size = 378494 },
+]
+
+[[package]]
+name = "markdown"
+version = "3.8.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d7/c2/4ab49206c17f75cb08d6311171f2d65798988db4360c4d1485bd0eedd67c/markdown-3.8.2.tar.gz", hash = "sha256:247b9a70dd12e27f67431ce62523e675b866d254f900c4fe75ce3dda62237c45", size = 362071 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/96/2b/34cc11786bc00d0f04d0f5fdc3a2b1ae0b6239eef72d3d345805f9ad92a1/markdown-3.8.2-py3-none-any.whl", hash = "sha256:5c83764dbd4e00bdd94d85a19b8d55ccca20fe35b2e678a1422b380324dd5f24", size = 106827 },
 ]
 
 [[package]]

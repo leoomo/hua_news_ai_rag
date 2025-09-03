@@ -13,6 +13,21 @@ from .ingest_utils import clean_html_to_text, url_sha256, simhash, ensure_column
 from ai.enrich import summarize_text, extract_keywords
 from .fetcher import Fetcher
 
+# 导入邮件模块
+try:
+    from ..email_fly.email_config import ENABLE_EMAIL_MODULE
+    if ENABLE_EMAIL_MODULE:
+        from ..email_fly import send_rss_ingest_notification
+        EMAIL_AVAILABLE = True
+    else:
+        EMAIL_AVAILABLE = False
+        logger = logging.getLogger(__name__)
+        logger.info("邮件模块已通过配置禁用")
+except ImportError:
+    EMAIL_AVAILABLE = False
+    logger = logging.getLogger(__name__)
+    logger.warning("邮件模块导入失败，邮件通知功能将不可用")
+
 logger = logging.getLogger(__name__)
 
 
@@ -203,6 +218,33 @@ def ingest_rss_source(source_id: int) -> dict:
         except Exception:
             pass
 
+    # 发送邮件通知（如果启用了邮件功能且有新文章）
+    if EMAIL_AVAILABLE and created > 0:
+        try:
+            # 获取新创建的文章信息用于邮件通知
+            new_articles = []
+            for item in iterator:
+                if item.get("title") and item.get("content"):
+                    new_articles.append({
+                        "title": item.get("title"),
+                        "summary": summarize_text(item.get("content"), max_chars=100),
+                        "source": item.get("source_name"),
+                        "url": item.get("source_url"),
+                        "category": item.get("category"),
+                        "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    })
+            
+            # 发送邮件通知
+            if new_articles:
+                email_success = send_rss_ingest_notification(new_articles)
+                if email_success:
+                    logger.info(f"邮件通知发送成功，通知了 {len(new_articles)} 篇新文章")
+                else:
+                    logger.warning("邮件通知发送失败")
+        except Exception as e:
+            logger.error(f"发送邮件通知时出错: {str(e)}")
+            # 邮件发送失败不影响采集流程
+    
     return {"code": 0, "data": {"created": created, "skipped": skipped}}
 
 
