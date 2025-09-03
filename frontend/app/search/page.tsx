@@ -104,7 +104,7 @@ export default function SearchPage() {
         <NotificationContainer notifications={notification.notifications} />
         
         <h1 className="text-2xl font-semibold">语义搜索</h1>
-        <form onSubmit={onSearch} className="flex gap-2">
+        <form onSubmit={onSearch} className="flex gap-2 max-w-2xl mx-auto">
           <input 
             className="flex-1 rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
             value={q} 
