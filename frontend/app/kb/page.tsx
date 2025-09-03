@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Protected } from '@/components/Protected';
-import { Filter, X, Search, Calendar, Tag, Globe, ChevronDown, ChevronUp, Edit3, Trash2, Save, XCircle, CheckSquare, Square, Eye } from 'lucide-react';
+import { Filter, X, Search, Calendar, Tag, Globe, ChevronDown, ChevronUp, Edit3, Trash2, Save, XCircle, CheckSquare, Square, Eye, PlusCircle } from 'lucide-react';
 import ContentModal from '@/components/ContentModal';
 import { useNotification, NotificationContainer } from '@/components/Notification';
 import * as XLSX from 'xlsx';
@@ -432,6 +432,7 @@ export default function KbListPage() {
               }}
               className="inline-flex items-center space-x-2 px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
             >
+              <PlusCircle className="w-4 h-4 text-blue-600" />
               <span>新增知识</span>
             </button>
             <button
