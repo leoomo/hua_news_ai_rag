@@ -24,13 +24,37 @@ export function Nav() {
   return (
     <nav className="mb-6 flex flex-wrap items-center gap-2">
       {links.map((l) => (
-        <Link key={l.href} href={l.href} className={`px-3 py-1 rounded border ${pathname === l.href ? 'bg-black text-white' : 'bg-white'}`}>{l.label}</Link>
+        <Link
+          key={l.href}
+          href={l.href}
+          className={`px-3 py-1.5 rounded-md border transition-all duration-150 ${
+            pathname === l.href
+              ? 'bg-gray-900 text-white border-gray-900 shadow'
+              : 'bg-white/90 text-gray-700 border-gray-200 hover:bg-gray-50 hover:-translate-y-0.5'
+          }`}
+        >
+          {l.label}
+        </Link>
       ))}
       <div className="ml-auto" />
       {authed ? (
-        <button onClick={() => { clearAuthToken(); location.href = '/login'; }} className="px-3 py-1 rounded border bg-white">退出登录</button>
+        <button
+          onClick={() => { clearAuthToken(); location.href = '/login'; }}
+          className="px-3 py-1.5 rounded-md border border-gray-200 bg-white/90 text-gray-700 hover:bg-gray-50 transition-all duration-150"
+        >
+          退出登录
+        </button>
       ) : (
-        <Link href="/login" className={`px-3 py-1 rounded border ${pathname === '/login' ? 'bg-black text-white' : 'bg-white'}`}>登录</Link>
+        <Link
+          href="/login"
+          className={`px-3 py-1.5 rounded-md border transition-all duration-150 ${
+            pathname === '/login'
+              ? 'bg-gray-900 text-white border-gray-900 shadow'
+              : 'bg-white/90 text-gray-700 border-gray-200 hover:bg-gray-50 hover:-translate-y-0.5'
+          }`}
+        >
+          登录
+        </Link>
       )}
     </nav>
   );

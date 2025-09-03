@@ -46,7 +46,7 @@ export default function AnalyticsPage() {
       ) : (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="rounded border bg-white p-4">
+            <div className="rounded-xl border border-gray-100 bg-white/90 backdrop-blur-sm shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 p-4">
             <h2 className="font-medium mb-3">关键词 Top10</h2>
             <table className="w-full text-sm">
               <thead className="bg-gray-50">
@@ -57,7 +57,7 @@ export default function AnalyticsPage() {
               </thead>
               <tbody>
                 {keywords.map((r) => (
-                  <tr key={r.keyword} className="border-t">
+                  <tr key={r.keyword} className="border-t hover:bg-gray-50">
                     <td className="p-2">{r.keyword}</td>
                     <td className="p-2">{r.count}</td>
                   </tr>
@@ -66,7 +66,7 @@ export default function AnalyticsPage() {
             </table>
             </div>
 
-            <div className="rounded border bg-white p-4">
+            <div className="rounded-xl border border-gray-100 bg-white/90 backdrop-blur-sm shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 p-4">
             <h2 className="font-medium mb-3">近14天文章数量趋势</h2>
             {(() => {
               const total = trend.reduce((s, x) => s + x.count, 0);
@@ -104,8 +104,8 @@ export default function AnalyticsPage() {
                           <div key={d.date} className="text-center min-w-[30px]" title={`${label}（${wday}）：${d.count}`}>
                             <div className="text-[11px] text-gray-700 mb-1">{d.count}</div>
                             <div
-                              className={`mx-auto w-3.5 rounded-sm transition-colors ${isToday ? 'ring-2 ring-blue-300' : ''}`}
-                              style={{ height: h, backgroundColor: `rgba(37,99,235,${intensity})` }}
+                              className={`mx-auto w-3.5 rounded-sm transition-all ${isToday ? 'ring-2 ring-blue-300' : ''}`}
+                              style={{ height: h, background: `linear-gradient(to top, rgba(30,64,175,0.9), rgba(59,130,246,${intensity}))` }}
                             />
                             <div className="text-[10px] text-gray-400 mt-1 leading-tight">
                               <div>{label}</div>
@@ -124,7 +124,7 @@ export default function AnalyticsPage() {
         </>
       )}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="rounded border bg-white p-4">
+        <div className="rounded-xl border border-gray-100 bg-white/90 backdrop-blur-sm shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 p-4">
           <h2 className="font-medium mb-3">来源Top趋势（近14天）</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
@@ -150,7 +150,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="rounded border bg-white p-4">
+        <div className="rounded-xl border border-gray-100 bg-white/90 backdrop-blur-sm shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 p-4">
           <h2 className="font-medium mb-3">失败原因 Top（近14天）</h2>
           <ul className="space-y-1 text-sm">
             {failTop.map((r, i) => (
@@ -164,7 +164,7 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      <div className="rounded border bg-white p-4">
+      <div className="rounded-xl border border-gray-100 bg-white/90 backdrop-blur-sm shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 p-4">
         <h2 className="font-medium mb-3">时段热力图（近14天，周日为0）</h2>
         <div className="overflow-auto">
           <table className="text-[11px]">
