@@ -17,6 +17,7 @@ export default function SearchPage() {
   const [q, setQ] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
   
   // 使用通知管理器
   const notification = useNotification();
@@ -34,6 +35,7 @@ export default function SearchPage() {
     }
     
     setLoading(true);
+    setHasSearched(true);
     try {
       const res = await api.post('/api/search/semantic', { query: q, top_k: 10 });
       setResults(res.data?.data || res.data || []);
@@ -147,7 +149,7 @@ export default function SearchPage() {
               </div>
             )}
             
-            {results.length === 0 && !loading && q.trim() && (
+            {hasSearched && results.length === 0 && !loading && q.trim() && (
               <div className="text-center py-8 text-gray-500">
                 <p>未找到相关内容</p>
                 <p className="text-sm mt-1">请尝试使用其他关键词或调整搜索条件</p>
