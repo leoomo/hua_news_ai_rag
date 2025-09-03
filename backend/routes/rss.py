@@ -86,6 +86,14 @@ def trigger_ingest():
     if not source_id:
         return {'code': 400, 'msg': 'id is required'}, 400
     try:
+        # 禁止对未启用的源进行采集
+        db = get_session()
+        src = db.query(RssSource).get(source_id)
+        if not src:
+            return {'code': 404, 'msg': 'Source not found'}, 404
+        if not bool(src.is_active):
+            return {'code': 400, 'msg': 'Source is inactive, cannot ingest'}, 400
+
         result = ingest_rss_source(source_id)
         status = 200 if result.get('code') == 0 else 500
         return result, status

@@ -391,12 +391,13 @@ export default function RssSettingsPage() {
                       <button onClick={() => onDelete(r.id)} className="rounded border px-3 py-1 text-red-600">删除</button>
                       <button 
                         onClick={() => onIngest(r.id)} 
-                        disabled={ingestingIds.has(r.id) || isIngestingAll}
+                        disabled={ingestingIds.has(r.id) || isIngestingAll || !r.is_active}
                         className={`rounded border px-3 py-1 ${
-                          (ingestingIds.has(r.id) || isIngestingAll)
+                          (ingestingIds.has(r.id) || isIngestingAll || !r.is_active)
                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
                             : 'text-green-700 hover:bg-green-50'
                         }`}
+                        title={!r.is_active ? '该源已停用，无法采集' : ''}
                       >
                         {ingestingIds.has(r.id) ? '采集中...' : '采集'}
                       </button>
