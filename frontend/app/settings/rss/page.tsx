@@ -5,7 +5,7 @@ import { isNonEmpty, isUrl } from '@/lib/validators';
 import { useNotification, NotificationContainer } from '@/components/Notification';
 import { IngestProgress } from '@/components/IngestProgress';
 
-type Rss = { id: number; name: string; url: string; category?: string; is_active?: boolean };
+type Rss = { id: number; name: string; url: string; category?: string; is_active?: boolean; last_fetch?: string | null };
 type RssStatus = { id: number; source_id: number; url: string; status: string; created: number; skipped: number; error_message?: string; created_at?: string };
 
 export default function RssSettingsPage() {
@@ -306,6 +306,7 @@ export default function RssSettingsPage() {
               <th className="text-left p-2">分类</th>
               <th className="text-left p-2">启用</th>
               <th className="text-left p-2">状态</th>
+              <th className="text-left p-2">最近更新时间</th>
               <th className="text-left p-2">操作</th>
             </tr>
           </thead>
@@ -349,6 +350,19 @@ export default function RssSettingsPage() {
                   ) : (
                     '-'
                   )}
+                </td>
+                <td className="p-2 text-gray-600">
+                  {r.last_fetch ? (
+                    new Date(r.last_fetch).toLocaleString('zh-CN', {
+                      timeZone: 'Asia/Shanghai',
+                      hour12: false,
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }).replace(/-/g, '/')
+                  ) : ''}
                 </td>
                 <td className="p-2">
                   {editingId === r.id ? (
