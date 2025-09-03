@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from pathlib import Path
+import sys
 import calendar
 from typing import Iterable
 
@@ -15,19 +17,64 @@ from ai.enrich import summarize_text, extract_keywords
 from .fetcher import Fetcher
 
 # 导入邮件模块
+EMAIL_AVAILABLE = False
+logger = logging.getLogger(__name__)
+
+# 尝试相对导入（作为包运行时）与绝对导入（从项目根运行时）两种方式，提升鲁棒性
+_enable_email = None
+_import_errors: list[str] = []
 try:
-    from ..email_fly.email_config import ENABLE_EMAIL_MODULE
-    if ENABLE_EMAIL_MODULE:
-        from ..email_fly import send_rss_ingest_notification
-        EMAIL_AVAILABLE = True
+    from ..email_fly.email_config import ENABLE_EMAIL_MODULE as _ENABLE1  # type: ignore
+    _enable_email = _ENABLE1
+    import_mode = "relative"
+except Exception as e1:
+    _import_errors.append(f"relative import failed: {e1}")
+    try:
+        from backend.email_fly.email_config import ENABLE_EMAIL_MODULE as _ENABLE2  # type: ignore
+        _enable_email = _ENABLE2
+        import_mode = "absolute"
+    except Exception as e2:
+        _import_errors.append(f"absolute import failed: {e2}")
+        # 最后尝试：将项目根目录加入 sys.path 后再次绝对导入
+        try:
+            project_root = Path(__file__).resolve().parents[2]
+            if str(project_root) not in sys.path:
+                sys.path.insert(0, str(project_root))
+            from backend.email_fly.email_config import ENABLE_EMAIL_MODULE as _ENABLE3  # type: ignore
+            _enable_email = _ENABLE3
+            import_mode = "absolute+sys.path"
+        except Exception as e3:
+            _import_errors.append(f"absolute import with sys.path failed: {e3}")
+            _enable_email = None
+            import_mode = "none"
+
+if _enable_email is None:
+    logger.warning(
+        "邮件模块导入失败，邮件通知功能将不可用: " + "; ".join(_import_errors)
+    )
+else:
+    if _enable_email:
+        # 导入发送函数（同样尝试两种方式）
+        try:
+            if import_mode == "relative":
+                from ..email_fly.email_sender import send_rss_ingest_notification  # type: ignore
+            else:
+                # 为安全起见，再确保 project_root 在 sys.path
+                try:
+                    project_root = Path(__file__).resolve().parents[2]
+                    if str(project_root) not in sys.path:
+                        sys.path.insert(0, str(project_root))
+                except Exception:
+                    pass
+                from backend.email_fly.email_sender import send_rss_ingest_notification  # type: ignore
+            EMAIL_AVAILABLE = True
+            logger.info(f"邮件模块已启用（{import_mode} import）")
+        except Exception as e3:
+            EMAIL_AVAILABLE = False
+            logger.warning(f"邮件发送函数导入失败，邮件通知功能将不可用: {e3}")
     else:
         EMAIL_AVAILABLE = False
-        logger = logging.getLogger(__name__)
         logger.info("邮件模块已通过配置禁用")
-except ImportError:
-    EMAIL_AVAILABLE = False
-    logger = logging.getLogger(__name__)
-    logger.warning("邮件模块导入失败，邮件通知功能将不可用")
 
 logger = logging.getLogger(__name__)
 
