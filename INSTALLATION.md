@@ -37,7 +37,7 @@
 
 ```bash
 # 克隆项目
-git clone <repository-url>
+git clone https://github.com/leoomo/hua_news_ai_rag.git
 cd hua_news_ai_rag
 
 # 运行自动安装脚本
@@ -98,7 +98,7 @@ npm --version
 
 ```bash
 # 克隆项目
-git clone <repository-url>
+git clone https://github.com/leoomo/hua_news_ai_rag.git
 cd hua_news_ai_rag
 
 # 或下载ZIP文件并解压

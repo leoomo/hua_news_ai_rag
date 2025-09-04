@@ -22,7 +22,7 @@
 ### 一键安装
 ```bash
 # 克隆项目
-git clone <repository-url>
+git clone https://github.com/leoomo/hua_news_ai_rag.git
 cd hua_news_ai_rag
 
 # 运行一键安装脚本
