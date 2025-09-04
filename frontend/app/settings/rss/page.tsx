@@ -41,6 +41,7 @@ export default function RssSettingsPage() {
     id: string;
     type: 'success' | 'error' | 'info';
     message: string;
+    title?: string;
     timestamp: number;
   }>>([]);
   
@@ -48,23 +49,25 @@ export default function RssSettingsPage() {
   const notification = useNotification();
 
   // 添加邮件消息
-  const addEmailMessage = (type: 'success' | 'error' | 'info', message: string) => {
+  const addEmailMessage = (type: 'success' | 'error' | 'info', message: string, title?: string) => {
     const id = `email-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const newMessage = {
       id,
       type,
       message,
+      title,
       timestamp: Date.now()
     };
     
     setEmailMessages(prev => [...prev, newMessage]);
     
-    // 只有成功和信息类型的消息自动清除（3秒后），错误消息不自动关闭
-    if (type !== 'error') {
+    // 成功类型和信息类型消息8秒后自动清除，错误消息不自动关闭
+    if (type === 'success' || type === 'info') {
       setTimeout(() => {
         setEmailMessages(prev => prev.filter(msg => msg.id !== id));
-      }, 3000);
+      }, 8000);
     }
+    // error类型不自动关闭，需要手动关闭
   };
 
   // 清除所有邮件消息
@@ -78,23 +81,20 @@ export default function RssSettingsPage() {
     
     const message = emailInfo.message || '';
     
-    // 发送成功
-    if (emailInfo.enabled && emailInfo.sent) {
-      return 'success';
-    }
-    
-    // 发送失败
-    if (emailInfo.enabled && !emailInfo.sent) {
-      return 'error';
-    }
-    
-    // 根据消息内容判断
+    // 优先根据消息内容判断类型
     if (message.includes('邮件发送成功')) {
       return 'success';
     } else if (message.includes('邮件发送失败') || message.includes('邮件发送出错')) {
       return 'error';
     } else if (message.includes('无需发送') || message.includes('未配置') || message.includes('未启用')) {
       return 'info';
+    }
+    
+    // 其次根据状态判断
+    if (emailInfo.enabled && emailInfo.sent) {
+      return 'success';
+    } else if (emailInfo.enabled && !emailInfo.sent) {
+      return 'error';
     }
     
     // 默认信息类型
@@ -236,6 +236,12 @@ export default function RssSettingsPage() {
               message += `\n发送时间: ${emailInfo.send_time}`;
             }
             
+            // 构建标题（包含收件人信息）
+            let title = '';
+            if (emailInfo.recipients && emailInfo.recipients.length > 0) {
+              title = `收件人: ${emailInfo.recipients.join(', ')}`;
+            }
+            
             // 如果是错误类型，添加失败原因和详细错误信息
             if (messageType === 'error') {
               if (emailInfo.failure_reason) {
@@ -243,12 +249,10 @@ export default function RssSettingsPage() {
               }
               if (emailInfo.details && emailInfo.details.errors && emailInfo.details.errors.length > 0) {
                 message += `\n\n详细错误信息：\n${emailInfo.details.errors.join('\n')}`;
-              } else if (emailInfo.recipients && emailInfo.recipients.length > 0) {
-                message += `\n\n收件人: ${emailInfo.recipients.join(', ')}`;
               }
             }
             
-            addEmailMessage(messageType, message);
+            addEmailMessage(messageType, message, title);
           }
         } else {
           notification.showError('RSS采集失败', response.data?.msg || '采集过程中发生错误');
@@ -353,6 +357,12 @@ export default function RssSettingsPage() {
               message += `\n发送时间: ${emailInfo.send_time}`;
             }
             
+            // 构建标题（包含收件人信息）
+            let title = '';
+            if (emailInfo.recipients && emailInfo.recipients.length > 0) {
+              title = `收件人: ${emailInfo.recipients.join(', ')}`;
+            }
+            
             // 如果是错误类型，添加失败原因和详细错误信息
             if (messageType === 'error') {
               if (emailInfo.failure_reason) {
@@ -360,12 +370,10 @@ export default function RssSettingsPage() {
               }
               if (emailInfo.details && emailInfo.details.errors && emailInfo.details.errors.length > 0) {
                 message += `\n\n详细错误信息：\n${emailInfo.details.errors.join('\n')}`;
-              } else if (emailInfo.recipients && emailInfo.recipients.length > 0) {
-                message += `\n\n收件人: ${emailInfo.recipients.join(', ')}`;
               }
             }
             
-            addEmailMessage(messageType, message);
+            addEmailMessage(messageType, message, title);
           }
         } else {
           notification.showError('批量采集失败', response.data?.msg || '批量采集过程中发生错误');
@@ -528,6 +536,12 @@ export default function RssSettingsPage() {
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
+                  {/* 邮件消息标题 */}
+                  {msg.title && (
+                    <div className="text-sm font-semibold mb-2 text-gray-700 border-b border-gray-200 pb-1">
+                      {msg.title}
+                    </div>
+                  )}
                   <div className={`text-sm font-medium leading-relaxed ${msg.type === 'error' ? 'whitespace-pre-line' : ''}`}>
                     {msg.message.split('\n').map((line, index) => {
                       // 美化错误信息的显示
@@ -542,13 +556,6 @@ export default function RssSettingsPage() {
                         return (
                           <div key={index} className="ml-4 text-orange-700 text-xs font-mono bg-orange-50 px-2 py-1 rounded mt-1">
                             {line}
-                          </div>
-                        );
-                      } else if (line.includes('收件人:')) {
-                        // 收件人信息行
-                        return (
-                          <div key={index} className="mt-2">
-                            <div className="font-semibold text-gray-700 mb-1">{line}</div>
                           </div>
                         );
                       } else if (line.includes('发送时间:')) {

@@ -272,6 +272,8 @@ def ingest_rss_source(source_id: int) -> dict:
                     if config:
                         email_status["enabled"] = True
                         email_status["recipients"] = config.recipient_emails if config.recipient_emails else []
+                        email_status["sender_email"] = config.sender_email
+                        email_status["sender_name"] = config.sender_name
                         
                         if email_status["recipients"]:
                             # 发送邮件通知
@@ -314,6 +316,8 @@ def ingest_rss_source(source_id: int) -> dict:
                 if config and config.enable_email_module and config.enable_email_notification:
                     email_status["enabled"] = True
                     email_status["recipients"] = config.recipient_emails if config.recipient_emails else []
+                    email_status["sender_email"] = config.sender_email
+                    email_status["sender_name"] = config.sender_name
                     email_status["message"] = "没有新文章，无需发送邮件"
                 else:
                     email_status["message"] = "邮件模块未启用"

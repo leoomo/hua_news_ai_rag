@@ -133,13 +133,13 @@ class EmailSender:
             },
             "yahoo": {
                 "smtp_host": "smtp.mail.yahoo.com",
-                "smtp_port": 587,
+                "smtp_port": 465,
                 "smtp_use_tls": True,
                 "smtp_use_ssl": False
             },
             "sina": {
                 "smtp_host": "smtp.sina.com",
-                "smtp_port": 587,
+                "smtp_port": 465,
                 "smtp_use_tls": True,
                 "smtp_use_ssl": False
             }
