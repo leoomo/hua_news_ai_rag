@@ -156,7 +156,28 @@ export default function RssSettingsPage() {
       
       // 成功提示
       setTimeout(() => {
-        notification.showSuccess('采集成功', `已触发RSS源"${sourceName}"的采集任务`);
+        if (response.data?.code === 0) {
+          const data = response.data.data;
+          const emailInfo = data.email;
+          
+          // 构建通知消息
+          let message = `${sourceName} 采集完成，新增 ${data.created} 篇文章，跳过 ${data.skipped} 篇重复文章`;
+          
+          // 添加邮件状态信息
+          if (emailInfo) {
+            if (emailInfo.enabled && emailInfo.sent) {
+              message += `\n📧 ${emailInfo.message}`;
+            } else if (emailInfo.enabled && !emailInfo.sent) {
+              message += `\n📧 ${emailInfo.message}`;
+            } else {
+              message += `\n📧 ${emailInfo.message}`;
+            }
+          }
+          
+          notification.showSuccess('RSS采集完成', message);
+        } else {
+          notification.showError('RSS采集失败', response.data?.msg || '采集过程中发生错误');
+        }
       }, 200);
       
       refresh();
@@ -238,7 +259,29 @@ export default function RssSettingsPage() {
       
       // 延迟显示成功通知
       setTimeout(() => {
-        notification.showSuccess('批量采集成功', '已触发所有RSS源的批量采集任务');
+        if (response.data?.code === 0) {
+          const data = response.data.data;
+          const summary = data.summary;
+          const emailInfo = summary?.email;
+          
+          // 构建通知消息
+          let message = `批量采集完成，共新增 ${summary?.total_created || 0} 篇文章，跳过 ${summary?.total_skipped || 0} 篇重复文章`;
+          
+          // 添加邮件状态信息
+          if (emailInfo) {
+            if (emailInfo.enabled && emailInfo.sent) {
+              message += `\n📧 ${emailInfo.message}`;
+            } else if (emailInfo.enabled && !emailInfo.sent) {
+              message += `\n📧 ${emailInfo.message}`;
+            } else {
+              message += `\n📧 ${emailInfo.message}`;
+            }
+          }
+          
+          notification.showSuccess('批量采集完成', message);
+        } else {
+          notification.showError('批量采集失败', response.data?.msg || '批量采集过程中发生错误');
+        }
       }, 200);
       
       refresh();

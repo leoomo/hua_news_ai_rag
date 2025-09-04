@@ -15,8 +15,8 @@ import time
 import markdown
 
 # 导入数据库邮件配置
-from backend.data.db import get_db_session
-from backend.data.models import EmailConfig
+from data.db import get_db_session
+from data.models import EmailConfig
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -534,15 +534,24 @@ To stop receiving notifications, please contact system administrator
             return False
 
 
-# 全局邮件发送器实例
-email_sender = EmailSender()
+# 全局邮件发送器实例（延迟初始化）
+_email_sender = None
+
+def get_email_sender() -> EmailSender:
+    """获取邮件发送器实例（延迟初始化）"""
+    global _email_sender
+    if _email_sender is None:
+        _email_sender = EmailSender()
+    return _email_sender
 
 
 def send_rss_ingest_notification(articles: List[Dict]) -> bool:
     """发送RSS采集通知邮件（便捷函数）"""
+    email_sender = get_email_sender()
     return email_sender.send_notification(articles)
 
 
 def test_email_configuration() -> bool:
     """测试邮件配置（便捷函数）"""
+    email_sender = get_email_sender()
     return email_sender.test_connection()

@@ -17,33 +17,36 @@ from ai.enrich import summarize_text, extract_keywords
 from .fetcher import Fetcher
 
 # 导入邮件模块
-EMAIL_AVAILABLE = False
 logger = logging.getLogger(__name__)
 
-# 检查邮件模块是否启用 - 从数据库读取配置
-_enable_email = False
-try:
-    from backend.data.db import get_db_session
-    from backend.data.models import EmailConfig
-    with get_db_session() as session:
-        config = session.query(EmailConfig).first()
-        if config:
-            _enable_email = config.enable_email_module
-except Exception as e:
-    logger.warning(f"无法从数据库读取邮件配置: {e}")
-    _enable_email = False
-if _enable_email:
-    # 导入发送函数
+def check_email_available():
+    """检查邮件模块是否可用"""
     try:
-        from backend.email_fly.email_sender import send_rss_ingest_notification
-        EMAIL_AVAILABLE = True
-        logger.info("邮件模块已启用")
+        from data.db import get_db_session
+        from data.models import EmailConfig
+        with get_db_session() as session:
+            config = session.query(EmailConfig).first()
+            logger.info(f"邮件配置检查: config={config is not None}")
+            if config:
+                logger.info(f"邮件模块启用状态: enable_email_module={config.enable_email_module}, enable_email_notification={config.enable_email_notification}")
+                if config.enable_email_module and config.enable_email_notification:
+                    # 尝试导入发送函数
+                    try:
+                        from email_fly.email_sender import send_rss_ingest_notification
+                        logger.info("邮件模块检查通过")
+                        return True
+                    except Exception as e:
+                        logger.warning(f"邮件发送函数导入失败: {e}")
+                        return False
+                else:
+                    logger.info("邮件模块未启用")
+                    return False
+            else:
+                logger.info("邮件配置未找到")
+                return False
     except Exception as e:
-        EMAIL_AVAILABLE = False
-        logger.warning(f"邮件发送函数导入失败，邮件通知功能将不可用: {e}")
-else:
-    EMAIL_AVAILABLE = False
-    logger.info("邮件模块已通过配置禁用")
+        logger.warning(f"无法从数据库读取邮件配置: {e}")
+        return False
 
 logger = logging.getLogger(__name__)
 
@@ -156,6 +159,7 @@ def ingest_rss_source(source_id: int) -> dict:
 
     created = 0
     skipped = 0
+    new_articles = []  # 收集新文章信息用于邮件通知
 
     try:
         iterator = parse_rss(source)
@@ -220,6 +224,16 @@ def ingest_rss_source(source_id: int) -> dict:
             pass
         db.add(article)
         created += 1
+        
+        # 收集新文章信息用于邮件通知
+        new_articles.append({
+            "title": title,
+            "summary": summary,
+            "source": item.get("source_name"),
+            "url": url,
+            "category": item.get("category"),
+            "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        })
 
     # Record last fetch in UTC (timezone-aware)
     source.last_fetch = datetime.now(timezone.utc)
@@ -239,32 +253,76 @@ def ingest_rss_source(source_id: int) -> dict:
             pass
 
     # 发送邮件通知（如果启用了邮件功能且有新文章）
-    if EMAIL_AVAILABLE and created > 0:
+    email_status = {
+        "enabled": False,
+        "sent": False,
+        "recipients": [],
+        "message": "无需发送邮件"
+    }
+    
+    if created > 0:
         try:
-            # 获取新创建的文章信息用于邮件通知
-            new_articles = []
-            for item in iterator:
-                if item.get("title") and item.get("content"):
-                    new_articles.append({
-                        "title": item.get("title"),
-                        "summary": summarize_text(item.get("content"), max_chars=100),
-                        "source": item.get("source_name"),
-                        "url": item.get("source_url"),
-                        "category": item.get("category"),
-                        "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                    })
-            
-            # 发送邮件通知
-            if new_articles:
-                email_success = send_rss_ingest_notification(new_articles)
-                if email_success:
-                    logger.info(f"邮件通知发送成功，通知了 {len(new_articles)} 篇新文章")
-                else:
-                    logger.warning("邮件通知发送失败")
+            # 检查邮件模块是否可用
+            if check_email_available():
+                # 获取邮件配置信息
+                from data.db import get_db_session
+                from data.models import EmailConfig
+                with get_db_session() as session:
+                    config = session.query(EmailConfig).first()
+                    if config:
+                        email_status["enabled"] = True
+                        email_status["recipients"] = config.recipient_emails if config.recipient_emails else []
+                        
+                        if email_status["recipients"]:
+                            # 发送邮件通知
+                            if new_articles:
+                                from email_fly.email_sender import send_rss_ingest_notification
+                                email_success = send_rss_ingest_notification(new_articles)
+                                if email_success:
+                                    email_status["sent"] = True
+                                    email_status["message"] = f"邮件发送成功，已通知 {len(email_status.get('recipients', []))} 位收件人"
+                                    logger.info(f"邮件通知发送成功，通知了 {len(new_articles)} 篇新文章")
+                                else:
+                                    email_status["message"] = "邮件发送失败"
+                                    logger.warning("邮件通知发送失败")
+                            else:
+                                email_status["message"] = "没有新文章需要发送"
+                        else:
+                            email_status["message"] = "未配置收件人邮箱"
+                    else:
+                        email_status["message"] = "邮件配置未找到"
+            else:
+                email_status["message"] = "邮件模块未启用"
         except Exception as e:
+            email_status["message"] = f"邮件发送出错: {str(e)}"
             logger.error(f"发送邮件通知时出错: {str(e)}")
             # 邮件发送失败不影响采集流程
+    elif created == 0:
+        # 即使没有新文章，也要检查邮件模块状态
+        try:
+            # 检查邮件模块状态
+            from data.db import get_db_session
+            from data.models import EmailConfig
+            with get_db_session() as session:
+                config = session.query(EmailConfig).first()
+                if config and config.enable_email_module and config.enable_email_notification:
+                    email_status["enabled"] = True
+                    email_status["recipients"] = config.recipient_emails if config.recipient_emails else []
+                    email_status["message"] = "没有新文章，无需发送邮件"
+                else:
+                    email_status["message"] = "邮件模块未启用"
+        except Exception as e:
+            email_status["message"] = f"邮件状态检查出错: {str(e)}"
+    else:
+        email_status["message"] = "邮件模块未启用"
     
-    return {"code": 0, "data": {"created": created, "skipped": skipped}}
+    return {
+        "code": 0, 
+        "data": {
+            "created": created, 
+            "skipped": skipped,
+            "email": email_status
+        }
+    }
 
 
