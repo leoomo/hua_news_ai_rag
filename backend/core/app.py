@@ -47,9 +47,11 @@ def create_app() -> Flask:
     # import models so SQLAlchemy knows all tables
     try:
         from data import models as _models  # noqa: F401
+        from data import user_management_models as _user_models  # noqa: F401
     except Exception:
         try:
             from data import models as _models  # type: ignore # noqa: F401
+            from data import user_management_models as _user_models  # type: ignore # noqa: F401
         except Exception:
             pass
     # ensure all tables exist (long-term approach)

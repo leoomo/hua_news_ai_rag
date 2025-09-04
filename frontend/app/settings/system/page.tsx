@@ -52,6 +52,17 @@ export default function SystemSettingsPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [newEmail, setNewEmail] = useState('');
 
+  // 自动清除消息
+  useEffect(() => {
+    if (success || error) {
+      const timer = setTimeout(() => {
+        setSuccess(null);
+        setError(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [success, error]);
+
   useEffect(() => {
     loadEmailConfig();
   }, []);
@@ -96,23 +107,63 @@ export default function SystemSettingsPage() {
     }
   }
 
-  function addRecipientEmail() {
+  async function addRecipientEmail() {
     if (newEmail.trim() && isEmail(newEmail.trim())) {
       if (!emailConfig.recipient_emails.includes(newEmail.trim())) {
-        setEmailConfig({
+        const updatedConfig = {
           ...emailConfig,
           recipient_emails: [...emailConfig.recipient_emails, newEmail.trim()]
-        });
+        };
+        setEmailConfig(updatedConfig);
         setNewEmail('');
+        
+        // 自动保存到数据库
+        try {
+          const res = await api.post('/api/settings/email', updatedConfig);
+          if (res.data?.code === 0) {
+            setSuccess('收件人添加成功');
+            setError(null);
+          } else {
+            setError(res.data?.message || '添加收件人失败');
+            // 回滚状态
+            setEmailConfig(emailConfig);
+          }
+        } catch (error: any) {
+          setError(error.response?.data?.message || '添加收件人失败');
+          // 回滚状态
+          setEmailConfig(emailConfig);
+        }
+      } else {
+        setError('该邮箱地址已存在');
       }
+    } else {
+      setError('请输入有效的邮箱地址');
     }
   }
 
-  function removeRecipientEmail(email: string) {
-    setEmailConfig({
+  async function removeRecipientEmail(email: string) {
+    const updatedConfig = {
       ...emailConfig,
       recipient_emails: emailConfig.recipient_emails.filter(e => e !== email)
-    });
+    };
+    setEmailConfig(updatedConfig);
+    
+    // 自动保存到数据库
+    try {
+      const res = await api.post('/api/settings/email', updatedConfig);
+      if (res.data?.code === 0) {
+        setSuccess('收件人删除成功');
+        setError(null);
+      } else {
+        setError(res.data?.message || '删除收件人失败');
+        // 回滚状态
+        setEmailConfig(emailConfig);
+      }
+    } catch (error: any) {
+      setError(error.response?.data?.message || '删除收件人失败');
+      // 回滚状态
+      setEmailConfig(emailConfig);
+    }
   }
 
   function handleKeyPress(e: React.KeyboardEvent) {

@@ -38,8 +38,8 @@ class UserPreference(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     
-    # 关系
-    user: Mapped['User'] = relationship('User', back_populates='preferences')
+    # 关系 - 暂时注释掉避免循环导入问题
+    # user: Mapped['User'] = relationship('User', back_populates='preferences')
 
 
 class UserActivityLog(Base):
@@ -56,8 +56,8 @@ class UserActivityLog(Base):
     user_agent: Mapped[Optional[str]] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     
-    # 关系
-    user: Mapped[Optional['User']] = relationship('User', back_populates='activity_logs')
+    # 关系 - 暂时注释掉避免循环导入问题
+    # user: Mapped[Optional['User']] = relationship('User', back_populates='activity_logs')
 
 
 class UserSession(Base):
@@ -75,8 +75,8 @@ class UserSession(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     last_accessed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     
-    # 关系
-    user: Mapped['User'] = relationship('User', back_populates='sessions')
+    # 关系 - 暂时注释掉避免循环导入问题
+    # user: Mapped['User'] = relationship('User', back_populates='sessions')
 
 
 class UserGroup(Base):
@@ -105,9 +105,9 @@ class UserGroupMember(Base):
     role: Mapped[str] = mapped_column(String(50), default='member')
     joined_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     
-    # 关系
+    # 关系 - 暂时注释掉避免循环导入问题
     group: Mapped['UserGroup'] = relationship('UserGroup', back_populates='members')
-    user: Mapped['User'] = relationship('User', back_populates='group_memberships')
+    # user: Mapped['User'] = relationship('User', back_populates='group_memberships')
 
 
 

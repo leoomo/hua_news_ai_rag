@@ -14,15 +14,9 @@ from datetime import datetime
 import time
 import markdown
 
-# 导入邮件配置
-from .email_config import (
-    EMAIL_PROVIDER, GMAIL_CONFIG, QQ_CONFIG, EMAIL_163_CONFIG,
-    OUTLOOK_CONFIG, YAHOO_CONFIG, SINA_CONFIG, CUSTOM_CONFIG,
-    ENABLE_EMAIL_NOTIFICATION, SENDER_NAME, RECIPIENT_EMAILS,
-    MAX_ARTICLES_IN_EMAIL, EMAIL_TEMPLATE_LANGUAGE, EMAIL_FORMAT,
-    EMAIL_SEND_TIMEOUT, EMAIL_RETRY_COUNT, EMAIL_RETRY_DELAY,
-    ENABLE_EMAIL_MODULE
-)
+# 导入数据库邮件配置
+from backend.data.db import get_db_session
+from backend.data.models import EmailConfig
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -34,21 +28,27 @@ class EmailSender:
     
     def __init__(self):
         """初始化邮件发送器"""
-        # 首先检查总开关
-        if not ENABLE_EMAIL_MODULE:
+        self.config_data = self._load_config_from_db()
+        
+        if not self.config_data:
+            logger.info("邮件模块已禁用或配置未找到")
+            self.enabled = False
+            return
+            
+        if not self.config_data.get('enable_email_module', False):
             logger.info("邮件模块已禁用")
             self.enabled = False
             return
             
         self.config = self._get_provider_config()
-        self.enabled = ENABLE_EMAIL_NOTIFICATION
-        self.recipients = RECIPIENT_EMAILS
-        self.sender_name = SENDER_NAME
-        self.max_articles = MAX_ARTICLES_IN_EMAIL
-        self.language = EMAIL_TEMPLATE_LANGUAGE
-        self.timeout = EMAIL_SEND_TIMEOUT
-        self.retry_count = EMAIL_RETRY_COUNT
-        self.retry_delay = EMAIL_RETRY_DELAY
+        self.enabled = self.config_data.get('enable_email_notification', True)
+        self.recipients = self.config_data.get('recipient_emails', [])
+        self.sender_name = self.config_data.get('sender_name', '华新AI知识库系统')
+        self.max_articles = self.config_data.get('max_articles_in_email', 10)
+        self.language = self.config_data.get('email_template_language', 'zh_cn')
+        self.timeout = self.config_data.get('email_send_timeout', 30)
+        self.retry_count = self.config_data.get('email_retry_count', 3)
+        self.retry_delay = self.config_data.get('email_retry_delay', 5)
         
         if not self.enabled:
             logger.info("邮件通知功能已禁用")
@@ -58,32 +58,102 @@ class EmailSender:
             logger.warning("未配置收件人邮箱，邮件通知功能将无法使用")
             return
             
-        logger.info(f"邮件发送器初始化完成，使用 {EMAIL_PROVIDER} 服务商")
+        email_provider = self.config_data.get('email_provider', '163')
+        logger.info(f"邮件发送器初始化完成，使用 {email_provider} 服务商")
         logger.info(f"收件人: {', '.join(self.recipients)}")
+    
+    def _load_config_from_db(self) -> Optional[Dict]:
+        """从数据库加载邮件配置"""
+        try:
+            with get_db_session() as session:
+                config = session.query(EmailConfig).first()
+                if not config:
+                    return None
+                
+                return {
+                    'enable_email_module': config.enable_email_module,
+                    'enable_email_notification': config.enable_email_notification,
+                    'recipient_emails': config.recipient_emails if config.recipient_emails else [],
+                    'sender_name': config.sender_name,
+                    'sender_email': config.sender_email,
+                    'sender_password': config.sender_password,
+                    'email_provider': config.email_provider,
+                    'custom_smtp_config': config.custom_smtp_config if config.custom_smtp_config else {},
+                    'max_articles_in_email': config.max_articles_in_email,
+                    'email_template_language': config.email_template_language,
+                    'email_format': config.email_format,
+                    'email_send_timeout': config.email_send_timeout,
+                    'email_retry_count': config.email_retry_count,
+                    'email_retry_delay': config.email_retry_delay,
+                }
+        except Exception as e:
+            logger.error(f"从数据库加载邮件配置失败: {e}")
+            return None
     
     def _get_provider_config(self) -> Dict:
         """获取邮件服务商配置"""
-        provider_mapping = {
-            "gmail": GMAIL_CONFIG,
-            "qq": QQ_CONFIG,
-            "163": EMAIL_163_CONFIG,
-            "outlook": OUTLOOK_CONFIG,
-            "yahoo": YAHOO_CONFIG,
-            "sina": SINA_CONFIG,
-            "custom": CUSTOM_CONFIG
+        email_provider = self.config_data.get('email_provider', '163')
+        
+        # 预定义的邮件服务商配置
+        provider_configs = {
+            "gmail": {
+                "smtp_host": "smtp.gmail.com",
+                "smtp_port": 587,
+                "smtp_use_tls": True,
+                "smtp_use_ssl": False
+            },
+            "qq": {
+                "smtp_host": "smtp.qq.com",
+                "smtp_port": 587,
+                "smtp_use_tls": True,
+                "smtp_use_ssl": False
+            },
+            "163": {
+                "smtp_host": "smtp.163.com",
+                "smtp_port": 587,
+                "smtp_use_tls": True,
+                "smtp_use_ssl": False
+            },
+            "outlook": {
+                "smtp_host": "smtp-mail.outlook.com",
+                "smtp_port": 587,
+                "smtp_use_tls": True,
+                "smtp_use_ssl": False
+            },
+            "yahoo": {
+                "smtp_host": "smtp.mail.yahoo.com",
+                "smtp_port": 587,
+                "smtp_use_tls": True,
+                "smtp_use_ssl": False
+            },
+            "sina": {
+                "smtp_host": "smtp.sina.com",
+                "smtp_port": 587,
+                "smtp_use_tls": True,
+                "smtp_use_ssl": False
+            }
         }
         
-        if EMAIL_PROVIDER not in provider_mapping:
-            logger.warning(f"不支持的邮件服务商 '{EMAIL_PROVIDER}'，使用Gmail配置")
-            return GMAIL_CONFIG
-            
-        return provider_mapping[EMAIL_PROVIDER]
+        if email_provider == "custom":
+            # 使用自定义SMTP配置
+            custom_config = self.config_data.get('custom_smtp_config', {})
+            return {
+                "smtp_host": custom_config.get('smtp_host', 'smtp.your-server.com'),
+                "smtp_port": custom_config.get('smtp_port', 587),
+                "smtp_use_tls": custom_config.get('smtp_use_tls', True),
+                "smtp_use_ssl": custom_config.get('smtp_use_ssl', False)
+            }
+        elif email_provider in provider_configs:
+            return provider_configs[email_provider]
+        else:
+            logger.warning(f"不支持的邮件服务商 '{email_provider}'，使用163配置")
+            return provider_configs["163"]
     
     def _create_email_content(self, articles: List[Dict], language: str = "zh_cn") -> str:
         """创建邮件内容"""
-        from .email_config import EMAIL_FORMAT
+        email_format = self.config_data.get('email_format', 'markdown')
         
-        if EMAIL_FORMAT == "markdown":
+        if email_format == "markdown":
             if language == "zh_cn":
                 return self._create_chinese_markdown_content(articles)
             else:
@@ -345,13 +415,14 @@ To stop receiving notifications, please contact system administrator
             try:
                 # 创建邮件
                 msg = MIMEMultipart('alternative')
-                msg['From'] = f"{self.sender_name} <{self.config['smtp_username']}>"
+                sender_email = self.config_data.get('sender_email', '')
+                msg['From'] = f"{self.sender_name} <{sender_email}>"
                 msg['To'] = recipient
                 msg['Subject'] = subject
                 
                 # 检查是否需要将Markdown转换为HTML
-                from .email_config import EMAIL_FORMAT
-                if EMAIL_FORMAT == "markdown":
+                email_format = self.config_data.get('email_format', 'markdown')
+                if email_format == "markdown":
                     # 将Markdown转换为HTML
                     html_content = markdown.markdown(
                         content, 
@@ -410,7 +481,9 @@ To stop receiving notifications, please contact system administrator
                     server.starttls(context=ssl.create_default_context())
                 
                 # 登录
-                server.login(self.config['smtp_username'], self.config['smtp_password'])
+                sender_email = self.config_data.get('sender_email', '')
+                sender_password = self.config_data.get('sender_password', '')
+                server.login(sender_email, sender_password)
                 
                 # 发送邮件
                 server.send_message(msg)
