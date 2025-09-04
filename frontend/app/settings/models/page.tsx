@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { Save } from 'lucide-react';
 import { api } from '@/lib/api';
 
 type ModelsCfg = { llm: string; embedding: string; reranker?: string; ollama_url?: string };
@@ -35,7 +36,10 @@ export default function ModelsSettingsPage() {
           <label className="block text-sm mb-1">Ollama URL</label>
           <input className="w-full rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200" value={cfg.ollama_url || ''} onChange={(e) => setCfg({ ...cfg, ollama_url: e.target.value })} />
         </div>
-        <button onClick={onSave} className="rounded-md border px-4 py-2 bg-gray-900 text-white border-gray-900 hover:bg-gray-800 hover:shadow hover:-translate-y-0.5 transition-all duration-150">保存</button>
+        <button onClick={onSave} className="rounded-md border px-4 py-2 bg-gray-900 text-white border-gray-900 hover:bg-gray-800 hover:shadow hover:-translate-y-0.5 transition-all duration-150 flex items-center gap-2">
+          <Save className="w-4 h-4" />
+          保存
+        </button>
         {saved && <span className="text-green-600 text-sm">已保存</span>}
       </div>
     </main>

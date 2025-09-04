@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
-import { CheckCircle, XCircle, Loader2, Edit3, Trash2, Play, Save, X } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, Edit3, Trash2, Play, Save, X, Plus } from 'lucide-react';
 import { api } from '@/lib/api';
 import { isNonEmpty, isUrl } from '@/lib/validators';
 import { useNotification, NotificationContainer } from '@/components/Notification';
@@ -515,7 +515,10 @@ export default function RssSettingsPage() {
           <div className="flex items-center gap-2">
             <label className="text-sm">启用</label>
             <input type="checkbox" checked={!!form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
-            <button onClick={onCreate} className="ml-auto rounded-md border px-4 py-2 bg-gray-900 text-white border-gray-900 hover:bg-gray-800 hover:shadow hover:-translate-y-0.5 transition-all duration-150">添加</button>
+            <button onClick={onCreate} className="ml-auto rounded-md border px-4 py-2 bg-gray-900 text-white border-gray-900 hover:bg-gray-800 hover:shadow hover:-translate-y-0.5 transition-all duration-150 flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              添加
+            </button>
           </div>
         </div>
       </div>
@@ -724,12 +727,18 @@ export default function RssSettingsPage() {
                         </span>
                         {ok && (
                           <div className="flex items-center gap-1" title="本次采集统计：新增/跳过">
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
+                            <span 
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200 cursor-help"
+                              title="新增文章：本次采集到的新文章数量，这些文章将被保存到知识库中"
+                            >
                               <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
                               新增 {s.created}
                             </span>
                             {typeof s.skipped === 'number' && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-50 text-gray-700 border border-gray-200">
+                              <span 
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-50 text-gray-700 border border-gray-200 cursor-help"
+                                title="跳过文章：本次采集时跳过的文章数量，这些文章可能因为重复、格式问题或其他原因被跳过"
+                              >
                                 <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
                                 跳过 {s.skipped}
                               </span>
