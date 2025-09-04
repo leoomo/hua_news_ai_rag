@@ -96,7 +96,7 @@ export default function UsersSettingsPage() {
   const loadRoles = async () => {
     try {
       const response = await userManagementApi.roles.list();
-      setRoles(response.data || []);
+      setRoles(response.data.data || []);
     } catch (error: any) {
       console.error('加载角色列表失败:', error);
       setRoles([]);
@@ -106,7 +106,7 @@ export default function UsersSettingsPage() {
   const loadGroups = async () => {
     try {
       const response = await userManagementApi.groups.list();
-      setGroups(response.data || []);
+      setGroups(response.data.data || []);
     } catch (error: any) {
       console.error('加载用户组列表失败:', error);
       setGroups([]);
@@ -126,7 +126,7 @@ export default function UsersSettingsPage() {
   const loadActivities = async () => {
     try {
       const response = await userManagementApi.activityLogs.list();
-      setActivities(response.data || []);
+      setActivities(response.data.data?.items || []);
     } catch (error: any) {
       console.error('加载活动日志列表失败:', error);
       setActivities([]);

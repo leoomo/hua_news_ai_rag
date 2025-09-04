@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
-import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, Edit3, Trash2, Play, Save, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { isNonEmpty, isUrl } from '@/lib/validators';
 import { useNotification, NotificationContainer } from '@/components/Notification';
@@ -399,7 +399,12 @@ export default function RssSettingsPage() {
                 <Loader2 className="h-4 w-4 animate-spin" />
                 {`批量采集 ${Math.max(0, batchProgress)}%`}
               </span>
-            ) : '批量采集'}
+            ) : (
+              <span className="inline-flex items-center gap-2">
+                <Play className="h-4 w-4" />
+                批量采集
+              </span>
+            )}
             {isIngestingAll && (
               <span
                 className="absolute bottom-0 left-0 h-0.5 bg-blue-300"
@@ -527,26 +532,26 @@ export default function RssSettingsPage() {
                       <button 
                         onClick={onSaveEdit} 
                         disabled={ingestingIds.has(r.id) || isIngestingAll}
-                        className={`rounded px-3 py-1 ${
+                        className={`rounded px-2 py-1 ${
                           (ingestingIds.has(r.id) || isIngestingAll)
                             ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
                             : 'bg-black text-white hover:bg-gray-800'
                         }`}
                         title={ingestingIds.has(r.id) ? '采集中，无法保存' : isIngestingAll ? '批量采集中，无法保存' : '保存修改'}
                       >
-                        保存
+                        <Save className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => { setEditingId(null); setForm({ name: '', url: '', category: '', is_active: true }); }} 
                         disabled={ingestingIds.has(r.id) || isIngestingAll}
-                        className={`rounded border px-3 py-1 ${
+                        className={`rounded border px-2 py-1 ${
                           (ingestingIds.has(r.id) || isIngestingAll)
                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
                             : 'hover:bg-gray-50'
                         }`}
                         title={ingestingIds.has(r.id) ? '采集中，无法取消' : isIngestingAll ? '批量采集中，无法取消' : '取消编辑'}
                       >
-                        取消
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
                   ) : (
@@ -554,36 +559,36 @@ export default function RssSettingsPage() {
                       <button 
                         onClick={() => onEditStart(r)} 
                         disabled={ingestingIds.has(r.id) || isIngestingAll}
-                        className={`rounded border px-3 py-1 ${
+                        className={`rounded border px-2 py-1 ${
                           (ingestingIds.has(r.id) || isIngestingAll)
                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
-                            : 'hover:bg-gray-50'
+                            : 'text-blue-600 hover:text-blue-900 hover:bg-blue-50 transition-colors'
                         }`}
                         title={ingestingIds.has(r.id) ? '采集中，无法编辑' : isIngestingAll ? '批量采集中，无法编辑' : '编辑RSS源'}
                       >
-                        编辑
+                        <Edit3 className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => onDelete(r.id)} 
                         disabled={ingestingIds.has(r.id) || isIngestingAll}
-                        className={`rounded border px-3 py-1 ${
+                        className={`rounded border px-2 py-1 ${
                           (ingestingIds.has(r.id) || isIngestingAll)
                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
-                            : 'text-red-600 hover:bg-red-50'
+                            : 'text-red-600 hover:text-red-900 hover:bg-red-50 transition-colors'
                         }`}
                         title={ingestingIds.has(r.id) ? '采集中，无法删除' : isIngestingAll ? '批量采集中，无法删除' : '删除RSS源'}
                       >
-                        删除
+                        <Trash2 className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => onIngest(r.id)} 
                         disabled={ingestingIds.has(r.id) || isIngestingAll || !r.is_active}
-                        className={`relative overflow-hidden rounded border px-3 py-1 ${
+                        className={`relative overflow-hidden rounded border px-2 py-1 ${
                           ingestingIds.has(r.id)
                             ? `bg-blue-500 text-white border-blue-500 cursor-wait ${justCompletedIds.has(r.id) ? 'animate-bounce' : 'animate-pulse'}`
                             : (isIngestingAll || !r.is_active)
                               ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
-                              : 'text-green-700 hover:bg-green-50'
+                              : 'text-green-600 hover:text-green-900 hover:bg-green-50 transition-colors'
                         }`}
                         title={!r.is_active ? '该源已停用，无法采集' : ingestingIds.has(r.id) ? '采集中...' : isIngestingAll ? '批量采集中，无法单个采集' : '手动采集RSS源'}
                       >
@@ -596,7 +601,7 @@ export default function RssSettingsPage() {
                                   : '采集中...'}
                               </span>
                             )
-                          : '采集'}
+                          : <Play className="w-4 h-4" />}
                         {ingestingIds.has(r.id) && typeof singleProgress[r.id] === 'number' && (
                           <span
                             className="absolute bottom-0 left-0 h-0.5 bg-blue-300"
