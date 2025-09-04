@@ -12,11 +12,16 @@ from routes.rss import rss_bp
 from routes.kb import kb_bp
 from routes.models_settings import models_bp
 from routes.settings import bp as settings_bp
+from routes.user_groups import user_groups_bp
+from routes.user_roles import user_roles_bp
+from routes.user_preferences import user_preferences_bp
+from routes.user_activity_logs import user_activity_logs_bp
+from routes.user_sessions import user_sessions_bp
 
 
 def create_app() -> Flask:
     app = Flask(__name__)
-    CORS(app, supports_credentials=True)
+    CORS(app, supports_credentials=True, origins=['http://localhost:3000', 'http://localhost:3001'])
 
     settings = Settings()
     app.config['SECRET_KEY'] = settings.secret_key
@@ -66,6 +71,11 @@ def create_app() -> Flask:
     app.register_blueprint(kb_bp, url_prefix='/api')
     app.register_blueprint(models_bp, url_prefix='/api/settings')
     app.register_blueprint(settings_bp, url_prefix='/api/settings')
+    app.register_blueprint(user_groups_bp, url_prefix='/api')
+    app.register_blueprint(user_roles_bp, url_prefix='/api')
+    app.register_blueprint(user_preferences_bp, url_prefix='/api')
+    app.register_blueprint(user_activity_logs_bp, url_prefix='/api')
+    app.register_blueprint(user_sessions_bp, url_prefix='/api')
 
     # background scheduler for periodic ingest
     try:

@@ -1,7 +1,11 @@
 from sqlalchemy import Integer, String, Text, Boolean, Float, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
+from typing import Optional, List, TYPE_CHECKING
 from .db import Base
+
+if TYPE_CHECKING:
+    from .user_management_models import UserPreference, UserActivityLog, UserSession, UserGroupMember
 
 
 class User(Base):
@@ -15,6 +19,28 @@ class User(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     last_login: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    
+    # 扩展字段（用户管理功能）
+    full_name: Mapped[Optional[str]] = mapped_column(String(100))
+    avatar_url: Mapped[Optional[str]] = mapped_column(String(500))
+    phone: Mapped[Optional[str]] = mapped_column(String(20))
+    department: Mapped[Optional[str]] = mapped_column(String(100))
+    position: Mapped[Optional[str]] = mapped_column(String(100))
+    timezone: Mapped[str] = mapped_column(String(50), default='UTC')
+    language: Mapped[str] = mapped_column(String(10), default='zh-CN')
+    email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    phone_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    two_factor_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    failed_login_attempts: Mapped[int] = mapped_column(Integer, default=0)
+    locked_until: Mapped[Optional[datetime]] = mapped_column(DateTime)
+    password_changed_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
+    last_activity_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
+    
+    # 关系（用户管理功能）
+    preferences: Mapped[List['UserPreference']] = relationship('UserPreference', back_populates='user')
+    activity_logs: Mapped[List['UserActivityLog']] = relationship('UserActivityLog', back_populates='user')
+    sessions: Mapped[List['UserSession']] = relationship('UserSession', back_populates='user')
+    group_memberships: Mapped[List['UserGroupMember']] = relationship('UserGroupMember', back_populates='user')
 
 
 class NewsArticle(Base):
