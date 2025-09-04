@@ -28,16 +28,26 @@ class EmailSender:
     
     def __init__(self):
         """初始化邮件发送器"""
+        # 初始化默认属性
+        self.enabled = False
+        self.recipients = []
+        self.sender_name = '华新AI知识库系统'
+        self.sender_email = ''
+        self.max_articles = 10
+        self.language = 'zh_cn'
+        self.timeout = 30
+        self.retry_count = 3
+        self.retry_delay = 5
+        self.config = {}
+        
         self.config_data = self._load_config_from_db()
         
         if not self.config_data:
             logger.info("邮件模块已禁用或配置未找到")
-            self.enabled = False
             return
             
         if not self.config_data.get('enable_email_module', False):
             logger.info("邮件模块已禁用")
-            self.enabled = False
             return
             
         self.config = self._get_provider_config()
@@ -93,6 +103,7 @@ class EmailSender:
     def _get_provider_config(self) -> Dict:
         """获取邮件服务商配置"""
         email_provider = self.config_data.get('email_provider', '163')
+        logger.info(f"获取邮件服务商配置: {email_provider}")
         
         # 预定义的邮件服务商配置
         provider_configs = {
@@ -110,9 +121,9 @@ class EmailSender:
             },
             "163": {
                 "smtp_host": "smtp.163.com",
-                "smtp_port": 587,
-                "smtp_use_tls": True,
-                "smtp_use_ssl": False
+                "smtp_port": 465,
+                "smtp_use_tls": False,
+                "smtp_use_ssl": True
             },
             "outlook": {
                 "smtp_host": "smtp-mail.outlook.com",
@@ -144,7 +155,9 @@ class EmailSender:
                 "smtp_use_ssl": custom_config.get('smtp_use_ssl', False)
             }
         elif email_provider in provider_configs:
-            return provider_configs[email_provider]
+            config = provider_configs[email_provider]
+            logger.info(f"使用预定义配置: {config}")
+            return config
         else:
             logger.warning(f"不支持的邮件服务商 '{email_provider}'，使用163配置")
             return provider_configs["163"]
@@ -540,9 +553,11 @@ To stop receiving notifications, please contact system administrator
                 # 连接SMTP服务器
                 server: Union[smtplib.SMTP, smtplib.SMTP_SSL]
                 if self.config['smtp_use_ssl']:
+                    context = ssl.create_default_context()
                     server = smtplib.SMTP_SSL(
                         self.config['smtp_host'], 
                         self.config['smtp_port'], 
+                        context=context,
                         timeout=self.timeout
                     )
                 else:
@@ -630,14 +645,22 @@ To stop receiving notifications, please contact system administrator
                 smtp_config = self._get_provider_config()
                 
                 # 连接SMTP服务器并发送
-                with smtplib.SMTP(smtp_config['host'], smtp_config['port']) as server:
-                    if smtp_config.get('tls', False):
-                        server.starttls()
-                    elif smtp_config.get('ssl', False):
-                        server = smtplib.SMTP_SSL(smtp_config['host'], smtp_config['port'])
-                    
-                    server.login(smtp_config['username'], smtp_config['password'])
-                    server.send_message(msg)
+                if smtp_config.get('smtp_use_ssl', False):
+                    context = ssl.create_default_context()
+                    with smtplib.SMTP_SSL(smtp_config['smtp_host'], smtp_config['smtp_port'], context=context) as server:
+                        sender_email = self.config_data.get('sender_email', '')
+                        sender_password = self.config_data.get('sender_password', '')
+                        server.login(sender_email, sender_password)
+                        server.send_message(msg)
+                else:
+                    with smtplib.SMTP(smtp_config['smtp_host'], smtp_config['smtp_port']) as server:
+                        if smtp_config.get('smtp_use_tls', False):
+                            server.starttls(context=ssl.create_default_context())
+                        
+                        sender_email = self.config_data.get('sender_email', '')
+                        sender_password = self.config_data.get('sender_password', '')
+                        server.login(sender_email, sender_password)
+                        server.send_message(msg)
                 
                 logger.info(f"邮件发送成功: {recipient}")
                 return True, ""

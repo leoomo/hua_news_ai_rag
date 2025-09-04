@@ -17,6 +17,7 @@ from routes.user_roles import user_roles_bp
 from routes.user_preferences import user_preferences_bp
 from routes.user_activity_logs import user_activity_logs_bp
 from routes.user_sessions import user_sessions_bp
+from routes.email_test import email_test_bp
 
 
 def create_app() -> Flask:
@@ -78,6 +79,7 @@ def create_app() -> Flask:
     app.register_blueprint(user_preferences_bp, url_prefix='/api')
     app.register_blueprint(user_activity_logs_bp, url_prefix='/api')
     app.register_blueprint(user_sessions_bp, url_prefix='/api')
+    app.register_blueprint(email_test_bp, url_prefix='/api')
 
     # background scheduler for periodic ingest
     try:
