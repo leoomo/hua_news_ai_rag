@@ -82,11 +82,13 @@ export default function RssSettingsPage() {
     const message = emailInfo.message || '';
     
     // 优先根据消息内容判断类型
-    if (message.includes('邮件发送成功')) {
+    if (message.includes('邮件发送成功') || message.includes('已通知') && message.includes('位收件人')) {
       return 'success';
-    } else if (message.includes('邮件发送失败') || message.includes('邮件发送出错')) {
+    } else if (message.includes('邮件发送失败') || message.includes('邮件发送出错') || 
+               message.includes('但邮件发送失败') || message.includes('均未收到通知')) {
       return 'error';
-    } else if (message.includes('无需发送') || message.includes('未配置') || message.includes('未启用')) {
+    } else if (message.includes('无需发送') || message.includes('未配置') || message.includes('未启用') || 
+               message.includes('没有新文章') || message.includes('邮件模块未启用')) {
       return 'info';
     }
     
