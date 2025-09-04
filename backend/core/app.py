@@ -93,10 +93,12 @@ def create_app() -> Flask:
             except Exception:
                 pass
 
-        scheduler.add_job(_job, 'interval', minutes=30, id='rss_ingest_all', replace_existing=True)
+        # 启动调度器但不自动添加任务，让用户通过前端控制
         scheduler.start()
         app.config['scheduler'] = scheduler
-    except Exception:
+        print("✅ 调度器已启动，等待用户手动开启自动采集")
+    except Exception as e:
+        print(f"❌ 调度器启动失败: {e}")
         pass
 
     @app.get('/api/health')

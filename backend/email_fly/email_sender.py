@@ -408,6 +408,82 @@ To stop receiving notifications, please contact system administrator
         
         logger.info(f"邮件发送完成: {success_count}/{len(self.recipients)} 成功")
         return success_count > 0
+
+    def send_notification_with_details(self, articles: List[Dict]) -> Dict:
+        """发送采集通知邮件并返回详细结果"""
+        from datetime import datetime
+        result = {
+            "success": False,
+            "success_count": 0,
+            "total_count": 0,
+            "errors": [],
+            "message": "",
+            "send_time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            "failure_reason": ""
+        }
+        
+        if not self.enabled:
+            result["message"] = "邮件通知功能已禁用"
+            result["failure_reason"] = "邮件模块未启用"
+            logger.info("邮件通知功能已禁用")
+            return result
+            
+        if not self.recipients:
+            result["message"] = "未配置收件人邮箱"
+            result["failure_reason"] = "未配置收件人邮箱地址"
+            logger.warning("未配置收件人邮箱")
+            return result
+            
+        if not articles:
+            result["message"] = "没有新文章，跳过邮件发送"
+            result["failure_reason"] = "没有新文章需要发送"
+            logger.info("没有新文章，跳过邮件发送")
+            return result
+        
+        # 创建邮件内容
+        subject = f"华新AI知识库 - 新文章通知 ({len(articles)}篇)" if self.language == "zh_cn" else f"Hua News AI KB - New Articles ({len(articles)} articles)"
+        content = self._create_email_content(articles, self.language)
+        
+        # 发送邮件给所有收件人
+        result["total_count"] = len(self.recipients)
+        success_count = 0
+        errors = []
+        
+        for recipient in self.recipients:
+            success, error_msg = self._send_single_email_with_details(recipient, subject, content)
+            if success:
+                success_count += 1
+            else:
+                errors.append(f"{recipient}: {error_msg}")
+        
+        result["success_count"] = success_count
+        result["errors"] = errors
+        result["success"] = success_count > 0
+        
+        if success_count == result["total_count"]:
+            result["message"] = f"邮件发送成功，已通知 {success_count} 位收件人"
+            result["failure_reason"] = ""
+        elif success_count > 0:
+            result["message"] = f"邮件部分发送成功，{success_count}/{result['total_count']} 位收件人收到通知"
+            result["failure_reason"] = f"部分收件人发送失败，共 {len(errors)} 个错误"
+        else:
+            result["message"] = f"邮件发送失败，{result['total_count']} 位收件人均未收到通知"
+            # 分析主要失败原因
+            if errors:
+                # 统计最常见的错误类型
+                error_types: dict[str, int] = {}
+                for error in errors:
+                    error_msg = error.split(': ', 1)[1] if ': ' in error else error
+                    error_types[error_msg] = error_types.get(error_msg, 0) + 1
+                
+                # 获取最常见的错误
+                most_common_error = max(error_types.items(), key=lambda x: x[1])
+                result["failure_reason"] = f"主要错误: {most_common_error[0]} (影响 {most_common_error[1]} 个收件人)"
+            else:
+                result["failure_reason"] = "未知错误"
+        
+        logger.info(f"邮件发送完成: {success_count}/{result['total_count']} 成功")
+        return result
     
     def _send_single_email(self, recipient: str, subject: str, content: str) -> bool:
         """发送单个邮件"""
@@ -502,6 +578,82 @@ To stop receiving notifications, please contact system administrator
                     return False
         
         return False
+
+    def _send_single_email_with_details(self, recipient: str, subject: str, content: str) -> tuple[bool, str]:
+        """发送单个邮件并返回详细结果"""
+        last_error = ""
+        for attempt in range(self.retry_count + 1):
+            try:
+                # 创建邮件
+                msg = MIMEMultipart('alternative')
+                sender_email = self.config_data.get('sender_email', '')
+                msg['From'] = f"{self.sender_name} <{sender_email}>"
+                msg['To'] = recipient
+                msg['Subject'] = subject
+                
+                # 检查是否需要将Markdown转换为HTML
+                email_format = self.config_data.get('email_format', 'markdown')
+                if email_format == "markdown":
+                    # 将Markdown转换为HTML
+                    html_content = markdown.markdown(
+                        content, 
+                        extensions=['extra', 'codehilite', 'tables'],
+                        output_format='html5'
+                    )
+                    # 添加CSS样式
+                    html_content = f"""
+                    <html>
+                    <head>
+                        <meta charset="utf-8">
+                        <style>
+                            body {{ font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }}
+                            h1 {{ color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }}
+                            h2 {{ color: #34495e; border-left: 4px solid #3498db; padding-left: 15px; }}
+                            strong {{ color: #2c3e50; }}
+                            a {{ color: #3498db; text-decoration: none; }}
+                            a:hover {{ text-decoration: underline; }}
+                            hr {{ border: none; border-top: 1px solid #ecf0f1; margin: 20px 0; }}
+                            .meta {{ background-color: #f8f9fa; padding: 10px; border-radius: 5px; margin: 10px 0; }}
+                            .footer {{ margin-top: 30px; padding: 20px; background-color: #ecf0f1; border-radius: 5px; color: #7f8c8d; }}
+                        </style>
+                    </head>
+                    <body>
+                    {html_content}
+                    </body>
+                    </html>
+                    """
+                    msg.attach(MIMEText(html_content, 'html', 'utf-8'))
+                else:
+                    msg.attach(MIMEText(content, 'plain', 'utf-8'))
+                
+                # 获取SMTP配置
+                smtp_config = self._get_provider_config()
+                
+                # 连接SMTP服务器并发送
+                with smtplib.SMTP(smtp_config['host'], smtp_config['port']) as server:
+                    if smtp_config.get('tls', False):
+                        server.starttls()
+                    elif smtp_config.get('ssl', False):
+                        server = smtplib.SMTP_SSL(smtp_config['host'], smtp_config['port'])
+                    
+                    server.login(smtp_config['username'], smtp_config['password'])
+                    server.send_message(msg)
+                
+                logger.info(f"邮件发送成功: {recipient}")
+                return True, ""
+                
+            except Exception as e:
+                error_msg = str(e)
+                last_error = error_msg
+                logger.error(f"邮件发送失败 (尝试 {attempt + 1}/{self.retry_count + 1}): {recipient} - {error_msg}")
+                
+                if attempt < self.retry_count:
+                    time.sleep(self.retry_delay)
+                else:
+                    logger.error(f"邮件发送最终失败: {recipient}")
+                    return False, error_msg
+        
+        return False, last_error
     
     def test_connection(self) -> bool:
         """测试邮件服务器连接"""
@@ -555,3 +707,8 @@ def test_email_configuration() -> bool:
     """测试邮件配置（便捷函数）"""
     email_sender = get_email_sender()
     return email_sender.test_connection()
+
+def send_rss_ingest_notification_with_details(articles: List[Dict]) -> Dict:
+    """发送RSS采集通知邮件并返回详细结果（便捷函数）"""
+    email_sender = get_email_sender()
+    return email_sender.send_notification_with_details(articles)

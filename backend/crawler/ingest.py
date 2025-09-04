@@ -276,14 +276,20 @@ def ingest_rss_source(source_id: int) -> dict:
                         if email_status["recipients"]:
                             # 发送邮件通知
                             if new_articles:
-                                from email_fly.email_sender import send_rss_ingest_notification
-                                email_success = send_rss_ingest_notification(new_articles)
-                                if email_success:
+                                from email_fly.email_sender import send_rss_ingest_notification_with_details
+                                email_result = send_rss_ingest_notification_with_details(new_articles)
+                                if email_result["success"]:
                                     email_status["sent"] = True
-                                    email_status["message"] = f"邮件发送成功，已通知 {len(email_status.get('recipients', []))} 位收件人"
+                                    email_status["message"] = email_result["message"]
+                                    email_status["details"] = email_result
+                                    email_status["send_time"] = email_result.get("send_time", "")
+                                    email_status["failure_reason"] = email_result.get("failure_reason", "")
                                     logger.info(f"邮件通知发送成功，通知了 {len(new_articles)} 篇新文章")
                                 else:
-                                    email_status["message"] = "邮件发送失败"
+                                    email_status["message"] = email_result["message"]
+                                    email_status["details"] = email_result
+                                    email_status["send_time"] = email_result.get("send_time", "")
+                                    email_status["failure_reason"] = email_result.get("failure_reason", "")
                                     logger.warning("邮件通知发送失败")
                             else:
                                 email_status["message"] = "没有新文章需要发送"

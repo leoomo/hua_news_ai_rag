@@ -59,15 +59,46 @@ export default function RssSettingsPage() {
     
     setEmailMessages(prev => [...prev, newMessage]);
     
-    // 自动清除消息（5秒后）
-    setTimeout(() => {
-      setEmailMessages(prev => prev.filter(msg => msg.id !== id));
-    }, 5000);
+    // 只有成功和信息类型的消息自动清除（3秒后），错误消息不自动关闭
+    if (type !== 'error') {
+      setTimeout(() => {
+        setEmailMessages(prev => prev.filter(msg => msg.id !== id));
+      }, 3000);
+    }
   };
 
   // 清除所有邮件消息
   const clearEmailMessages = () => {
     setEmailMessages([]);
+  };
+
+  // 根据邮件状态判断消息类型
+  const getEmailMessageType = (emailInfo: any): 'success' | 'error' | 'info' => {
+    if (!emailInfo) return 'info';
+    
+    const message = emailInfo.message || '';
+    
+    // 发送成功
+    if (emailInfo.enabled && emailInfo.sent) {
+      return 'success';
+    }
+    
+    // 发送失败
+    if (emailInfo.enabled && !emailInfo.sent) {
+      return 'error';
+    }
+    
+    // 根据消息内容判断
+    if (message.includes('邮件发送成功')) {
+      return 'success';
+    } else if (message.includes('邮件发送失败') || message.includes('邮件发送出错')) {
+      return 'error';
+    } else if (message.includes('无需发送') || message.includes('未配置') || message.includes('未启用')) {
+      return 'info';
+    }
+    
+    // 默认信息类型
+    return 'info';
   };
 
   useEffect(() => {
@@ -197,13 +228,27 @@ export default function RssSettingsPage() {
           
           // 邮件状态消息（独立显示为flash消息）
           if (emailInfo) {
-            if (emailInfo.enabled && emailInfo.sent) {
-              addEmailMessage('success', `📧 ${emailInfo.message}`);
-            } else if (emailInfo.enabled && !emailInfo.sent) {
-              addEmailMessage('error', `📧 ${emailInfo.message}`);
-            } else {
-              addEmailMessage('info', `📧 ${emailInfo.message}`);
+            const messageType = getEmailMessageType(emailInfo);
+            let message = emailInfo.message;
+            
+            // 添加发送时间
+            if (emailInfo.send_time) {
+              message += `\n发送时间: ${emailInfo.send_time}`;
             }
+            
+            // 如果是错误类型，添加失败原因和详细错误信息
+            if (messageType === 'error') {
+              if (emailInfo.failure_reason) {
+                message += `\n失败原因: ${emailInfo.failure_reason}`;
+              }
+              if (emailInfo.details && emailInfo.details.errors && emailInfo.details.errors.length > 0) {
+                message += `\n\n详细错误信息：\n${emailInfo.details.errors.join('\n')}`;
+              } else if (emailInfo.recipients && emailInfo.recipients.length > 0) {
+                message += `\n\n收件人: ${emailInfo.recipients.join(', ')}`;
+              }
+            }
+            
+            addEmailMessage(messageType, message);
           }
         } else {
           notification.showError('RSS采集失败', response.data?.msg || '采集过程中发生错误');
@@ -300,13 +345,27 @@ export default function RssSettingsPage() {
           
           // 邮件状态消息（独立显示为flash消息）
           if (emailInfo) {
-            if (emailInfo.enabled && emailInfo.sent) {
-              addEmailMessage('success', `📧 ${emailInfo.message}`);
-            } else if (emailInfo.enabled && !emailInfo.sent) {
-              addEmailMessage('error', `📧 ${emailInfo.message}`);
-            } else {
-              addEmailMessage('info', `📧 ${emailInfo.message}`);
+            const messageType = getEmailMessageType(emailInfo);
+            let message = emailInfo.message;
+            
+            // 添加发送时间
+            if (emailInfo.send_time) {
+              message += `\n发送时间: ${emailInfo.send_time}`;
             }
+            
+            // 如果是错误类型，添加失败原因和详细错误信息
+            if (messageType === 'error') {
+              if (emailInfo.failure_reason) {
+                message += `\n失败原因: ${emailInfo.failure_reason}`;
+              }
+              if (emailInfo.details && emailInfo.details.errors && emailInfo.details.errors.length > 0) {
+                message += `\n\n详细错误信息：\n${emailInfo.details.errors.join('\n')}`;
+              } else if (emailInfo.recipients && emailInfo.recipients.length > 0) {
+                message += `\n\n收件人: ${emailInfo.recipients.join(', ')}`;
+              }
+            }
+            
+            addEmailMessage(messageType, message);
           }
         } else {
           notification.showError('批量采集失败', response.data?.msg || '批量采集过程中发生错误');
@@ -460,19 +519,63 @@ export default function RssSettingsPage() {
             <div
               key={msg.id}
               className={`rounded-lg border p-3 shadow-lg transition-all duration-300 ${
-                msg.type === 'success'
+                msg.type === 'error'
+                  ? 'bg-orange-50 border-orange-200 text-orange-800'
+                  : msg.type === 'success'
                   ? 'bg-green-50 border-green-200 text-green-800'
-                  : msg.type === 'error'
-                  ? 'bg-red-50 border-red-200 text-red-800'
                   : 'bg-blue-50 border-blue-200 text-blue-800'
               }`}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <span className="text-lg">
-                    {msg.type === 'success' ? '✅' : msg.type === 'error' ? '❌' : 'ℹ️'}
-                  </span>
-                  <span className="text-sm font-medium">{msg.message}</span>
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className={`text-sm font-medium leading-relaxed ${msg.type === 'error' ? 'whitespace-pre-line' : ''}`}>
+                    {msg.message.split('\n').map((line, index) => {
+                      // 美化错误信息的显示
+                      if (msg.type === 'error' && line.includes('详细错误信息：')) {
+                        return (
+                          <div key={index} className="mt-2">
+                            <div className="font-semibold text-orange-900 mb-1">{line}</div>
+                          </div>
+                        );
+                      } else if (msg.type === 'error' && line.includes(':')) {
+                        // 错误详情行，使用缩进和不同颜色
+                        return (
+                          <div key={index} className="ml-4 text-orange-700 text-xs font-mono bg-orange-50 px-2 py-1 rounded mt-1">
+                            {line}
+                          </div>
+                        );
+                      } else if (line.includes('收件人:')) {
+                        // 收件人信息行
+                        return (
+                          <div key={index} className="mt-2">
+                            <div className="font-semibold text-gray-700 mb-1">{line}</div>
+                          </div>
+                        );
+                      } else if (line.includes('发送时间:')) {
+                        // 发送时间行
+                        return (
+                          <div key={index} className="mt-2">
+                            <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded inline-block">
+                              🕒 {line}
+                            </div>
+                          </div>
+                        );
+                      } else if (line.includes('失败原因:')) {
+                        // 失败原因行
+                        return (
+                          <div key={index} className="mt-2">
+                            <div className="font-semibold text-orange-800 mb-1">⚠️ {line}</div>
+                          </div>
+                        );
+                      } else if (line.trim() === '') {
+                        // 空行
+                        return <br key={index} />;
+                      } else {
+                        // 普通行
+                        return <div key={index}>{line}</div>;
+                      }
+                    })}
+                  </div>
                 </div>
                 <button
                   onClick={() => setEmailMessages(prev => prev.filter(m => m.id !== msg.id))}
