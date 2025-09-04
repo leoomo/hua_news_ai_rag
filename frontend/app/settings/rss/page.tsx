@@ -36,8 +36,39 @@ export default function RssSettingsPage() {
   const batchTimer = useRef<any>(null);
   const [batchJustCompleted, setBatchJustCompleted] = useState<boolean>(false);
   
+  // 邮件消息状态 - 独立于采集消息
+  const [emailMessages, setEmailMessages] = useState<Array<{
+    id: string;
+    type: 'success' | 'error' | 'info';
+    message: string;
+    timestamp: number;
+  }>>([]);
+  
   // 使用通知管理器
   const notification = useNotification();
+
+  // 添加邮件消息
+  const addEmailMessage = (type: 'success' | 'error' | 'info', message: string) => {
+    const id = `email-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const newMessage = {
+      id,
+      type,
+      message,
+      timestamp: Date.now()
+    };
+    
+    setEmailMessages(prev => [...prev, newMessage]);
+    
+    // 自动清除消息（5秒后）
+    setTimeout(() => {
+      setEmailMessages(prev => prev.filter(msg => msg.id !== id));
+    }, 5000);
+  };
+
+  // 清除所有邮件消息
+  const clearEmailMessages = () => {
+    setEmailMessages([]);
+  };
 
   useEffect(() => {
     api.get('/api/settings/rss').then((res) => setItems(res.data?.data || res.data || []));
@@ -160,21 +191,20 @@ export default function RssSettingsPage() {
           const data = response.data.data;
           const emailInfo = data.email;
           
-          // 构建通知消息
-          let message = `${sourceName} 采集完成，新增 ${data.created} 篇文章，跳过 ${data.skipped} 篇重复文章`;
+          // 采集完成消息（独立显示）
+          const ingestMessage = `${sourceName} 采集完成，新增 ${data.created} 篇文章，跳过 ${data.skipped} 篇重复文章`;
+          notification.showSuccess('RSS采集完成', ingestMessage);
           
-          // 添加邮件状态信息
+          // 邮件状态消息（独立显示为flash消息）
           if (emailInfo) {
             if (emailInfo.enabled && emailInfo.sent) {
-              message += `\n📧 ${emailInfo.message}`;
+              addEmailMessage('success', `📧 ${emailInfo.message}`);
             } else if (emailInfo.enabled && !emailInfo.sent) {
-              message += `\n📧 ${emailInfo.message}`;
+              addEmailMessage('error', `📧 ${emailInfo.message}`);
             } else {
-              message += `\n📧 ${emailInfo.message}`;
+              addEmailMessage('info', `📧 ${emailInfo.message}`);
             }
           }
-          
-          notification.showSuccess('RSS采集完成', message);
         } else {
           notification.showError('RSS采集失败', response.data?.msg || '采集过程中发生错误');
         }
@@ -264,21 +294,20 @@ export default function RssSettingsPage() {
           const summary = data.summary;
           const emailInfo = summary?.email;
           
-          // 构建通知消息
-          let message = `批量采集完成，共新增 ${summary?.total_created || 0} 篇文章，跳过 ${summary?.total_skipped || 0} 篇重复文章`;
+          // 批量采集完成消息（独立显示）
+          const batchMessage = `批量采集完成，共新增 ${summary?.total_created || 0} 篇文章，跳过 ${summary?.total_skipped || 0} 篇重复文章`;
+          notification.showSuccess('批量采集完成', batchMessage);
           
-          // 添加邮件状态信息
+          // 邮件状态消息（独立显示为flash消息）
           if (emailInfo) {
             if (emailInfo.enabled && emailInfo.sent) {
-              message += `\n📧 ${emailInfo.message}`;
+              addEmailMessage('success', `📧 ${emailInfo.message}`);
             } else if (emailInfo.enabled && !emailInfo.sent) {
-              message += `\n📧 ${emailInfo.message}`;
+              addEmailMessage('error', `📧 ${emailInfo.message}`);
             } else {
-              message += `\n📧 ${emailInfo.message}`;
+              addEmailMessage('info', `📧 ${emailInfo.message}`);
             }
           }
-          
-          notification.showSuccess('批量采集完成', message);
         } else {
           notification.showError('批量采集失败', response.data?.msg || '批量采集过程中发生错误');
         }
@@ -377,6 +406,7 @@ export default function RssSettingsPage() {
       {/* 通知容器 */}
       <NotificationContainer notifications={notification.notifications} />
       
+      
       {/* 进度指示器（仅用于单条模式） */}
       <IngestProgress
         key={`${showProgress}-${progressType}-${progressSourceName}`}
@@ -422,6 +452,51 @@ export default function RssSettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* 邮件消息Flash显示区域 - 在列表卡片和新增卡片之间 */}
+      {emailMessages.length > 0 && (
+        <div className="space-y-2">
+          {emailMessages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`rounded-lg border p-3 shadow-lg transition-all duration-300 ${
+                msg.type === 'success'
+                  ? 'bg-green-50 border-green-200 text-green-800'
+                  : msg.type === 'error'
+                  ? 'bg-red-50 border-red-200 text-red-800'
+                  : 'bg-blue-50 border-blue-200 text-blue-800'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <span className="text-lg">
+                    {msg.type === 'success' ? '✅' : msg.type === 'error' ? '❌' : 'ℹ️'}
+                  </span>
+                  <span className="text-sm font-medium">{msg.message}</span>
+                </div>
+                <button
+                  onClick={() => setEmailMessages(prev => prev.filter(m => m.id !== msg.id))}
+                  className="text-gray-400 hover:text-gray-600 transition-colors ml-2"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+          
+          {/* 清除所有消息按钮 */}
+          {emailMessages.length > 1 && (
+            <div className="flex justify-end">
+              <button
+                onClick={clearEmailMessages}
+                className="text-xs text-gray-500 hover:text-gray-700 underline"
+              >
+                清除所有邮件消息
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="rounded-xl border border-gray-200 bg-white/90 backdrop-blur-sm shadow-sm">
         <div className="flex items-center justify-between p-2">
