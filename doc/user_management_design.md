@@ -56,22 +56,7 @@
   - `user_id`: 用户ID
   - `role`: 在组中的角色 (member, admin)
 
-#### 1.7 用户通知设置表 (user_notification_settings)
-- **用途**: 管理用户的通知偏好
-- **主要字段**:
-  - `user_id`: 用户ID
-  - `notification_type`: 通知类型 (email, push, in_app)
-  - `event_type`: 事件类型 (new_article, system_update)
-  - `is_enabled`: 是否启用
 
-#### 1.8 用户API密钥表 (user_api_keys)
-- **用途**: 管理用户的API访问密钥
-- **主要字段**:
-  - `user_id`: 用户ID
-  - `key_name`: 密钥名称
-  - `api_key`: API密钥
-  - `permissions`: API权限(JSON格式)
-  - `expires_at`: 过期时间
 
 ### 2. 用户表扩展字段
 
@@ -176,29 +161,7 @@
 - 操作频率分析
 - 安全事件监控
 
-### 4. 通知管理模块
 
-#### 4.1 通知设置
-- 通知类型配置
-- 通知渠道设置
-- 通知时间偏好
-
-#### 4.2 通知发送
-- 邮件通知
-- 站内消息
-- 推送通知
-
-### 5. API管理模块
-
-#### 5.1 API密钥管理
-- 密钥生成
-- 权限控制
-- 使用统计
-
-#### 5.2 API访问控制
-- 请求限制
-- 权限验证
-- 日志记录
 
 ## 实现方案
 
@@ -221,7 +184,13 @@ python scripts/migrate_user_management.py
 
 ### 4. 前端界面更新
 
-在 `frontend/app/settings/users/` 中更新用户管理界面。
+在 `frontend/app/settings/users/` 中更新用户管理界面，包含以下功能模块：
+- 用户管理
+- 角色权限管理
+- 用户组管理
+- 用户偏好设置
+- 用户活动日志
+- 会话管理
 
 ## 安全考虑
 

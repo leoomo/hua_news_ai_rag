@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { Save } from 'lucide-react';
 import { api } from '@/lib/api';
 import { isEmail } from '@/lib/validators';
 
@@ -8,6 +9,15 @@ type EmailConfig = {
   enable_email_notification: boolean;
   recipient_emails: string[];
   sender_name: string;
+  sender_email: string;
+  sender_password: string;
+  email_provider: string;
+  custom_smtp_config: {
+    smtp_host: string;
+    smtp_port: number;
+    smtp_use_tls: boolean;
+    smtp_use_ssl: boolean;
+  };
   max_articles_in_email: number;
   email_template_language: string;
   email_format: string;
@@ -22,6 +32,15 @@ export default function SystemSettingsPage() {
     enable_email_notification: true,
     recipient_emails: [],
     sender_name: '华新AI知识库系统',
+    sender_email: '',
+    sender_password: '',
+    email_provider: '163',
+    custom_smtp_config: {
+      smtp_host: 'smtp.your-server.com',
+      smtp_port: 587,
+      smtp_use_tls: true,
+      smtp_use_ssl: false,
+    },
     max_articles_in_email: 10,
     email_template_language: 'zh_cn',
     email_format: 'markdown',
@@ -33,6 +52,17 @@ export default function SystemSettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [newEmail, setNewEmail] = useState('');
+
+  // 自动清除消息
+  useEffect(() => {
+    if (success || error) {
+      const timer = setTimeout(() => {
+        setSuccess(null);
+        setError(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [success, error]);
 
   useEffect(() => {
     loadEmailConfig();
@@ -78,23 +108,63 @@ export default function SystemSettingsPage() {
     }
   }
 
-  function addRecipientEmail() {
+  async function addRecipientEmail() {
     if (newEmail.trim() && isEmail(newEmail.trim())) {
       if (!emailConfig.recipient_emails.includes(newEmail.trim())) {
-        setEmailConfig({
+        const updatedConfig = {
           ...emailConfig,
           recipient_emails: [...emailConfig.recipient_emails, newEmail.trim()]
-        });
+        };
+        setEmailConfig(updatedConfig);
         setNewEmail('');
+        
+        // 自动保存到数据库
+        try {
+          const res = await api.post('/api/settings/email', updatedConfig);
+          if (res.data?.code === 0) {
+            setSuccess('收件人添加成功');
+            setError(null);
+          } else {
+            setError(res.data?.message || '添加收件人失败');
+            // 回滚状态
+            setEmailConfig(emailConfig);
+          }
+        } catch (error: any) {
+          setError(error.response?.data?.message || '添加收件人失败');
+          // 回滚状态
+          setEmailConfig(emailConfig);
+        }
+      } else {
+        setError('该邮箱地址已存在');
       }
+    } else {
+      setError('请输入有效的邮箱地址');
     }
   }
 
-  function removeRecipientEmail(email: string) {
-    setEmailConfig({
+  async function removeRecipientEmail(email: string) {
+    const updatedConfig = {
       ...emailConfig,
       recipient_emails: emailConfig.recipient_emails.filter(e => e !== email)
-    });
+    };
+    setEmailConfig(updatedConfig);
+    
+    // 自动保存到数据库
+    try {
+      const res = await api.post('/api/settings/email', updatedConfig);
+      if (res.data?.code === 0) {
+        setSuccess('收件人删除成功');
+        setError(null);
+      } else {
+        setError(res.data?.message || '删除收件人失败');
+        // 回滚状态
+        setEmailConfig(emailConfig);
+      }
+    } catch (error: any) {
+      setError(error.response?.data?.message || '删除收件人失败');
+      // 回滚状态
+      setEmailConfig(emailConfig);
+    }
   }
 
   function handleKeyPress(e: React.KeyboardEvent) {
@@ -206,12 +276,161 @@ export default function SystemSettingsPage() {
           </div>
         </div>
 
-        {/* 邮件内容配置 */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium text-gray-700">邮件内容配置</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* 邮件服务商配置 */}
+        <div className="space-y-3">
+          <h3 className="text-base font-medium text-gray-700">邮件服务商配置</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                邮件服务商
+              </label>
+              <select
+                value={emailConfig.email_provider}
+                onChange={(e) => setEmailConfig({
+                  ...emailConfig,
+                  email_provider: e.target.value
+                })}
+                className="w-full rounded-md border border-gray-200 bg-white/90 px-2 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                disabled={!emailConfig.enable_email_module}
+              >
+                <option value="163">163邮箱</option>
+                <option value="qq">QQ邮箱</option>
+                <option value="gmail">Gmail</option>
+                <option value="outlook">Outlook</option>
+                <option value="yahoo">Yahoo</option>
+                <option value="sina">新浪邮箱</option>
+                <option value="custom">自定义SMTP</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                发件人邮箱
+              </label>
+              <input
+                type="email"
+                value={emailConfig.sender_email}
+                onChange={(e) => setEmailConfig({
+                  ...emailConfig,
+                  sender_email: e.target.value
+                })}
+                className="w-full rounded-md border border-gray-200 bg-white/90 px-2 py-1.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                placeholder="your-email@example.com"
+                disabled={!emailConfig.enable_email_module}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                邮箱密码/授权码
+              </label>
+              <input
+                type="password"
+                value={emailConfig.sender_password}
+                onChange={(e) => setEmailConfig({
+                  ...emailConfig,
+                  sender_password: e.target.value
+                })}
+                className="w-full rounded-md border border-gray-200 bg-white/90 px-2 py-1.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                placeholder="请输入密码或授权码"
+                disabled={!emailConfig.enable_email_module}
+              />
+            </div>
+          </div>
+
+          {/* 自定义SMTP配置 */}
+          {emailConfig.email_provider === 'custom' && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-3">
+              <h4 className="text-sm font-medium text-gray-700">自定义SMTP配置</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    SMTP服务器
+                  </label>
+                  <input
+                    type="text"
+                    value={emailConfig.custom_smtp_config.smtp_host}
+                    onChange={(e) => setEmailConfig({
+                      ...emailConfig,
+                      custom_smtp_config: {
+                        ...emailConfig.custom_smtp_config,
+                        smtp_host: e.target.value
+                      }
+                    })}
+                    className="w-full rounded-md border border-gray-200 bg-white/90 px-2 py-1.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                    placeholder="smtp.your-server.com"
+                    disabled={!emailConfig.enable_email_module}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    SMTP端口
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="65535"
+                    value={emailConfig.custom_smtp_config.smtp_port}
+                    onChange={(e) => setEmailConfig({
+                      ...emailConfig,
+                      custom_smtp_config: {
+                        ...emailConfig.custom_smtp_config,
+                        smtp_port: parseInt(e.target.value) || 587
+                      }
+                    })}
+                    className="w-full rounded-md border border-gray-200 bg-white/90 px-2 py-1.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                    disabled={!emailConfig.enable_email_module}
+                  />
+                </div>
+
+                <div className="flex items-center space-x-3">
+                  <label className="flex items-center space-x-1">
+                    <input
+                      type="checkbox"
+                      checked={emailConfig.custom_smtp_config.smtp_use_tls}
+                      onChange={(e) => setEmailConfig({
+                        ...emailConfig,
+                        custom_smtp_config: {
+                          ...emailConfig.custom_smtp_config,
+                          smtp_use_tls: e.target.checked
+                        }
+                      })}
+                      className="rounded border-gray-300 text-gray-600 focus:ring-gray-500"
+                      disabled={!emailConfig.enable_email_module}
+                    />
+                    <span className="text-xs font-medium text-gray-700">使用TLS</span>
+                  </label>
+                  
+                  <label className="flex items-center space-x-1">
+                    <input
+                      type="checkbox"
+                      checked={emailConfig.custom_smtp_config.smtp_use_ssl}
+                      onChange={(e) => setEmailConfig({
+                        ...emailConfig,
+                        custom_smtp_config: {
+                          ...emailConfig.custom_smtp_config,
+                          smtp_use_ssl: e.target.checked
+                        }
+                      })}
+                      className="rounded border-gray-300 text-gray-600 focus:ring-gray-500"
+                      disabled={!emailConfig.enable_email_module}
+                    />
+                    <span className="text-xs font-medium text-gray-700">使用SSL</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
+
+        </div>
+
+        {/* 邮件内容和发送配置 */}
+        <div className="space-y-3">
+          <h3 className="text-base font-medium text-gray-700">邮件内容和发送配置</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">
                 发件人显示名称
               </label>
               <input
@@ -221,13 +440,13 @@ export default function SystemSettingsPage() {
                   ...emailConfig,
                   sender_name: e.target.value
                 })}
-                className="w-full rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                className="w-full rounded-md border border-gray-200 bg-white/90 px-2 py-1.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 disabled={!emailConfig.enable_email_module}
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-medium text-gray-600 mb-1">
                 邮件格式
               </label>
               <select
@@ -236,7 +455,7 @@ export default function SystemSettingsPage() {
                   ...emailConfig,
                   email_format: e.target.value
                 })}
-                className="w-full rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                className="w-full rounded-md border border-gray-200 bg-white/90 px-2 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 disabled={!emailConfig.enable_email_module}
               >
                 <option value="html">HTML</option>
@@ -245,7 +464,7 @@ export default function SystemSettingsPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-medium text-gray-600 mb-1">
                 模板语言
               </label>
               <select
@@ -254,7 +473,7 @@ export default function SystemSettingsPage() {
                   ...emailConfig,
                   email_template_language: e.target.value
                 })}
-                className="w-full rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                className="w-full rounded-md border border-gray-200 bg-white/90 px-2 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 disabled={!emailConfig.enable_email_module}
               >
                 <option value="zh_cn">中文</option>
@@ -263,7 +482,7 @@ export default function SystemSettingsPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-medium text-gray-600 mb-1">
                 每封邮件最多文章数
               </label>
               <input
@@ -275,19 +494,13 @@ export default function SystemSettingsPage() {
                   ...emailConfig,
                   max_articles_in_email: parseInt(e.target.value) || 10
                 })}
-                className="w-full rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                className="w-full rounded-md border border-gray-200 bg-white/90 px-2 py-1.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 disabled={!emailConfig.enable_email_module}
               />
             </div>
-          </div>
-        </div>
 
-        {/* 发送配置 */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium text-gray-700">发送配置</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-medium text-gray-600 mb-1">
                 发送超时（秒）
               </label>
               <input
@@ -299,13 +512,13 @@ export default function SystemSettingsPage() {
                   ...emailConfig,
                   email_send_timeout: parseInt(e.target.value) || 30
                 })}
-                className="w-full rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                className="w-full rounded-md border border-gray-200 bg-white/90 px-2 py-1.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 disabled={!emailConfig.enable_email_module}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-medium text-gray-600 mb-1">
                 重试次数
               </label>
               <input
@@ -317,13 +530,13 @@ export default function SystemSettingsPage() {
                   ...emailConfig,
                   email_retry_count: parseInt(e.target.value) || 3
                 })}
-                className="w-full rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                className="w-full rounded-md border border-gray-200 bg-white/90 px-2 py-1.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 disabled={!emailConfig.enable_email_module}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-medium text-gray-600 mb-1">
                 重试延迟（秒）
               </label>
               <input
@@ -335,7 +548,7 @@ export default function SystemSettingsPage() {
                   ...emailConfig,
                   email_retry_delay: parseInt(e.target.value) || 5
                 })}
-                className="w-full rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                className="w-full rounded-md border border-gray-200 bg-white/90 px-2 py-1.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 disabled={!emailConfig.enable_email_module}
               />
             </div>
@@ -344,16 +557,12 @@ export default function SystemSettingsPage() {
 
         {/* 保存按钮 */}
         <div className="pt-4 border-t">
-          <div className="mb-3">
-            <p className="text-sm text-gray-600">
-              💾 点击保存后，配置将立即生效。如果启用了邮件模块，系统将使用新的配置发送邮件。
-            </p>
-          </div>
           <button
             onClick={saveEmailConfig}
             disabled={loading}
-            className="px-6 py-2 bg-gray-900 text-white rounded-md border border-gray-900 hover:bg-gray-800 hover:shadow hover:-translate-y-0.5 transition-all duration-150 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:border-gray-300"
+            className="px-6 py-2 bg-gray-900 text-white rounded-md border border-gray-900 hover:bg-gray-800 hover:shadow hover:-translate-y-0.5 transition-all duration-150 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:border-gray-300 flex items-center gap-2"
           >
+            <Save className="w-4 h-4" />
             {loading ? '保存中...' : '保存配置'}
           </button>
         </div>

@@ -1,21 +1,63 @@
-项目运行说明（本地开发）
+# 华新AI知识库系统
 
-## 目录（Quick Preview）
-- [截图（Snapshots）](#sec-snapshots)
-- [项目概览](#sec-overview)
-- [先决条件](#sec-prereq)
-- [后端（Flask API）](#sec-backend)
-- [前端（Next.js）](#sec-frontend)
-- [常用脚本](#sec-scripts)
-- [接口文档](#sec-openapi)
-- [常见问题（FAQ）](#sec-faq)
-- [目录结构（详细）](#sec-structure)
-- [开发提示](#sec-dev-tips)
-- [接口测试（API Tests）](#sec-api-tests)
-- [模块结构具体说明](#sec-module-structure)
+> 基于AI的智能新闻采集、处理和检索系统，支持RSS源管理、知识库构建、语义搜索和邮件通知等功能。
 
-<a id="sec-snapshots"></a>
-## 截图（Snapshots）
+## 📋 目录
+
+- [🚀 快速开始](#快速开始)
+- [📸 系统截图](#系统截图)
+- [🏗️ 项目概览](#项目概览)
+- [⚙️ 系统要求](#系统要求)
+- [🔧 安装指南](#安装指南)
+- [🚀 启动服务](#启动服务)
+- [📚 功能特性](#功能特性)
+- [🔌 API接口](#api接口)
+- [📁 项目结构](#项目结构)
+- [🛠️ 开发指南](#开发指南)
+- [❓ 常见问题](#常见问题)
+- [📖 相关文档](#相关文档)
+
+## 🚀 快速开始
+
+### 一键安装
+```bash
+# 克隆项目
+git clone <repository-url>
+cd hua_news_ai_rag
+
+# 运行一键安装脚本
+python install.py
+```
+
+### 手动安装
+```bash
+# 1. 后端设置
+python scripts/setup_backend.py
+
+# 2. 前端设置
+python scripts/setup_frontend.py
+
+# 3. 数据库初始化
+python scripts/init_database.py
+```
+
+### 启动服务
+```bash
+# 启动后端
+cd backend && python run.py
+
+# 启动前端
+cd frontend && npm run dev
+```
+
+### 访问系统
+- **前端界面**: http://localhost:3000
+- **后端API**: http://localhost:5050
+- **默认账户**: admin / admin123
+
+---
+
+## 📸 系统截图
 
 > 以下为系统原型与页面截图，更多请查看 `snapshot/` 目录。
 
@@ -80,45 +122,100 @@
   
   邮件配置、功能开关、发送参数等系统级设置。配置卡片采用毛玻璃效果，输入框统一圆角设计，提示信息采用灰色信息条样式。
 
-<a id="sec-overview"></a>
-## 一、项目概览
-- 后端：Flask + SQLAlchemy（Python 3.11+）
-- 前端：Next.js 14 + React 18（Node.js 18/20+）
-- 数据库：SQLite（默认 `hua_news.db`，无需手动建表）
-- 包管理：Python 使用 uv，前端使用 npm
+## 🏗️ 项目概览
 
-<a id="sec-prereq"></a>
-## 二、先决条件
-1) 安装 Python 3.11+
-2) 安装 uv（Python 包管理与运行）
-   - macOS/Linux: `curl -LsSf https://astral.sh/uv/install.sh | sh`
-3) 安装 Node.js（建议 20+）与 npm
-4) 可选：Ollama（用于本地大模型问答 RAG）
-   - 安装参考：`https://ollama.com/`
-   - 拉取模型（示例，与后端默认一致）：`ollama pull qwen2.5:3b`
+华新AI知识库系统是一个基于AI的智能新闻采集、处理和检索平台，集成了现代化的Web技术栈和AI能力。
 
-<a id="sec-backend"></a>
-## 三、后端（Flask API）
-目录：`backend/`
+### 技术栈
+- **后端**: Flask + SQLAlchemy + LangChain（Python 3.11+）
+- **前端**: Next.js 14 + React 18 + TypeScript（Node.js 18+）
+- **数据库**: SQLite（支持扩展至PostgreSQL/MySQL）
+- **AI能力**: 文本嵌入、向量搜索、智能问答、内容摘要
+- **包管理**: Python使用uv，前端使用npm
 
-### 1. 安装依赖
-在项目根目录执行：
+### 核心功能
+- 🔍 **智能搜索**: 基于向量相似度的语义搜索
+- 📰 **RSS采集**: 自动化新闻源采集和内容处理
+- 📚 **知识库管理**: 文章分类、标签、批量操作
+- 👥 **用户管理**: 角色权限、用户组、活动日志
+- 📧 **邮件通知**: 采集完成通知、系统消息推送
+- 🤖 **AI问答**: 基于知识库的智能问答系统
+- 📊 **数据分析**: 关键词分析、趋势统计、可视化展示
+
+## ⚙️ 系统要求
+
+### 最低要求
+- **操作系统**: Windows 10/11, macOS 10.15+, Ubuntu 18.04+
+- **Python**: 3.11 或更高版本
+- **Node.js**: 18.0 或更高版本
+- **内存**: 4GB RAM
+- **存储**: 2GB 可用空间
+
+### 推荐配置
+- **操作系统**: Windows 11, macOS 12+, Ubuntu 20.04+
+- **Python**: 3.11+
+- **Node.js**: 20.0+
+- **内存**: 8GB RAM
+- **存储**: 5GB 可用空间
+
+### 可选组件
+- **Ollama**: 用于本地大模型问答（RAG功能）
+  - 安装: https://ollama.com/
+  - 模型: `ollama pull qwen2.5:3b`
+- **uv**: Python包管理器（推荐）
+  - 安装: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+
+## 🔧 安装指南
+
+### 自动安装（推荐）
+```bash
+# 运行一键安装脚本
+python install.py
 ```
+
+### 分步安装
+
+#### 1. 后端设置
+```bash
+# 运行后端初始化脚本
+python scripts/setup_backend.py
+
+# 或手动安装
 uv sync
-```
-可选安装 LangChain 功能（用于 RAG/QA）：
-```
-uv sync -E langchain
+uv sync -E langchain  # 可选：安装LangChain功能
 ```
 
-### 2. 环境变量（可选）
-不设置也能跑，以下为可覆盖项：
-```
-DATABASE_URL=sqlite:///绝对路径/hua_news.db     # 默认：项目根的 hua_news.db
-SECRET_KEY=dev-secret-key                      # 会话密钥
-PORT=5050                                      # 后端端口，默认 5050
+#### 2. 前端设置
+```bash
+# 运行前端初始化脚本
+python scripts/setup_frontend.py
 
-# 抓取/切分/嵌入等（均有默认值）
+# 或手动安装
+cd frontend
+npm install
+```
+
+#### 3. 数据库初始化
+```bash
+# 运行数据库初始化脚本
+python scripts/init_database.py
+
+# 或手动初始化
+sqlite3 hua_news.db < db/init_database.sql
+```
+
+### 环境配置
+
+#### 后端环境变量 (.env)
+```env
+# 数据库配置
+DATABASE_URL=sqlite:///./hua_news.db
+SECRET_KEY=your-secret-key-here
+
+# 服务配置
+PORT=5050
+
+# 采集配置
 FETCH_TIMEOUT_SEC=8
 FETCH_RETRIES=3
 RATE_LIMIT_DOMAIN_QPS=1
@@ -128,346 +225,423 @@ EMBED_BATCH_SIZE=64
 CHUNK_SIZE=800
 CHUNK_OVERLAP=120
 SIMHASH_HAMMING_THRESHOLD=4
+
+# 百度搜索API（可选）
+BAIDU_API_KEY=
+BAIDU_SECRET_KEY=
+
+# 网络搜索配置
+ENABLE_WEB_SEARCH=true
+WEB_SEARCH_FALLBACK=true
 ```
 
-### 3. 初始化数据库（可选）
-程序启动时会自动建表。如需导入示例数据（如果有）：
-```
-sqlite3 hua_news.db < db/seed.sql
-```
+#### 前端环境变量 (.env.local)
+```env
+# API基础URL
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5050
 
-### 4. 启动后端（推荐方式）
-使用封装的启动脚本，避免相对导入问题：
-```
-cd backend
-source ../.venv/bin/activate
-python run.py               # 默认端口 5050
-# 或自定义端口：PORT=8080 python run.py
-```
-默认监听：`http://localhost:5050`
-
-健康检查：`GET http://localhost:5050/api/health` → `{ "status": "ok" }`
-
-> 兼容方式：也可使用 Flask 命令行启动
-> ```bash
-> source .venv/bin/activate
-> python -m flask --app backend.core.app run --host=0.0.0.0 --port=5001 --debug
-> ```
-
-### 5. 启动 RAG/QA（可选）
-仅当已执行 `uv sync -E langchain` 且本机有可用 LLM（如 Ollama）时：
-- 确保本地已运行 Ollama，且存在模型 `qwen2.5:3b`
-- QA 相关接口详见 `openapi.yaml` 中的 `/api/search/qa`
-
-<a id="sec-frontend"></a>
-## 四、前端（Next.js）
-目录：`frontend/`
-
-### 1. 安装依赖
-```
-cd frontend
-npm install
+# 应用配置
+NEXT_PUBLIC_APP_NAME=华新AI知识库系统
+NEXT_PUBLIC_APP_VERSION=1.0.0
 ```
 
-### 2. 环境变量
-前端通过 `NEXT_PUBLIC_API_BASE_URL` 访问后端，默认 `http://localhost:5050`。
+## 🚀 启动服务
 
-如后端运行在 5001 端口（兼容方式），推荐在 `frontend/.env.local` 设置：
-```
-NEXT_PUBLIC_API_BASE_URL=http://localhost:5001
-```
+### 开发环境
 
-### 3. 启动前端
-```
-npm run dev
-```
-默认访问：`http://localhost:3000`
-
-<a id="sec-scripts"></a>
-## 五、常用脚本
-
-### 后端服务
+#### 启动后端服务
 ```bash
-# 标准启动（端口 5050）
+cd backend
+python run.py
+# 默认端口: 5050
+# 健康检查: http://localhost:5050/api/health
+```
+
+#### 启动前端服务
+```bash
+cd frontend
+npm run dev
+# 默认端口: 3000
+# 访问地址: http://localhost:3000
+```
+
+### 生产环境
+
+#### 后端服务
+```bash
+# 使用Gunicorn（推荐）
+pip install gunicorn
+gunicorn -w 4 -b 0.0.0.0:5050 core.app:create_app()
+
+# 或使用uWSGI
+pip install uwsgi
+uwsgi --http :5050 --module core.app:create_app --callable app
+```
+
+#### 前端服务
+```bash
+cd frontend
+# 构建生产版本
+npm run build
+
+# 启动生产服务
+npm start
+```
+
+### 一键启动脚本
+```bash
+# Windows
+startup_scripts/start_all.bat
+
+# Linux/macOS
+./startup_scripts/start_all.sh
+```
+
+## 📚 功能特性
+
+### 🔍 智能搜索
+- **语义搜索**: 基于向量相似度的智能检索
+- **混合搜索**: 结合关键词和语义搜索
+- **网络搜索**: 本地无结果时自动联网补充
+- **引用溯源**: 搜索结果包含来源链接
+
+### 📰 RSS采集管理
+- **多源采集**: 支持多个RSS源同时采集
+- **自动采集**: 定时自动采集，可配置采集间隔
+- **手动采集**: 支持单源和批量手动采集
+- **内容去重**: 基于SimHash的智能去重
+- **状态监控**: 实时显示采集状态和进度
+
+### 📚 知识库管理
+- **文章管理**: 支持文章的增删改查
+- **分类标签**: 灵活的文章分类和标签系统
+- **批量操作**: 支持批量删除、导入等操作
+- **内容编辑**: 行内编辑文章标签和分类
+- **搜索筛选**: 多维度筛选和搜索
+
+### 👥 用户权限管理
+- **用户管理**: 完整的用户CRUD操作
+- **角色权限**: 基于角色的权限控制系统
+- **用户组**: 支持用户分组管理
+- **活动日志**: 详细的用户操作日志
+- **会话管理**: JWT令牌和会话管理
+
+### 📧 邮件通知系统
+- **采集通知**: RSS采集完成自动发送邮件
+- **多收件人**: 支持多个收件人配置
+- **邮件模板**: 可自定义邮件内容和格式
+- **发送状态**: 详细的邮件发送状态反馈
+- **重试机制**: 发送失败自动重试
+
+### 🤖 AI智能功能
+- **智能问答**: 基于知识库的问答系统
+- **内容摘要**: 自动生成文章摘要
+- **关键词提取**: 智能提取文章关键词
+- **向量搜索**: 基于FAISS的高效向量检索
+- **模型配置**: 支持多种AI模型配置
+
+### 📊 数据分析
+- **仪表盘**: 数据概览和统计信息
+- **趋势分析**: 文章入库趋势分析
+- **关键词统计**: 热门关键词分析
+- **来源分析**: RSS源效果分析
+- **可视化图表**: 直观的数据展示
+
+## 🔌 API接口
+
+### 接口文档
+- **OpenAPI规范**: `openapi.yaml`
+- **详细文档**: `doc/backend_api.md`
+- **基准URL**: `http://localhost:5050`
+
+### 核心API端点
+
+#### 认证相关
+- `POST /api/auth/login` - 用户登录
+- `POST /api/auth/logout` - 用户登出
+- `GET /api/auth/me` - 获取当前用户信息
+
+#### 用户管理
+- `GET /api/users` - 获取用户列表
+- `POST /api/users` - 创建用户
+- `PUT /api/users/{id}` - 更新用户
+- `DELETE /api/users/{id}` - 删除用户
+- `GET /api/user-roles` - 获取角色列表
+- `GET /api/user-groups` - 获取用户组列表
+
+#### RSS管理
+- `GET /api/settings/rss` - 获取RSS源列表
+- `POST /api/settings/rss` - 创建RSS源
+- `PUT /api/settings/rss/{id}` - 更新RSS源
+- `DELETE /api/settings/rss/{id}` - 删除RSS源
+- `POST /api/settings/rss/ingest/{id}` - 手动采集
+- `POST /api/settings/rss/ingest-all` - 批量采集
+
+#### 知识库
+- `GET /api/kb/items` - 获取文章列表
+- `GET /api/kb/items/{id}` - 获取文章详情
+- `PUT /api/kb/items/{id}` - 更新文章
+- `DELETE /api/kb/items/{id}` - 删除文章
+- `POST /api/kb/items/batch-delete` - 批量删除
+
+#### 搜索功能
+- `POST /api/search/semantic` - 语义搜索
+- `POST /api/search/qa` - 智能问答
+
+#### 系统设置
+- `GET /api/settings` - 获取系统设置
+- `PUT /api/settings` - 更新系统设置
+- `GET /api/settings/models` - 获取模型配置
+- `PUT /api/settings/models` - 更新模型配置
+- `POST /api/email/test` - 测试邮件发送
+
+#### 数据分析
+- `GET /api/dashboard/summary` - 获取仪表盘数据
+- `GET /api/analytics/keywords` - 获取关键词统计
+- `GET /api/analytics/trends` - 获取趋势分析
+
+### API测试
+- **HTTP集合**: `tests/api.http` (VS Code REST Client)
+- **冒烟测试**: `tests/smoke_test.py` (Python requests)
+- **测试报告**: `tests/api_test_report.md`
+
+## 📁 项目结构
+
+```
+hua_news_ai_rag/                    # 项目根目录
+├── backend/                        # 后端模块
+│   ├── core/                       # 核心应用层
+│   │   └── app.py                  # Flask主应用入口
+│   ├── data/                       # 数据层
+│   │   ├── db.py                   # 数据库连接管理
+│   │   ├── models.py               # 基础数据模型
+│   │   ├── user_management_models.py # 用户管理模型
+│   │   └── model_config_models.py  # 模型配置模型
+│   ├── ai/                         # AI服务层
+│   │   ├── embeddings.py           # 文本嵌入服务
+│   │   ├── enrich.py               # 文本增强工具
+│   │   ├── qa.py                   # 问答系统
+│   │   └── vectorstore.py          # 向量搜索功能
+│   ├── crawler/                    # 数据采集层
+│   │   ├── fetcher.py              # HTTP抓取器
+│   │   ├── ingest.py               # RSS采集处理
+│   │   └── ingest_utils.py         # 采集工具
+│   ├── routes/                     # API路由层
+│   │   ├── auth.py                 # 认证端点
+│   │   ├── users.py                # 用户管理端点
+│   │   ├── rss.py                  # RSS管理端点
+│   │   ├── kb.py                   # 知识库端点
+│   │   ├── models_settings.py      # 模型配置端点
+│   │   ├── settings.py             # 系统设置端点
+│   │   ├── email_test.py           # 邮件测试端点
+│   │   └── user_*.py               # 用户管理相关端点
+│   ├── services/                   # 领域服务
+│   │   ├── ai_summary.py           # AI摘要服务
+│   │   ├── web_search.py           # 联网搜索服务
+│   │   └── simple_web_search.py    # 简单搜索服务
+│   ├── email_fly/                  # 邮件模块
+│   │   ├── email_sender.py         # 邮件发送服务
+│   │   ├── email_templates.py      # 邮件模板
+│   │   └── db_email_sender.py      # 数据库邮件发送
+│   ├── scripts/                    # 脚本工具
+│   │   ├── export_openapi.py       # OpenAPI导出
+│   │   └── migrate_*.py            # 数据库迁移脚本
+│   ├── config.py                   # 应用配置
+│   └── run.py                      # 服务启动文件
+├── frontend/                       # 前端应用
+│   ├── app/                        # Next.js应用目录
+│   │   ├── page.tsx                # 首页
+│   │   ├── login/                  # 登录页面
+│   │   ├── kb/                     # 知识库页面
+│   │   ├── search/                 # 搜索页面
+│   │   ├── settings/               # 设置页面
+│   │   │   ├── rss/                # RSS管理
+│   │   │   ├── models/             # 模型配置
+│   │   │   ├── system/             # 系统设置
+│   │   │   └── users/              # 用户管理
+│   │   └── analytics/              # 数据分析
+│   ├── components/                 # 组件库
+│   │   ├── UserManagement/         # 用户管理组件
+│   │   ├── Nav.tsx                 # 导航组件
+│   │   ├── Notification.tsx        # 通知组件
+│   │   └── ContentModal.tsx        # 内容模态框
+│   ├── lib/                        # 工具库
+│   │   ├── api.ts                  # API客户端
+│   │   ├── auth.ts                 # 认证工具
+│   │   └── validators.ts           # 验证器
+│   └── package.json                # 前端依赖配置
+├── db/                             # 数据库相关
+│   ├── init_database.sql           # 数据库初始化脚本
+│   ├── schema.sql                  # 基础表结构
+│   ├── seed.sql                    # 种子数据
+│   └── user_management_schema.sql  # 用户管理表结构
+├── scripts/                        # 安装脚本
+│   ├── init_database.py            # 数据库初始化脚本
+│   ├── setup_backend.py            # 后端设置脚本
+│   └── setup_frontend.py           # 前端设置脚本
+├── doc/                            # 项目文档
+│   ├── backend_api.md              # API文档
+│   ├── system_architecture_document.md # 系统架构文档
+│   ├── product_requirements_document.md # 产品需求文档
+│   └── user_management_design.md   # 用户管理设计文档
+├── tests/                          # 测试文件
+│   ├── api.http                    # HTTP测试集合
+│   ├── smoke_test.py               # 冒烟测试
+│   └── api_test_report.md          # 测试报告
+├── snapshot/                       # 系统截图
+├── install.py                      # 一键安装脚本
+├── INSTALLATION.md                 # 详细安装指南
+├── README_INSTALL.md               # 快速安装指南
+├── pyproject.toml                  # Python项目配置
+├── openapi.yaml                    # OpenAPI规范
+└── hua_news.db                     # SQLite数据库文件
+```
+
+## 🛠️ 开发指南
+
+### 开发环境设置
+```bash
+# 后端开发
 cd backend
 source ../.venv/bin/activate
 python run.py
 
-# 自定义端口启动
-cd backend
-source ../.venv/bin/activate
-PORT=8080 python run.py
-
-# 开发模式（自动重载）
-cd backend
-source ../.venv/bin/activate
-FLASK_ENV=development python run.py
-```
-
-### 前端服务
-```bash
-# 开发模式
+# 前端开发
 cd frontend
 npm run dev
+```
 
-# 生产构建
-cd frontend
-npm run build
-npm run start
+### 代码格式化
+```bash
+# 后端代码格式化
+pip install black isort flake8
+black backend/
+isort backend/
+flake8 backend/
 
-# 测试
+# 前端代码格式化
+npm install -g prettier
+prettier --write frontend/
+```
+
+### 测试
+```bash
+# 后端测试
+cd backend
+python -m pytest
+
+# 前端测试
 cd frontend
 npm test
 ```
 
-### 数据库管理
+### 调试
 ```bash
-# 查看数据库状态
-sqlite3 hua_news.db ".tables"
-sqlite3 hua_news.db "SELECT COUNT(*) FROM news_articles;"
-
-# 导入示例数据（如果有）
-sqlite3 hua_news.db < db/seed.sql
-```
-
-### 开发工具
-```bash
-# 修复导入问题（如需要）
+# 后端调试
 cd backend
-python fix_imports.py
+python -m pdb run.py
 
-# 测试邮件配置
-cd backend/email_fly
-python test_email.py
-
-# 生成 OpenAPI（自动扫描路由）
-cd backend
-uv run python scripts/export_openapi.py
-# 生成结果：doc/openapi.generated.yaml
+# 前端调试
+cd frontend
+npm run dev -- --inspect
 ```
 
-### 邮件模块
-```bash
-# 快速配置邮件通知
-cd backend/email_fly
-cp email_config_example.py email_config.py
-# 编辑 email_config.py 文件，填入邮箱配置
-# 测试邮件功能
-python test_email.py
-```
-
-<a id="sec-openapi"></a>
-<a id="sec-openapi"></a>
-## 六、接口文档
-参见根目录 `openapi.yaml`，后端默认基准 URL：`http://localhost:5050`。
-
-- 更易读的接口说明文档（Markdown）：`doc/backend_api.md`
-
-### 核心 API 端点
-- **健康检查**: `GET /api/health`
-- **RSS 管理**: `GET /api/settings/rss`
-- **知识库**: `GET /api/kb/items`
-- **仪表板**: `GET /api/dashboard/summary`
-- **用户认证**: `POST /api/auth/login`
-- **系统设置**: `GET /api/settings`（来自 `routes/settings.py`）
-
-### API 测试
-项目包含完整的 API 测试套件：
-- **HTTP 集合**: `tests/api.http` (VS Code REST Client)
-- **冒烟测试**: `tests/smoke_test.py` (Python requests)
-- **测试报告**: `tests/api_test_report.md`
-
-<a id="sec-faq"></a>
-## 七、常见问题（FAQ）
+## ❓ 常见问题
 
 ### 🔌 连接问题
-1) **前端报错无法访问 API**
-   - 确认 `NEXT_PUBLIC_API_BASE_URL` 指向后端实际地址
-   - 默认配置：前端 `http://localhost:3000` ↔ 后端 `http://localhost:5050`
-   - 如需要，可在 `frontend/.env.local` 中设置：`NEXT_PUBLIC_API_BASE_URL=http://localhost:5050`
+**Q: 前端报错无法访问API**
+- 确认 `NEXT_PUBLIC_API_BASE_URL` 指向后端实际地址
+- 默认配置：前端 `http://localhost:3000` ↔ 后端 `http://localhost:5050`
+- 如需要，可在 `frontend/.env.local` 中设置：`NEXT_PUBLIC_API_BASE_URL=http://localhost:5050`
 
-2) **端口冲突**
-   - 检查端口 5050 和 3000 是否被占用：`lsof -i :5050` 和 `lsof -i :3000`
-   - 如冲突，可修改后端端口：`PORT=8080 python run.py`
+**Q: 端口冲突**
+- 检查端口占用：`lsof -i :5050` 和 `lsof -i :3000`
+- 修改后端端口：`PORT=8080 python run.py`
 
-### 🐍 Python 相关问题
-3) **导入错误 (ImportError)**
-   - 运行修复脚本：`cd backend && python fix_imports.py`
-   - 确保使用正确的启动方式：`python run.py`
+### 🐍 Python相关问题
+**Q: 导入错误 (ImportError)**
+- 运行修复脚本：`cd backend && python fix_imports.py`
+- 确保使用正确的启动方式：`python run.py`
 
-4) **虚拟环境问题**
-   - 确保激活虚拟环境：`source .venv/bin/activate`
-   - 检查 Python 版本：`python --version` (建议 3.11+)
+**Q: 虚拟环境问题**
+- 确保激活虚拟环境：`source .venv/bin/activate`
+- 检查Python版本：`python --version` (建议3.11+)
 
 ### 🗄️ 数据库问题
-5) **数据库连接失败**
-   - 确认 `hua_news.db` 文件路径正确
-   - 检查 `backend/config.py` 中的 `database_url` 配置
-   - 默认路径：项目根目录的 `hua_news.db`
+**Q: 数据库连接失败**
+- 确认 `hua_news.db` 文件路径正确
+- 检查 `backend/config.py` 中的 `database_url` 配置
+- 默认路径：项目根目录的 `hua_news.db`
 
-6) **表不存在错误**
-   - 首次启动会自动创建表结构
-   - 如需要，可手动检查：`sqlite3 hua_news.db ".tables"`
+**Q: 表不存在错误**
+- 首次启动会自动创建表结构
+- 手动检查：`sqlite3 hua_news.db ".tables"`
 
-### 🤖 AI 功能问题
-7) **RAG/QA 无法使用**
-   - 执行：`uv sync -E langchain`
-   - 确保本机有可用的 LLM 服务（例如 Ollama）
-   - 拉取模型：`ollama pull qwen2.5:3b`
+### 🤖 AI功能问题
+**Q: RAG/QA无法使用**
+- 执行：`uv sync -E langchain`
+- 确保本机有可用的LLM服务（例如Ollama）
+- 拉取模型：`ollama pull qwen2.5:3b`
 
-8) **向量搜索失败**
-   - 检查 FAISS 索引是否正确创建
-   - 确认文本嵌入服务正常运行
-   - 查看后端日志中的错误信息
+**Q: 向量搜索失败**
+- 检查FAISS索引是否正确创建
+- 确认文本嵌入服务正常运行
+- 查看后端日志中的错误信息
 
 ### 🚀 启动问题
-9) **后端启动失败**
-   - 检查依赖是否安装完整：`uv sync`
-   - 确认端口未被占用
-   - 查看错误日志，常见问题已在上方列出
+**Q: 后端启动失败**
+- 检查依赖是否安装完整：`uv sync`
+- 确认端口未被占用
+- 查看错误日志
 
-10) **前端启动失败**
-    - 检查 Node.js 版本：`node --version` (建议 18+)
-    - 重新安装依赖：`cd frontend && rm -rf node_modules && npm install`
-    - 清除缓存：`npm run dev -- --clear`
+**Q: 前端启动失败**
+- 检查Node.js版本：`node --version` (建议18+)
+- 重新安装依赖：`cd frontend && rm -rf node_modules && npm install`
+- 清除缓存：`npm run dev -- --clear`
 
-<a id="sec-structure"></a>
-## 八、目录结构（详细）
+### 📧 邮件问题
+**Q: 邮件发送失败**
+- 检查邮件配置：系统设置 → 邮件设置
+- 验证SMTP设置和认证信息
+- 查看邮件发送日志
 
-### 项目根目录
-```
-hua_news_ai_rag/           # 项目根目录
-├── backend/               # 后端模块（重构后的模块化架构）
-├── frontend/              # Next.js 前端应用
-├── tests/                 # 接口测试文件
-├── snapshot/              # 系统截图
-├── doc/                   # 项目文档
-├── prototype/             # 前端原型
-├── openapi.yaml           # OpenAPI 接口定义
-├── hua_news.db            # SQLite 数据库文件
-├── pyproject.toml         # Python 项目配置
-└── README.md              # 项目说明文档
-```
+**Q: 邮件通知不工作**
+- 确认邮件模块已启用
+- 检查收件人邮箱配置
+- 验证RSS采集是否正常
 
-### 后端模块结构
-```
-backend/
-├── core/                  # 核心应用层
-│   ├── app.py            # Flask 主应用入口
-│   └── __init__.py       # 核心模块初始化
-├── data/                  # 数据层
-│   ├── db.py             # 数据库连接和会话管理
-│   ├── models.py         # SQLAlchemy ORM 模型
-│   └── __init__.py       # 数据层初始化
-├── ai/                    # AI 服务层
-│   ├── embeddings.py     # 文本嵌入服务（sentence-transformers）
-│   ├── enrich.py         # 文本增强工具（摘要、关键词提取）
-│   ├── qa.py             # 问答系统（LangChain）
-│   ├── vectorstore.py    # 向量搜索功能（FAISS）
-│   └── __init__.py       # AI 层初始化
-├── crawler/               # 数据采集层
-│   ├── fetcher.py        # HTTP 抓取器（限速、robots.txt 支持）
-│   ├── ingest.py         # RSS 采集和内容处理
-│   ├── ingest_utils.py   # 采集工具和数据库模式管理
-│   └── __init__.py       # 采集层初始化
-├── routes/                # API 路由层
-│   ├── auth.py           # 认证端点
-│   ├── users.py          # 用户管理端点
-│   ├── rss.py            # RSS 源管理端点
-│   ├── kb.py             # 知识库和搜索端点
-│   ├── models_settings.py # AI 模型配置端点
-│   ├── settings.py       # 系统设置端点（新）
-│   └── __init__.py       # 路由层初始化
-├── services/              # 领域服务（新）
-│   ├── ai_summary.py     # AI 摘要服务
-│   ├── web_search.py     # 联网搜索服务
-│   └── __init__.py       # 服务层初始化
-├── utils/                 # 工具层
-│   ├── test_rss.py       # RSS 测试工具
-│   └── __init__.py       # 工具层初始化
-├── email_fly/             # 邮件模块
-│   ├── email_config.py   # 邮件配置文件
-│   └── ...
-├── config.py              # 应用配置（Pydantic 设置）
-├── run.py                 # 后端服务启动文件
-└── __init__.py            # 后端模块初始化
-```
+## 📖 相关文档
 
-### 模块职责说明
+### 安装部署
+- [详细安装指南](INSTALLATION.md) - 完整的安装和配置说明
+- [快速安装指南](README_INSTALL.md) - 快速上手指南
 
-#### 🔧 核心应用层 (core/)
-- **app.py**: Flask 应用主入口，注册蓝图、配置调度器、健康检查
-- 负责应用生命周期管理、中间件配置、错误处理
+### 技术文档
+- [API接口文档](doc/backend_api.md) - 完整的后端API文档
+- [系统架构文档](doc/system_architecture_document.md) - 系统架构设计
+- [产品需求文档](doc/product_requirements_document.md) - 产品功能需求
+- [用户管理设计](doc/user_management_design.md) - 用户权限系统设计
 
-#### 🗄️ 数据层 (data/)
-- **db.py**: 数据库连接池管理、会话管理、动态列添加
-- **models.py**: 数据模型定义（用户、文章、RSS源、日志等）
-- 提供数据访问抽象，支持 SQLite 和未来扩展
+### 开发文档
+- [数据采集技术文档](doc/data_collection_technical_doc.md) - RSS采集技术实现
+- [系统架构代码配置](doc/system_architecture_code_and_config.md) - 代码架构说明
 
-#### 🤖 AI 服务层 (ai/)
-- **embeddings.py**: 文本向量化服务，支持多种嵌入模型
-- **enrich.py**: 文本增强（摘要、关键词提取）
-- **qa.py**: 基于 LangChain 的问答系统
-- **vectorstore.py**: FAISS 向量数据库操作
+### 测试文档
+- [API测试报告](tests/api_test_report.md) - 接口测试结果
+- [HTTP测试集合](tests/api.http) - VS Code REST Client测试
 
-#### 🕷️ 数据采集层 (crawler/)
-- **fetcher.py**: 智能 HTTP 抓取，支持限速、重试、robots.txt
-- **ingest.py**: RSS 源采集、内容解析、去重处理
-- **ingest_utils.py**: 采集工具、数据库模式管理、SimHash 去重
+---
 
-#### 🌐 API 路由层 (routes/)
-- **auth.py**: JWT 认证、登录登出、权限验证
-- **users.py**: 用户 CRUD、角色管理、权限控制
-- **rss.py**: RSS 源管理、采集触发、状态监控
-- **kb.py**: 知识库管理、搜索接口、数据分析
-- **models_settings.py**: AI 模型配置、参数调优
-- **settings.py**: 系统设置接口（如开关、阈值、外部服务配置）
+## 📄 许可证
 
-#### 🧩 领域服务 (services/)
-- **ai_summary.py**: 复用 AI 能力为业务提供摘要服务
-- **web_search.py**: 联网检索、聚合外部信息
+本项目采用MIT许可证，详见LICENSE文件。
 
-#### 🛠️ 工具层 (utils/)
-- **test_rss.py**: RSS 功能测试、调试工具
+---
 
-#### 📧 邮件模块 (email_fly/)
-- **email_config.py** 等：邮件服务配置与工具
+## 🤝 贡献指南
 
-<a id="sec-dev-tips"></a>
-## 九、开发提示
-- 后端已启用 CORS，支持跨域请求
-- 后端会定时抓取 RSS（后台任务），首次可等待一段时间以出现数据
-- 如需自定义模型/向量化配置，参考接口 `/api/settings/models`
+欢迎提交Issue和Pull Request来改进项目！
 
-<a id="sec-api-tests"></a>
-## 十、接口测试（API Tests）
+---
 
-### HTTP 集合测试
-- **文件**: `tests/api.http`
-- **工具**: VS Code REST Client / JetBrains HTTP Client
-- **使用**: 打开文件，按每段上方的 `Send Request` 即可
-- **默认基址**: `http://localhost:5050`
-
-### Python 冒烟测试
-- **文件**: `tests/smoke_test.py`
-- **环境变量**（可选）:
-  - `API_BASE_URL`（默认 `http://localhost:5050`）
-  - `API_USERNAME`、`API_PASSWORD`
-- **运行**:
-  ```bash
-  cd tests
-  source ../.venv/bin/activate
-  python smoke_test.py
-  ```
-
-### 测试报告
-- **文件**: `tests/api_test_report.md`
-- **内容**: 包含详细的测试结果和问题分析
-
-<a id="sec-module-structure"></a>
-## 十一、模块结构具体说明
-
-（同上方“后端模块结构/模块职责说明”，此处不再重复）
-
-
-
+**⚠️ 重要提醒**: 安装完成后请及时修改默认密码并配置生产环境设置！

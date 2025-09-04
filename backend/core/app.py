@@ -12,11 +12,17 @@ from routes.rss import rss_bp
 from routes.kb import kb_bp
 from routes.models_settings import models_bp
 from routes.settings import bp as settings_bp
+from routes.user_groups import user_groups_bp
+from routes.user_roles import user_roles_bp
+from routes.user_preferences import user_preferences_bp
+from routes.user_activity_logs import user_activity_logs_bp
+from routes.user_sessions import user_sessions_bp
+from routes.email_test import email_test_bp
 
 
 def create_app() -> Flask:
     app = Flask(__name__)
-    CORS(app, supports_credentials=True)
+    CORS(app, supports_credentials=True, origins=['http://localhost:3000', 'http://localhost:3001'])
 
     settings = Settings()
     app.config['SECRET_KEY'] = settings.secret_key
@@ -42,9 +48,11 @@ def create_app() -> Flask:
     # import models so SQLAlchemy knows all tables
     try:
         from data import models as _models  # noqa: F401
+        from data import user_management_models as _user_models  # noqa: F401
     except Exception:
         try:
             from data import models as _models  # type: ignore # noqa: F401
+            from data import user_management_models as _user_models  # type: ignore # noqa: F401
         except Exception:
             pass
     # ensure all tables exist (long-term approach)
@@ -66,6 +74,12 @@ def create_app() -> Flask:
     app.register_blueprint(kb_bp, url_prefix='/api')
     app.register_blueprint(models_bp, url_prefix='/api/settings')
     app.register_blueprint(settings_bp, url_prefix='/api/settings')
+    app.register_blueprint(user_groups_bp, url_prefix='/api')
+    app.register_blueprint(user_roles_bp, url_prefix='/api')
+    app.register_blueprint(user_preferences_bp, url_prefix='/api')
+    app.register_blueprint(user_activity_logs_bp, url_prefix='/api')
+    app.register_blueprint(user_sessions_bp, url_prefix='/api')
+    app.register_blueprint(email_test_bp, url_prefix='/api')
 
     # background scheduler for periodic ingest
     try:
@@ -81,10 +95,12 @@ def create_app() -> Flask:
             except Exception:
                 pass
 
-        scheduler.add_job(_job, 'interval', minutes=30, id='rss_ingest_all', replace_existing=True)
+        # 启动调度器但不自动添加任务，让用户通过前端控制
         scheduler.start()
         app.config['scheduler'] = scheduler
-    except Exception:
+        print("✅ 调度器已启动，等待用户手动开启自动采集")
+    except Exception as e:
+        print(f"❌ 调度器启动失败: {e}")
         pass
 
     @app.get('/api/health')

@@ -14,36 +14,33 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from backend.data.db import get_session, engine
+from backend.data.db import init_db, get_session, engine
 from backend.data.models import User
 from backend.data.user_management_models import (
     UserRole, UserPreference, UserActivityLog, UserSession,
-    UserGroup, UserGroupMember, UserNotificationSetting, UserApiKey
+    UserGroup, UserGroupMember
 )
+from backend.config import Settings
 
 
 def create_user_management_tables():
     """创建用户管理相关的表"""
     print("创建用户管理相关表...")
     
-    # 创建所有新表
-    tables = [
-        UserRole.__table__,
-        UserPreference.__table__,
-        UserActivityLog.__table__,
-        UserSession.__table__,
-        UserGroup.__table__,
-        UserGroupMember.__table__,
-        UserNotificationSetting.__table__,
-        UserApiKey.__table__,
-    ]
-    
-    for table in tables:
-        try:
-            table.create(engine, checkfirst=True)
-            print(f"✓ 创建表: {table.name}")
-        except Exception as e:
-            print(f"✗ 创建表 {table.name} 失败: {e}")
+    try:
+        # 导入所有模型以确保它们被注册
+        from backend.data.user_management_models import (
+            UserRole, UserPreference, UserActivityLog, UserSession,
+            UserGroup, UserGroupMember
+        )
+        
+        # 使用 SQLAlchemy 的 create_all 方法创建所有表
+        from backend.data.db import Base
+        Base.metadata.create_all(engine, checkfirst=True)
+        print("✓ 所有用户管理表创建完成")
+        
+    except Exception as e:
+        print(f"✗ 创建用户管理表失败: {e}")
 
 
 def extend_users_table():
@@ -282,9 +279,6 @@ def create_indexes():
             "CREATE INDEX IF NOT EXISTS idx_user_sessions_expires ON user_sessions(expires_at)",
             "CREATE INDEX IF NOT EXISTS idx_user_group_members_user_id ON user_group_members(user_id)",
             "CREATE INDEX IF NOT EXISTS idx_user_group_members_group_id ON user_group_members(group_id)",
-            "CREATE INDEX IF NOT EXISTS idx_user_notification_settings_user_id ON user_notification_settings(user_id)",
-            "CREATE INDEX IF NOT EXISTS idx_user_api_keys_user_id ON user_api_keys(user_id)",
-            "CREATE INDEX IF NOT EXISTS idx_user_api_keys_key ON user_api_keys(api_key)",
         ]
         
         for index_sql in indexes:
@@ -309,6 +303,13 @@ def main():
     print("=" * 50)
     
     try:
+        # 0. 初始化数据库连接
+        print("初始化数据库连接...")
+        settings = Settings()
+        init_db(settings.database_url, settings)
+        print("✓ 数据库连接初始化完成")
+        print()
+        
         # 1. 创建新表
         create_user_management_tables()
         print()

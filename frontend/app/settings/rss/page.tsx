@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
-import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, Edit3, Trash2, Play, Save, X, Plus } from 'lucide-react';
 import { api } from '@/lib/api';
 import { isNonEmpty, isUrl } from '@/lib/validators';
 import { useNotification, NotificationContainer } from '@/components/Notification';
@@ -36,8 +36,72 @@ export default function RssSettingsPage() {
   const batchTimer = useRef<any>(null);
   const [batchJustCompleted, setBatchJustCompleted] = useState<boolean>(false);
   
+  // 邮件消息状态 - 独立于采集消息
+  const [emailMessages, setEmailMessages] = useState<Array<{
+    id: string;
+    type: 'success' | 'error' | 'info';
+    message: string;
+    title?: string;
+    timestamp: number;
+  }>>([]);
+  
   // 使用通知管理器
   const notification = useNotification();
+
+  // 添加邮件消息
+  const addEmailMessage = (type: 'success' | 'error' | 'info', message: string, title?: string) => {
+    const id = `email-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const newMessage = {
+      id,
+      type,
+      message,
+      title,
+      timestamp: Date.now()
+    };
+    
+    setEmailMessages(prev => [...prev, newMessage]);
+    
+    // 成功类型和信息类型消息8秒后自动清除，错误消息不自动关闭
+    if (type === 'success' || type === 'info') {
+      setTimeout(() => {
+        setEmailMessages(prev => prev.filter(msg => msg.id !== id));
+      }, 8000);
+    }
+    // error类型不自动关闭，需要手动关闭
+  };
+
+  // 清除所有邮件消息
+  const clearEmailMessages = () => {
+    setEmailMessages([]);
+  };
+
+  // 根据邮件状态判断消息类型
+  const getEmailMessageType = (emailInfo: any): 'success' | 'error' | 'info' => {
+    if (!emailInfo) return 'info';
+    
+    const message = emailInfo.message || '';
+    
+    // 优先根据消息内容判断类型
+    if (message.includes('邮件发送成功') || message.includes('已通知') && message.includes('位收件人')) {
+      return 'success';
+    } else if (message.includes('邮件发送失败') || message.includes('邮件发送出错') || 
+               message.includes('但邮件发送失败') || message.includes('均未收到通知')) {
+      return 'error';
+    } else if (message.includes('无需发送') || message.includes('未配置') || message.includes('未启用') || 
+               message.includes('没有新文章') || message.includes('邮件模块未启用')) {
+      return 'info';
+    }
+    
+    // 其次根据状态判断
+    if (emailInfo.enabled && emailInfo.sent) {
+      return 'success';
+    } else if (emailInfo.enabled && !emailInfo.sent) {
+      return 'error';
+    }
+    
+    // 默认信息类型
+    return 'info';
+  };
 
   useEffect(() => {
     api.get('/api/settings/rss').then((res) => setItems(res.data?.data || res.data || []));
@@ -156,7 +220,45 @@ export default function RssSettingsPage() {
       
       // 成功提示
       setTimeout(() => {
-        notification.showSuccess('采集成功', `已触发RSS源"${sourceName}"的采集任务`);
+        if (response.data?.code === 0) {
+          const data = response.data.data;
+          const emailInfo = data.email;
+          
+          // 采集完成消息（独立显示）
+          const ingestMessage = `${sourceName} 采集完成，新增 ${data.created} 篇文章，跳过 ${data.skipped} 篇重复文章`;
+          notification.showSuccess('RSS采集完成', ingestMessage);
+          
+          // 邮件状态消息（独立显示为flash消息）
+          if (emailInfo) {
+            const messageType = getEmailMessageType(emailInfo);
+            let message = emailInfo.message;
+            
+            // 添加发送时间
+            if (emailInfo.send_time) {
+              message += `\n发送时间: ${emailInfo.send_time}`;
+            }
+            
+            // 构建标题（包含收件人信息）
+            let title = '';
+            if (emailInfo.recipients && emailInfo.recipients.length > 0) {
+              title = `收件人: ${emailInfo.recipients.join(', ')}`;
+            }
+            
+            // 如果是错误类型，添加失败原因和详细错误信息
+            if (messageType === 'error') {
+              if (emailInfo.failure_reason) {
+                message += `\n失败原因: ${emailInfo.failure_reason}`;
+              }
+              if (emailInfo.details && emailInfo.details.errors && emailInfo.details.errors.length > 0) {
+                message += `\n\n详细错误信息：\n${emailInfo.details.errors.join('\n')}`;
+              }
+            }
+            
+            addEmailMessage(messageType, message, title);
+          }
+        } else {
+          notification.showError('RSS采集失败', response.data?.msg || '采集过程中发生错误');
+        }
       }, 200);
       
       refresh();
@@ -238,7 +340,46 @@ export default function RssSettingsPage() {
       
       // 延迟显示成功通知
       setTimeout(() => {
-        notification.showSuccess('批量采集成功', '已触发所有RSS源的批量采集任务');
+        if (response.data?.code === 0) {
+          const data = response.data.data;
+          const summary = data.summary;
+          const emailInfo = summary?.email;
+          
+          // 批量采集完成消息（独立显示）
+          const batchMessage = `批量采集完成，共新增 ${summary?.total_created || 0} 篇文章，跳过 ${summary?.total_skipped || 0} 篇重复文章`;
+          notification.showSuccess('批量采集完成', batchMessage);
+          
+          // 邮件状态消息（独立显示为flash消息）
+          if (emailInfo) {
+            const messageType = getEmailMessageType(emailInfo);
+            let message = emailInfo.message;
+            
+            // 添加发送时间
+            if (emailInfo.send_time) {
+              message += `\n发送时间: ${emailInfo.send_time}`;
+            }
+            
+            // 构建标题（包含收件人信息）
+            let title = '';
+            if (emailInfo.recipients && emailInfo.recipients.length > 0) {
+              title = `收件人: ${emailInfo.recipients.join(', ')}`;
+            }
+            
+            // 如果是错误类型，添加失败原因和详细错误信息
+            if (messageType === 'error') {
+              if (emailInfo.failure_reason) {
+                message += `\n失败原因: ${emailInfo.failure_reason}`;
+              }
+              if (emailInfo.details && emailInfo.details.errors && emailInfo.details.errors.length > 0) {
+                message += `\n\n详细错误信息：\n${emailInfo.details.errors.join('\n')}`;
+              }
+            }
+            
+            addEmailMessage(messageType, message, title);
+          }
+        } else {
+          notification.showError('批量采集失败', response.data?.msg || '批量采集过程中发生错误');
+        }
       }, 200);
       
       refresh();
@@ -334,6 +475,7 @@ export default function RssSettingsPage() {
       {/* 通知容器 */}
       <NotificationContainer notifications={notification.notifications} />
       
+      
       {/* 进度指示器（仅用于单条模式） */}
       <IngestProgress
         key={`${showProgress}-${progressType}-${progressSourceName}`}
@@ -375,10 +517,101 @@ export default function RssSettingsPage() {
           <div className="flex items-center gap-2">
             <label className="text-sm">启用</label>
             <input type="checkbox" checked={!!form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
-            <button onClick={onCreate} className="ml-auto rounded-md border px-4 py-2 bg-gray-900 text-white border-gray-900 hover:bg-gray-800 hover:shadow hover:-translate-y-0.5 transition-all duration-150">添加</button>
+            <button onClick={onCreate} className="ml-auto rounded-md border px-4 py-2 bg-gray-900 text-white border-gray-900 hover:bg-gray-800 hover:shadow hover:-translate-y-0.5 transition-all duration-150 flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              添加
+            </button>
           </div>
         </div>
       </div>
+
+      {/* 邮件消息Flash显示区域 - 在列表卡片和新增卡片之间 */}
+      {emailMessages.length > 0 && (
+        <div className="space-y-2">
+          {emailMessages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`rounded-lg border p-3 shadow-lg transition-all duration-300 ${
+                msg.type === 'error'
+                  ? 'bg-orange-50 border-orange-200 text-orange-800'
+                  : msg.type === 'success'
+                  ? 'bg-green-50 border-green-200 text-green-800'
+                  : 'bg-blue-50 border-blue-200 text-blue-800'
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  {/* 邮件消息标题 */}
+                  {msg.title && (
+                    <div className="text-sm font-semibold mb-2 text-gray-700 border-b border-gray-200 pb-1">
+                      {msg.title}
+                    </div>
+                  )}
+                  <div className={`text-sm font-medium leading-relaxed ${msg.type === 'error' ? 'whitespace-pre-line' : ''}`}>
+                    {msg.message.split('\n').map((line, index) => {
+                      // 美化错误信息的显示
+                      if (msg.type === 'error' && line.includes('详细错误信息：')) {
+                        return (
+                          <div key={index} className="mt-2">
+                            <div className="font-semibold text-orange-900 mb-1">{line}</div>
+                          </div>
+                        );
+                      } else if (msg.type === 'error' && line.includes(':')) {
+                        // 错误详情行，使用缩进和不同颜色
+                        return (
+                          <div key={index} className="ml-4 text-orange-700 text-xs font-mono bg-orange-50 px-2 py-1 rounded mt-1">
+                            {line}
+                          </div>
+                        );
+                      } else if (line.includes('发送时间:')) {
+                        // 发送时间行
+                        return (
+                          <div key={index} className="mt-2">
+                            <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded inline-block">
+                              🕒 {line}
+                            </div>
+                          </div>
+                        );
+                      } else if (line.includes('失败原因:')) {
+                        // 失败原因行
+                        return (
+                          <div key={index} className="mt-2">
+                            <div className="font-semibold text-orange-800 mb-1">⚠️ {line}</div>
+                          </div>
+                        );
+                      } else if (line.trim() === '') {
+                        // 空行
+                        return <br key={index} />;
+                      } else {
+                        // 普通行
+                        return <div key={index}>{line}</div>;
+                      }
+                    })}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setEmailMessages(prev => prev.filter(m => m.id !== msg.id))}
+                  className="text-gray-400 hover:text-gray-600 transition-colors ml-2"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+          
+          {/* 清除所有消息按钮 */}
+          {emailMessages.length > 1 && (
+            <div className="flex justify-end">
+              <button
+                onClick={clearEmailMessages}
+                className="text-xs text-gray-500 hover:text-gray-700 underline"
+              >
+                清除所有邮件消息
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="rounded-xl border border-gray-200 bg-white/90 backdrop-blur-sm shadow-sm">
         <div className="flex items-center justify-between p-2">
@@ -399,7 +632,12 @@ export default function RssSettingsPage() {
                 <Loader2 className="h-4 w-4 animate-spin" />
                 {`批量采集 ${Math.max(0, batchProgress)}%`}
               </span>
-            ) : '批量采集'}
+            ) : (
+              <span className="inline-flex items-center gap-2">
+                <Play className="h-4 w-4" />
+                批量采集
+              </span>
+            )}
             {isIngestingAll && (
               <span
                 className="absolute bottom-0 left-0 h-0.5 bg-blue-300"
@@ -491,12 +729,18 @@ export default function RssSettingsPage() {
                         </span>
                         {ok && (
                           <div className="flex items-center gap-1" title="本次采集统计：新增/跳过">
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
+                            <span 
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200 cursor-help"
+                              title="新增文章：本次采集到的新文章数量，这些文章将被保存到知识库中"
+                            >
                               <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
                               新增 {s.created}
                             </span>
                             {typeof s.skipped === 'number' && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-50 text-gray-700 border border-gray-200">
+                              <span 
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-50 text-gray-700 border border-gray-200 cursor-help"
+                                title="跳过文章：本次采集时跳过的文章数量，这些文章可能因为重复、格式问题或其他原因被跳过"
+                              >
                                 <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
                                 跳过 {s.skipped}
                               </span>
@@ -527,26 +771,26 @@ export default function RssSettingsPage() {
                       <button 
                         onClick={onSaveEdit} 
                         disabled={ingestingIds.has(r.id) || isIngestingAll}
-                        className={`rounded px-3 py-1 ${
+                        className={`rounded px-2 py-1 ${
                           (ingestingIds.has(r.id) || isIngestingAll)
                             ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
                             : 'bg-black text-white hover:bg-gray-800'
                         }`}
                         title={ingestingIds.has(r.id) ? '采集中，无法保存' : isIngestingAll ? '批量采集中，无法保存' : '保存修改'}
                       >
-                        保存
+                        <Save className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => { setEditingId(null); setForm({ name: '', url: '', category: '', is_active: true }); }} 
                         disabled={ingestingIds.has(r.id) || isIngestingAll}
-                        className={`rounded border px-3 py-1 ${
+                        className={`rounded border px-2 py-1 ${
                           (ingestingIds.has(r.id) || isIngestingAll)
                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
                             : 'hover:bg-gray-50'
                         }`}
                         title={ingestingIds.has(r.id) ? '采集中，无法取消' : isIngestingAll ? '批量采集中，无法取消' : '取消编辑'}
                       >
-                        取消
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
                   ) : (
@@ -554,36 +798,36 @@ export default function RssSettingsPage() {
                       <button 
                         onClick={() => onEditStart(r)} 
                         disabled={ingestingIds.has(r.id) || isIngestingAll}
-                        className={`rounded border px-3 py-1 ${
+                        className={`rounded border px-2 py-1 ${
                           (ingestingIds.has(r.id) || isIngestingAll)
                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
-                            : 'hover:bg-gray-50'
+                            : 'text-blue-600 hover:text-blue-900 hover:bg-blue-50 transition-colors'
                         }`}
                         title={ingestingIds.has(r.id) ? '采集中，无法编辑' : isIngestingAll ? '批量采集中，无法编辑' : '编辑RSS源'}
                       >
-                        编辑
+                        <Edit3 className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => onDelete(r.id)} 
                         disabled={ingestingIds.has(r.id) || isIngestingAll}
-                        className={`rounded border px-3 py-1 ${
+                        className={`rounded border px-2 py-1 ${
                           (ingestingIds.has(r.id) || isIngestingAll)
                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
-                            : 'text-red-600 hover:bg-red-50'
+                            : 'text-red-600 hover:text-red-900 hover:bg-red-50 transition-colors'
                         }`}
                         title={ingestingIds.has(r.id) ? '采集中，无法删除' : isIngestingAll ? '批量采集中，无法删除' : '删除RSS源'}
                       >
-                        删除
+                        <Trash2 className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => onIngest(r.id)} 
                         disabled={ingestingIds.has(r.id) || isIngestingAll || !r.is_active}
-                        className={`relative overflow-hidden rounded border px-3 py-1 ${
+                        className={`relative overflow-hidden rounded border px-2 py-1 ${
                           ingestingIds.has(r.id)
                             ? `bg-blue-500 text-white border-blue-500 cursor-wait ${justCompletedIds.has(r.id) ? 'animate-bounce' : 'animate-pulse'}`
                             : (isIngestingAll || !r.is_active)
                               ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
-                              : 'text-green-700 hover:bg-green-50'
+                              : 'text-green-600 hover:text-green-900 hover:bg-green-50 transition-colors'
                         }`}
                         title={!r.is_active ? '该源已停用，无法采集' : ingestingIds.has(r.id) ? '采集中...' : isIngestingAll ? '批量采集中，无法单个采集' : '手动采集RSS源'}
                       >
@@ -596,7 +840,7 @@ export default function RssSettingsPage() {
                                   : '采集中...'}
                               </span>
                             )
-                          : '采集'}
+                          : <Play className="w-4 h-4" />}
                         {ingestingIds.has(r.id) && typeof singleProgress[r.id] === 'number' && (
                           <span
                             className="absolute bottom-0 left-0 h-0.5 bg-blue-300"

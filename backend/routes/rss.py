@@ -120,9 +120,59 @@ def ingest_all():
         except Exception:
             pass
     results = []
+    total_created = 0
+    total_skipped = 0
+    email_summary = {
+        "enabled": False,
+        "sent": False,
+        "recipients": [],
+        "message": "批量采集完成"
+    }
+    
     for sid in ids:
-        results.append({"id": sid, **ingest_rss_source(sid)})
-    return {"code": 0, "data": results}
+        result = ingest_rss_source(sid)
+        results.append({"id": sid, **result})
+        
+        # 汇总统计信息
+        if result.get("code") == 0:
+            data = result.get("data", {})
+            total_created += data.get("created", 0)
+            total_skipped += data.get("skipped", 0)
+            
+            # 汇总邮件状态（取最后一个有效的邮件状态）
+            email_data = data.get("email", {})
+            if email_data.get("enabled"):
+                email_summary["enabled"] = True
+                email_summary["recipients"] = email_data.get("recipients", [])
+                if email_data.get("sent"):
+                    email_summary["sent"] = True
+                    email_summary["message"] = f"批量采集完成，邮件发送成功，已通知 {len(email_summary['recipients'])} 位收件人"
+                else:
+                    email_summary["message"] = f"批量采集完成，{email_data.get('message', '邮件发送失败')}"
+    
+    # 根据是否有新文章更新邮件状态
+    if total_created == 0:
+        email_summary["message"] = "批量采集完成，没有新文章，无需发送邮件"
+    else:
+        # 如果有新文章，检查是否有邮件发送成功
+        if email_summary["enabled"] and email_summary["sent"]:
+            email_summary["message"] = f"批量采集完成，邮件发送成功，已通知 {len(email_summary['recipients'])} 位收件人"
+        elif email_summary["enabled"]:
+            email_summary["message"] = f"批量采集完成，共新增 {total_created} 篇文章，但邮件发送失败"
+        else:
+            email_summary["message"] = f"批量采集完成，共新增 {total_created} 篇文章，但邮件模块未启用"
+    
+    return {
+        "code": 0, 
+        "data": {
+            "results": results,
+            "summary": {
+                "total_created": total_created,
+                "total_skipped": total_skipped,
+                "email": email_summary
+            }
+        }
+    }
 
 
 # helper for background scheduler to call

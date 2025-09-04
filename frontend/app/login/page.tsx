@@ -30,7 +30,7 @@ export default function LoginPage() {
         router.push('/');
       }, 1500);
     } catch (err: any) {
-      setError(err?.response?.data?.msg || '登录失败');
+      setError(err?.response?.data?.msg || err?.message || '登录失败');
     } finally {
       setLoading(false);
     }

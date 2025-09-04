@@ -38,8 +38,8 @@ class UserPreference(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     
-    # 关系
-    user: Mapped['User'] = relationship('User', back_populates='preferences')
+    # 关系 - 暂时注释掉避免循环导入问题
+    # user: Mapped['User'] = relationship('User', back_populates='preferences')
 
 
 class UserActivityLog(Base):
@@ -56,8 +56,8 @@ class UserActivityLog(Base):
     user_agent: Mapped[Optional[str]] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     
-    # 关系
-    user: Mapped[Optional['User']] = relationship('User', back_populates='activity_logs')
+    # 关系 - 暂时注释掉避免循环导入问题
+    # user: Mapped[Optional['User']] = relationship('User', back_populates='activity_logs')
 
 
 class UserSession(Base):
@@ -75,8 +75,8 @@ class UserSession(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     last_accessed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     
-    # 关系
-    user: Mapped['User'] = relationship('User', back_populates='sessions')
+    # 关系 - 暂时注释掉避免循环导入问题
+    # user: Mapped['User'] = relationship('User', back_populates='sessions')
 
 
 class UserGroup(Base):
@@ -105,43 +105,12 @@ class UserGroupMember(Base):
     role: Mapped[str] = mapped_column(String(50), default='member')
     joined_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     
-    # 关系
+    # 关系 - 暂时注释掉避免循环导入问题
     group: Mapped['UserGroup'] = relationship('UserGroup', back_populates='members')
-    user: Mapped['User'] = relationship('User', back_populates='group_memberships')
+    # user: Mapped['User'] = relationship('User', back_populates='group_memberships')
 
 
-class UserNotificationSetting(Base):
-    """用户通知设置表"""
-    __tablename__ = 'user_notification_settings'
-    
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'))
-    notification_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    event_type: Mapped[str] = mapped_column(String(100), nullable=False)
-    is_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    
-    # 关系
-    user: Mapped['User'] = relationship('User', back_populates='notification_settings')
 
-
-class UserApiKey(Base):
-    """用户API密钥表"""
-    __tablename__ = 'user_api_keys'
-    
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'))
-    key_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    api_key: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
-    permissions: Mapped[Optional[str]] = mapped_column(Text)  # JSON格式的API权限
-    last_used_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
-    expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    
-    # 关系
-    user: Mapped['User'] = relationship('User', back_populates='api_keys')
 
 
 # 扩展现有 User 模型的关系
@@ -158,8 +127,6 @@ class User(Base):
     activity_logs: Mapped[List['UserActivityLog']] = relationship('UserActivityLog', back_populates='user')
     sessions: Mapped[List['UserSession']] = relationship('UserSession', back_populates='user')
     group_memberships: Mapped[List['UserGroupMember']] = relationship('UserGroupMember', back_populates='user')
-    notification_settings: Mapped[List['UserNotificationSetting']] = relationship('UserNotificationSetting', back_populates='user')
-    api_keys: Mapped[List['UserApiKey']] = relationship('UserApiKey', back_populates='user')
     
     # 扩展字段（需要通过数据库迁移添加）
     full_name: Mapped[Optional[str]] = mapped_column(String(100))

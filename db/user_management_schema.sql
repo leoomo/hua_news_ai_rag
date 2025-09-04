@@ -79,32 +79,7 @@ CREATE TABLE IF NOT EXISTS user_group_members (
     UNIQUE(group_id, user_id)
 );
 
--- 7. 用户通知设置表
-CREATE TABLE IF NOT EXISTS user_notification_settings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    notification_type VARCHAR(50) NOT NULL, -- email, push, in_app
-    event_type VARCHAR(100) NOT NULL,       -- new_article, system_update, etc.
-    is_enabled BOOLEAN DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE(user_id, notification_type, event_type)
-);
 
--- 8. 用户API密钥表
-CREATE TABLE IF NOT EXISTS user_api_keys (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    key_name VARCHAR(100) NOT NULL,
-    api_key VARCHAR(255) UNIQUE NOT NULL,
-    permissions TEXT,                       -- JSON格式的API权限
-    last_used_at TIMESTAMP,
-    expires_at TIMESTAMP,
-    is_active BOOLEAN DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
 
 -- 扩展现有 users 表
 -- 注意：这些字段需要在实际部署时通过 ALTER TABLE 添加
@@ -134,9 +109,6 @@ CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON user_sessions(session_toke
 CREATE INDEX IF NOT EXISTS idx_user_sessions_expires ON user_sessions(expires_at);
 CREATE INDEX IF NOT EXISTS idx_user_group_members_user_id ON user_group_members(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_group_members_group_id ON user_group_members(group_id);
-CREATE INDEX IF NOT EXISTS idx_user_notification_settings_user_id ON user_notification_settings(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_api_keys_user_id ON user_api_keys(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_api_keys_key ON user_api_keys(api_key);
 
 -- 插入默认角色数据
 INSERT OR IGNORE INTO user_roles (name, display_name, description, permissions, is_system_role) VALUES
