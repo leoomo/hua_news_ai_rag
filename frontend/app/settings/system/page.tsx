@@ -8,6 +8,15 @@ type EmailConfig = {
   enable_email_notification: boolean;
   recipient_emails: string[];
   sender_name: string;
+  sender_email: string;
+  sender_password: string;
+  email_provider: string;
+  custom_smtp_config: {
+    smtp_host: string;
+    smtp_port: number;
+    smtp_use_tls: boolean;
+    smtp_use_ssl: boolean;
+  };
   max_articles_in_email: number;
   email_template_language: string;
   email_format: string;
@@ -22,6 +31,15 @@ export default function SystemSettingsPage() {
     enable_email_notification: true,
     recipient_emails: [],
     sender_name: '华新AI知识库系统',
+    sender_email: '',
+    sender_password: '',
+    email_provider: '163',
+    custom_smtp_config: {
+      smtp_host: 'smtp.your-server.com',
+      smtp_port: 587,
+      smtp_use_tls: true,
+      smtp_use_ssl: false,
+    },
     max_articles_in_email: 10,
     email_template_language: 'zh_cn',
     email_format: 'markdown',
@@ -203,6 +221,170 @@ export default function SystemSettingsPage() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* 邮件服务商配置 */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium text-gray-700">邮件服务商配置</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                邮件服务商
+              </label>
+              <select
+                value={emailConfig.email_provider}
+                onChange={(e) => setEmailConfig({
+                  ...emailConfig,
+                  email_provider: e.target.value
+                })}
+                className="w-full rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                disabled={!emailConfig.enable_email_module}
+              >
+                <option value="163">163邮箱</option>
+                <option value="qq">QQ邮箱</option>
+                <option value="gmail">Gmail</option>
+                <option value="outlook">Outlook</option>
+                <option value="yahoo">Yahoo</option>
+                <option value="sina">新浪邮箱</option>
+                <option value="custom">自定义SMTP</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                发件人邮箱
+              </label>
+              <input
+                type="email"
+                value={emailConfig.sender_email}
+                onChange={(e) => setEmailConfig({
+                  ...emailConfig,
+                  sender_email: e.target.value
+                })}
+                className="w-full rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                placeholder="your-email@example.com"
+                disabled={!emailConfig.enable_email_module}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                邮箱密码/授权码
+              </label>
+              <input
+                type="password"
+                value={emailConfig.sender_password}
+                onChange={(e) => setEmailConfig({
+                  ...emailConfig,
+                  sender_password: e.target.value
+                })}
+                className="w-full rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                placeholder="请输入密码或授权码"
+                disabled={!emailConfig.enable_email_module}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Gmail使用应用专用密码，QQ/163等使用授权码
+              </p>
+            </div>
+          </div>
+
+          {/* 自定义SMTP配置 */}
+          {emailConfig.email_provider === 'custom' && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4">
+              <h4 className="text-md font-medium text-gray-700">自定义SMTP配置</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    SMTP服务器
+                  </label>
+                  <input
+                    type="text"
+                    value={emailConfig.custom_smtp_config.smtp_host}
+                    onChange={(e) => setEmailConfig({
+                      ...emailConfig,
+                      custom_smtp_config: {
+                        ...emailConfig.custom_smtp_config,
+                        smtp_host: e.target.value
+                      }
+                    })}
+                    className="w-full rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                    placeholder="smtp.your-server.com"
+                    disabled={!emailConfig.enable_email_module}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    SMTP端口
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="65535"
+                    value={emailConfig.custom_smtp_config.smtp_port}
+                    onChange={(e) => setEmailConfig({
+                      ...emailConfig,
+                      custom_smtp_config: {
+                        ...emailConfig.custom_smtp_config,
+                        smtp_port: parseInt(e.target.value) || 587
+                      }
+                    })}
+                    className="w-full rounded-md border border-gray-200 bg-white/90 px-3 py-2 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                    disabled={!emailConfig.enable_email_module}
+                  />
+                </div>
+
+                <div className="flex items-center space-x-4">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={emailConfig.custom_smtp_config.smtp_use_tls}
+                      onChange={(e) => setEmailConfig({
+                        ...emailConfig,
+                        custom_smtp_config: {
+                          ...emailConfig.custom_smtp_config,
+                          smtp_use_tls: e.target.checked
+                        }
+                      })}
+                      className="rounded border-gray-300 text-gray-600 focus:ring-gray-500"
+                      disabled={!emailConfig.enable_email_module}
+                    />
+                    <span className="text-sm font-medium text-gray-700">使用TLS</span>
+                  </label>
+                  
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={emailConfig.custom_smtp_config.smtp_use_ssl}
+                      onChange={(e) => setEmailConfig({
+                        ...emailConfig,
+                        custom_smtp_config: {
+                          ...emailConfig.custom_smtp_config,
+                          smtp_use_ssl: e.target.checked
+                        }
+                      })}
+                      className="rounded border-gray-300 text-gray-600 focus:ring-gray-500"
+                      disabled={!emailConfig.enable_email_module}
+                    />
+                    <span className="text-sm font-medium text-gray-700">使用SSL</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 服务商说明 */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-sm text-blue-700">
+              💡 <strong>配置说明：</strong>
+            </p>
+            <ul className="text-xs text-blue-600 mt-1 space-y-1">
+              <li>• <strong>Gmail：</strong>需要开启两步验证并使用应用专用密码</li>
+              <li>• <strong>QQ邮箱：</strong>需要开启SMTP服务并获取授权码</li>
+              <li>• <strong>163邮箱：</strong>需要开启SMTP服务并获取授权码</li>
+              <li>• <strong>自定义SMTP：</strong>适用于企业邮箱或其他SMTP服务</li>
+            </ul>
           </div>
         </div>
 
