@@ -16,6 +16,7 @@ export default function Page() {
   const [yesterday, setYesterday] = useState<number>(0);
   const [topCats, setTopCats] = useState<{name: string; count: number}[]>([]);
   const [topSrcs, setTopSrcs] = useState<{name: string; count: number}[]>([]);
+  const [topKeywords, setTopKeywords] = useState<{ keyword: string; count: number }[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -34,6 +35,17 @@ export default function Page() {
         setYesterday(d.yesterday_count || 0);
         setTopCats(d.top_categories || []);
         setTopSrcs(d.top_sources || []);
+        // 关键词Top10
+        try {
+          const kwRes = await api.get('/api/analytics/keywords_top', {
+            headers: { 'Cache-Control': 'no-cache' },
+            params: { limit: 10, t: Date.now() },
+          });
+          const kwData = kwRes.data?.data || kwRes.data || [];
+          setTopKeywords(Array.isArray(kwData) ? kwData : []);
+        } catch {
+          setTopKeywords([]);
+        }
       } finally {
         setLoading(false);
       }
@@ -153,6 +165,24 @@ export default function Page() {
                       })()}
                       {topSrcs.length === 0 && <div className="text-gray-400">-</div>}
                     </div>
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <div className="text-xs text-gray-500 mb-1">关键词 Top10</div>
+                  <div className="space-y-1">
+                    {(() => {
+                      const maxK = Math.max(1, ...topKeywords.map(k => k.count));
+                      return topKeywords.map((k, i) => (
+                        <div key={i} className="flex items-center gap-2 text-xs">
+                          <a href={`/kb?keyword=${encodeURIComponent(k.keyword)}`} className="truncate w-24 text-blue-600 hover:underline" title={k.keyword}>{k.keyword}</a>
+                          <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-2 rounded-full bg-gradient-to-r from-amber-400 to-orange-500" style={{ width: `${Math.max(5, Math.round((k.count / maxK) * 100))}%` }} />
+                          </div>
+                          <span className="w-6 text-right text-gray-700">{k.count}</span>
+                        </div>
+                      ));
+                    })()}
+                    {topKeywords.length === 0 && <div className="text-gray-400 text-xs">-</div>}
                   </div>
                 </div>
               </div>
