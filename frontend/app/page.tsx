@@ -86,11 +86,11 @@ export default function Page() {
           <p>加载中...</p>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4" style={{ height: 'calc(78vh - 8rem)' }}>
-              <div className="rounded-xl border border-gray-100 bg-white/90 backdrop-blur-sm shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 p-4 h-full flex flex-col">
-                <div className="text-sm text-gray-500">文章总数</div>
-                <div className="text-3xl font-semibold mt-1 tracking-tight text-gray-900">{total}</div>
-                <div className="mt-2 text-xs text-gray-500">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5" style={{ height: 'calc(78vh - 8rem)' }}>
+              <div className="rounded-xl border border-gray-100 bg-white/90 backdrop-blur-sm shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 p-5 h-full flex flex-col">
+                <div className="text-sm text-gray-600 mb-1">文章总数</div>
+                <div className="text-3xl font-bold mt-1 tracking-tight text-gray-900 mb-3">{total.toLocaleString()}</div>
+                <div className="mt-2 text-xs text-gray-500 mb-4">
                   最近更新时间：{(() => {
                     if (!latestUpdate) return '-';
                     const dt = new Date(latestUpdate);
@@ -107,41 +107,41 @@ export default function Page() {
                   })()}
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-                  <div className="rounded-lg border border-green-100 p-2 bg-gradient-to-b from-green-50 to-white shadow-sm">
-                    <div className="flex items-center justify-between text-gray-600">
+                  <div className="rounded-lg border border-green-100 p-2.5 bg-gradient-to-b from-green-50 to-white shadow-sm">
+                    <div className="flex items-center justify-between text-gray-600 mb-1">
                       <span>今日新增</span>
                       {(() => {
                         const diff = today - yesterday;
                         const up = diff >= 0;
                         const color = up ? 'text-green-600' : 'text-red-600';
                         const arrow = up ? '▲' : '▼';
-                        return <span className={`${color}`}>{arrow} {Math.abs(diff)}</span>;
+                        return <span className={`${color} text-xs`}>{arrow} {Math.abs(diff)}</span>;
                       })()}
                     </div>
-                    <div className="text-base font-semibold text-gray-900 mt-0.5 tracking-tight">{today}</div>
+                    <div className="text-base font-semibold text-gray-900 tracking-tight">{today}</div>
                   </div>
-                  <div className="rounded-lg border border-gray-100 p-2 bg-gradient-to-b from-gray-50 to-white shadow-sm">
-                    <div className="text-gray-600">昨日新增</div>
-                    <div className="text-base font-semibold text-gray-900 mt-0.5">{yesterday}</div>
+                  <div className="rounded-lg border border-gray-100 p-2.5 bg-gradient-to-b from-gray-50 to-white shadow-sm">
+                    <div className="text-gray-600 mb-1">昨日新增</div>
+                    <div className="text-base font-semibold text-gray-900">{yesterday}</div>
                   </div>
-                  <div className="rounded-lg border border-blue-100 p-2 bg-gradient-to-b from-blue-50 to-white shadow-sm">
-                    <div className="text-gray-600">近7天日均</div>
-                    <div className="text-base font-semibold text-gray-900 mt-0.5">{Math.round((last7.reduce((s, x) => s + x.count, 0) / Math.max(1, last7.length)) || 0)}</div>
+                  <div className="rounded-lg border border-blue-100 p-2.5 bg-gradient-to-b from-blue-50 to-white shadow-sm">
+                    <div className="text-gray-600 mb-1">近7天日均</div>
+                    <div className="text-base font-semibold text-gray-900">{Math.round((last7.reduce((s, x) => s + x.count, 0) / Math.max(1, last7.length)) || 0)}</div>
                   </div>
                 </div>
-                <div className="mt-2 grid grid-cols-2 gap-3 text-xs">
+                <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
                   <div>
-                    <div className="text-gray-500 mb-1">分类 Top3</div>
-                    <div className="space-y-1">
+                    <div className="text-gray-500 mb-2 font-medium">分类 Top3</div>
+                    <div className="space-y-1.5">
                       {(() => {
                         const maxV = Math.max(1, ...topCats.map(x => x.count));
                         return topCats.map((c, i) => (
                           <div key={i} className="flex items-center gap-2">
-                            <a href={`/kb?category=${encodeURIComponent(c.name)}`} className="truncate w-16 text-blue-600 hover:underline" title={c.name}>{c.name}</a>
-                            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                              <div className="h-2 rounded-full bg-gradient-to-r from-green-400 to-emerald-500" style={{ width: `${Math.max(5, Math.round((c.count / maxV) * 100))}%` }} />
+                            <a href={`/kb?category=${encodeURIComponent(c.name)}`} className="truncate w-18 text-blue-600 hover:underline font-medium" title={c.name}>{c.name}</a>
+                            <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-2.5 rounded-full bg-gradient-to-r from-green-400 to-emerald-500" style={{ width: `${Math.max(5, Math.round((c.count / maxV) * 100))}%` }} />
                             </div>
-                            <span className="w-8 text-right text-gray-700">{c.count}</span>
+                            <span className="w-8 text-right text-gray-700 font-medium">{c.count}</span>
                           </div>
                         ));
                       })()}
@@ -149,17 +149,17 @@ export default function Page() {
                     </div>
                   </div>
                   <div>
-                    <div className="text-gray-500 mb-1">来源 Top3</div>
-                    <div className="space-y-1">
+                    <div className="text-gray-500 mb-2 font-medium">来源 Top3</div>
+                    <div className="space-y-1.5">
                       {(() => {
                         const maxV = Math.max(1, ...topSrcs.map(x => x.count));
                         return topSrcs.map((s, i) => (
                           <div key={i} className="flex items-center gap-2">
-                            <a href={`/kb?source=${encodeURIComponent(s.name)}`} className="truncate w-16 text-blue-600 hover:underline" title={s.name}>{s.name}</a>
-                            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                              <div className="h-2 rounded-full bg-gradient-to-r from-blue-400 to-indigo-500" style={{ width: `${Math.max(5, Math.round((s.count / maxV) * 100))}%` }} />
+                            <a href={`/kb?source=${encodeURIComponent(s.name)}`} className="truncate w-18 text-blue-600 hover:underline font-medium" title={s.name}>{s.name}</a>
+                            <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-2.5 rounded-full bg-gradient-to-r from-blue-400 to-indigo-500" style={{ width: `${Math.max(5, Math.round((s.count / maxV) * 100))}%` }} />
                             </div>
-                            <span className="w-8 text-right text-gray-700">{s.count}</span>
+                            <span className="w-8 text-right text-gray-700 font-medium">{s.count}</span>
                           </div>
                         ));
                       })()}
@@ -167,18 +167,18 @@ export default function Page() {
                     </div>
                   </div>
                 </div>
-                <div className="mt-3">
-                  <div className="text-xs text-gray-500 mb-1">关键词 Top10</div>
-                  <div className="space-y-1">
+                <div className="mt-4">
+                  <div className="text-xs text-gray-500 mb-2 font-medium">关键词 Top10</div>
+                  <div className="space-y-1.5">
                     {(() => {
                       const maxK = Math.max(1, ...topKeywords.map(k => k.count));
                       return topKeywords.map((k, i) => (
                         <div key={i} className="flex items-center gap-2 text-xs">
-                          <a href={`/kb?keyword=${encodeURIComponent(k.keyword)}`} className="truncate w-24 text-blue-600 hover:underline" title={k.keyword}>{k.keyword}</a>
-                          <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-2 rounded-full bg-gradient-to-r from-amber-400 to-orange-500" style={{ width: `${Math.max(5, Math.round((k.count / maxK) * 100))}%` }} />
+                          <a href={`/kb?keyword=${encodeURIComponent(k.keyword)}`} className="truncate w-24 text-blue-600 hover:underline font-medium" title={k.keyword}>{k.keyword}</a>
+                          <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-2.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500" style={{ width: `${Math.max(5, Math.round((k.count / maxK) * 100))}%` }} />
                           </div>
-                          <span className="w-6 text-right text-gray-700">{k.count}</span>
+                          <span className="w-6 text-right text-gray-700 font-medium">{k.count}</span>
                         </div>
                       ));
                     })()}
