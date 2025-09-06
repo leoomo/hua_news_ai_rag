@@ -18,21 +18,35 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    
+    const startTime = Date.now();
+    const minLoadingTime = 800; // 最小loading时间800ms
+    
     try {
       const res = await api.post('/api/auth/login', { username, password });
       setAuthToken(res.data.token);
       
+      // 计算剩余时间，确保最小loading时间
+      const elapsed = Date.now() - startTime;
+      const remainingTime = Math.max(0, minLoadingTime - elapsed);
+      
       // 显示登录成功提示
       showSuccess('登录成功', '欢迎回来！正在跳转...');
       
-      // 延迟跳转，让用户看到成功提示
+      // 保持loading状态，让用户看到完整的反馈
       setTimeout(() => {
+        setLoading(false);
         router.push('/');
-      }, 1500);
+      }, remainingTime + 1200); // 额外1.2秒用于显示成功提示和跳转
     } catch (err: any) {
-      setError(err?.response?.data?.msg || err?.message || '登录失败');
-    } finally {
-      setLoading(false);
+      // 计算剩余时间，确保最小loading时间
+      const elapsed = Date.now() - startTime;
+      const remainingTime = Math.max(0, minLoadingTime - elapsed);
+      
+      setTimeout(() => {
+        setError(err?.response?.data?.msg || err?.message || '登录失败');
+        setLoading(false);
+      }, remainingTime);
     }
   }
 
