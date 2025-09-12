@@ -61,6 +61,12 @@ cd frontend && npm run dev
 
 > The following are system prototypes and page screenshots. For more details, please check the `snapshot/` directory.
 
+- Login Page
+
+  ![Login](snapshot/%E7%99%BB%E5%BD%95.png)
+  
+  Clean and modern login interface with username/password authentication. Features loading state with spinner animation, error handling, and success notifications. Uses minimalist gray-white design with rounded input fields and hover effects.
+
 - Dashboard (Overview)
 
   ![Dashboard](snapshot/%E4%BB%AA%E8%A1%A8%E7%9B%98.png)
