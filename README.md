@@ -1,227 +1,226 @@
-# 华新AI知识库系统
+# Hua News AI Knowledge Base System
 
-> 基于AI的智能新闻采集、处理和检索系统，支持RSS源管理、知识库构建、语义搜索和邮件通知等功能。
+> An AI-powered intelligent news collection, processing, and retrieval system with RSS source management, knowledge base construction, semantic search, and email notification capabilities.
 
-## 📋 目录
+## 📋 Table of Contents
 
-- [🚀 快速开始](#快速开始)
-- [📸 系统截图](#系统截图)
-- [🏗️ 项目概览](#项目概览)
-- [⚙️ 系统要求](#系统要求)
-- [🔧 安装指南](#安装指南)
-- [🚀 启动服务](#启动服务)
-- [📚 功能特性](#功能特性)
-- [🔌 API接口](#api接口)
-- [📁 项目结构](#项目结构)
-- [🛠️ 开发指南](#开发指南)
-- [❓ 常见问题](#常见问题)
-- [📖 相关文档](#相关文档)
+- [🚀 Quick Start](#quick-start)
+- [📸 System Screenshots](#system-screenshots)
+- [🏗️ Project Overview](#project-overview)
+- [⚙️ System Requirements](#system-requirements)
+- [🔧 Installation Guide](#installation-guide)
+- [🚀 Starting Services](#starting-services)
+- [📚 Features](#features)
+- [🔌 API Interface](#api-interface)
+- [📁 Project Structure](#project-structure)
+- [🛠️ Development Guide](#development-guide)
+- [❓ FAQ](#faq)
+- [📖 Related Documentation](#related-documentation)
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### 一键安装
+### One-Click Installation
 ```bash
-# 克隆项目
+# Clone the project
 git clone https://github.com/leoomo/hua_news_ai_rag.git
 cd hua_news_ai_rag
 
-# 运行一键安装脚本
+# Run the one-click installation script
 python install.py
 ```
 
-### 手动安装
+### Manual Installation
 ```bash
-# 1. 后端设置
+# 1. Backend setup
 python scripts/setup_backend.py
 
-# 2. 前端设置
+# 2. Frontend setup
 python scripts/setup_frontend.py
 
-# 3. 数据库初始化
+# 3. Database initialization
 python scripts/init_database.py
 ```
 
-### 启动服务
+### Start Services
 ```bash
-# 启动后端
+# Start backend
 cd backend && python run.py
 
-# 启动前端
+# Start frontend
 cd frontend && npm run dev
 ```
 
-### 访问系统
-- **前端界面**: http://localhost:3000
-- **后端API**: http://localhost:5050
-- **默认账户**: admin / admin123
+### Access System
+- **Frontend Interface**: http://localhost:3000
+- **Backend API**: http://localhost:5050
+- **Default Account**: admin / admin123
 
 ---
 
-## 📸 系统截图
+## 📸 System Screenshots
 
-> 以下为系统原型与页面截图，更多请查看 `snapshot/` 目录。
+> The following are system prototypes and page screenshots. For more details, please check the `snapshot/` directory.
 
-- 登录页面
+- Login Page
 
-  ![登录](snapshot/%E7%99%BB%E5%BD%95.png)
+  ![Login](snapshot/%E7%99%BB%E5%BD%95.png)
   
-  简洁现代的登录界面，支持用户名/密码认证。具备加载状态显示（旋转动画）、错误处理和成功提示功能。采用极简灰白设计，圆角输入框，悬停效果。
+  Clean and modern login interface with username/password authentication. Features loading state with spinner animation, error handling, and success notifications. Uses minimalist gray-white design with rounded input fields and hover effects.
 
-- 仪表盘（总览）
+- Dashboard (Overview)
 
-  ![仪表盘](snapshot/%E4%BB%AA%E8%A1%A8%E7%9B%98.png)
+  ![Dashboard](snapshot/%E4%BB%AA%E8%A1%A8%E7%9B%98.png)
   
-  展示总数、今日/昨日新增（含同比箭头）、近7天日均、分类/来源 Top3（可点击跳转到知识库筛选）、最近更新时间；右侧含"最近 7 天入库"（数值置于柱形上方、比例优化）与"最新 8 篇"。采用统一灰白毛玻璃风格，卡片圆角设计，悬停微浮起效果。
+  Displays total count, today/yesterday additions (with comparison arrows), 7-day average, category/source Top3 (clickable to jump to knowledge base filtering), last update time; right side includes "Last 7 Days Ingest" (values placed above bars, optimized proportions) and "Latest 8 Articles". Uses unified gray-white frosted glass style with rounded card design and hover micro-float effects.
 
-- 知识库（列表/筛选/批量操作）
+- Knowledge Base (List/Filter/Batch Operations)
 
-  ![知识库](snapshot/%E7%9F%A5%E8%AF%86%E5%BA%93.png)
+  ![Knowledge Base](snapshot/%E7%9F%A5%E8%AF%86%E5%BA%93.png)
   
-  支持按来源/时间/标签筛选，行内编辑标签，批量删除与导入数据。来源和分类支持点击跳转，表格行悬停高亮，整体采用圆角卡片设计。
+  Supports filtering by source/time/tags, inline tag editing, batch deletion and data import. Sources and categories support click-to-jump, table row hover highlighting, overall rounded card design.
 
-- 知识库编辑模式
+- Knowledge Base Edit Mode
 
-  ![知识库编辑](snapshot/%E7%9F%A5%E8%AF%86%E5%BA%93_%E7%BC%96%E8%BE%91.png)
+  ![Knowledge Base Edit](snapshot/%E7%9F%A5%E8%AF%86%E5%BA%93_%E7%BC%96%E8%BE%91.png)
   
-  支持行内编辑文章标签和分类，实时保存修改。编辑状态输入框采用统一圆角设计，聚焦状态有灰色环形提示。
+  Supports inline editing of article tags and categories with real-time save. Edit state input boxes use unified rounded design with gray ring hints on focus.
 
-- 语义搜索（RAG 结果与引用）
+- Semantic Search (RAG Results with Citations)
 
-  ![搜索](snapshot/%E6%90%9C%E7%B4%A2.png)
+  ![Search](snapshot/%E6%90%9C%E7%B4%A2.png)
   
-  先检索知识库按相似度排序，未命中可触发联网补充，结果含引用来源。搜索结果卡片采用毛玻璃效果，悬停微浮起，整体保持灰白极简风格。
-。
+  First retrieves knowledge base sorted by similarity, triggers web search if no hits, results include citation sources. Search result cards use frosted glass effects with hover micro-float, maintaining gray-white minimalist style.
 
-- 网络搜索结果
+- Web Search Results
 
-  ![网络搜索](snapshot/%E6%90%9C%E7%B4%A22.png)
+  ![Web Search](snapshot/%E6%90%9C%E7%B4%A22.png)
   
-  当本地知识库未找到相关内容时，自动触发网络搜索，提供补充信息。网络结果采用统一卡片样式，与本地结果保持视觉一致。
+  When local knowledge base finds no relevant content, automatically triggers web search to provide supplementary information. Web results use unified card style, maintaining visual consistency with local results.
 
-- 模型与 API 配置
+- Model & API Configuration
 
-  ![模型](snapshot/%E6%A8%A1%E5%9E%8B.png)
+  ![Models](snapshot/%E6%A8%A1%E5%9E%8B.png)
   
-  配置 Ollama/LLM、Embedding、Rerank 等参数，支持在线保存与热更新。配置卡片采用毛玻璃效果，输入框统一圆角设计，保存按钮采用灰黑主题。
+  Configure Ollama/LLM, Embedding, Rerank parameters with online save and hot update support. Configuration cards use frosted glass effects, input boxes unified rounded design, save buttons use gray-black theme.
 
-- 用户与角色
+- Users & Roles
 
-  ![用户](snapshot/%E7%94%A8%E6%88%B7.png)
+  ![Users](snapshot/%E7%94%A8%E6%88%B7.png)
   
-  管理用户、角色与权限，支持禁用/删除与角色分配操作。表格采用圆角卡片设计，操作按钮统一样式，悬停状态有微浮起效果。
+  Manage users, roles and permissions with disable/delete and role assignment operations. Tables use rounded card design, operation buttons unified style with hover micro-float effects.
 
-- RSS 源管理（新增/编辑/抓取）
+- RSS Source Management (Add/Edit/Crawl)
 
-  ![RSS 管理](snapshot/rss.png)
+  ![RSS Management](snapshot/rss.png)
   
-  支持 RSS 源的新增、编辑、删除操作，以及手动采集和批量采集功能。采集按钮集成进度显示，自动采集状态有呼吸灯效果，整体采用统一灰白风格。
+  Supports RSS source add, edit, delete operations, and manual/batch crawling. Crawl buttons integrate progress display, auto-crawl status has breathing light effects, overall unified gray-white style.
 
-- 数据分析（关键词/趋势等）
+- Data Analytics (Keywords/Trends)
 
-  ![数据分析](snapshot/%E5%88%86%E6%9E%90.png)
+  ![Analytics](snapshot/%E5%88%86%E6%9E%90.png)
   
-  提供关键词Top、入库趋势等洞察，辅助理解内容结构与变化。数据卡片采用毛玻璃效果，悬停微浮起，与仪表盘保持视觉一致。
+  Provides keyword Top, ingest trends insights to assist understanding content structure and changes. Data cards use frosted glass effects with hover micro-float, maintaining visual consistency with dashboard.
 
-- 系统设置
+- System Settings
 
-  ![系统设置](snapshot/%E7%B3%BB%E7%BB%9F.png)
+  ![System Settings](snapshot/%E7%B3%BB%E7%BB%9F.png)
   
-  邮件配置、功能开关、发送参数等系统级设置。配置卡片采用毛玻璃效果，输入框统一圆角设计，提示信息采用灰色信息条样式。
+  Email configuration, feature switches, send parameters and other system-level settings. Configuration cards use frosted glass effects, input boxes unified rounded design, hint information uses gray info bar style.
 
-## 🏗️ 项目概览
+## 🏗️ Project Overview
 
-华新AI知识库系统是一个基于AI的智能新闻采集、处理和检索平台，集成了现代化的Web技术栈和AI能力。
+Hua News AI Knowledge Base System is an AI-powered intelligent news collection, processing, and retrieval platform that integrates modern web technology stack and AI capabilities.
 
-### 技术栈
-- **后端**: Flask + SQLAlchemy + LangChain（Python 3.11+）
-- **前端**: Next.js 14 + React 18 + TypeScript（Node.js 18+）
-- **数据库**: SQLite（支持扩展至PostgreSQL/MySQL）
-- **AI能力**: 文本嵌入、向量搜索、智能问答、内容摘要
-- **包管理**: Python使用uv，前端使用npm
+### Technology Stack
+- **Backend**: Flask + SQLAlchemy + LangChain (Python 3.11+)
+- **Frontend**: Next.js 14 + React 18 + TypeScript (Node.js 18+)
+- **Database**: SQLite (supports extension to PostgreSQL/MySQL)
+- **AI Capabilities**: Text embedding, vector search, intelligent Q&A, content summarization
+- **Package Management**: Python uses uv, frontend uses npm
 
-### 核心功能
-- 🔍 **智能搜索**: 基于向量相似度的语义搜索
-- 📰 **RSS采集**: 自动化新闻源采集和内容处理
-- 📚 **知识库管理**: 文章分类、标签、批量操作
-- 👥 **用户管理**: 角色权限、用户组、活动日志
-- 📧 **邮件通知**: 采集完成通知、系统消息推送
-- 🤖 **AI问答**: 基于知识库的智能问答系统
-- 📊 **数据分析**: 关键词分析、趋势统计、可视化展示
+### Core Features
+- 🔍 **Intelligent Search**: Vector similarity-based semantic search
+- 📰 **RSS Collection**: Automated news source collection and content processing
+- 📚 **Knowledge Base Management**: Article categorization, tagging, batch operations
+- 👥 **User Management**: Role permissions, user groups, activity logs
+- 📧 **Email Notifications**: Collection completion notifications, system message push
+- 🤖 **AI Q&A**: Knowledge base-based intelligent Q&A system
+- 📊 **Data Analytics**: Keyword analysis, trend statistics, visualization
 
-## ⚙️ 系统要求
+## ⚙️ System Requirements
 
-### 最低要求
-- **操作系统**: Windows 10/11, macOS 10.15+, Ubuntu 18.04+
-- **Python**: 3.11 或更高版本
-- **Node.js**: 18.0 或更高版本
-- **内存**: 4GB RAM
-- **存储**: 2GB 可用空间
+### Minimum Requirements
+- **Operating System**: Windows 10/11, macOS 10.15+, Ubuntu 18.04+
+- **Python**: 3.11 or higher
+- **Node.js**: 18.0 or higher
+- **Memory**: 4GB RAM
+- **Storage**: 2GB available space
 
-### 推荐配置
-- **操作系统**: Windows 11, macOS 12+, Ubuntu 20.04+
+### Recommended Configuration
+- **Operating System**: Windows 11, macOS 12+, Ubuntu 20.04+
 - **Python**: 3.11+
 - **Node.js**: 20.0+
-- **内存**: 8GB RAM
-- **存储**: 5GB 可用空间
+- **Memory**: 8GB RAM
+- **Storage**: 5GB available space
 
-### 可选组件
-- **Ollama**: 用于本地大模型问答（RAG功能）
-  - 安装: https://ollama.com/
-  - 模型: `ollama pull qwen2.5:3b`
-- **uv**: Python包管理器（推荐）
-  - 安装: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+### Optional Components
+- **Ollama**: For local large model Q&A (RAG functionality)
+  - Install: https://ollama.com/
+  - Model: `ollama pull qwen2.5:3b`
+- **uv**: Python package manager (recommended)
+  - Install: `curl -LsSf https://astral.sh/uv/install.sh | sh`
 
-## 🔧 安装指南
+## 🔧 Installation Guide
 
-### 自动安装（推荐）
+### Automatic Installation (Recommended)
 ```bash
-# 运行一键安装脚本
+# Run one-click installation script
 python install.py
 ```
 
-### 分步安装
+### Step-by-Step Installation
 
-#### 1. 后端设置
+#### 1. Backend Setup
 ```bash
-# 运行后端初始化脚本
+# Run backend initialization script
 python scripts/setup_backend.py
 
-# 或手动安装
+# Or manual installation
 uv sync
-uv sync -E langchain  # 可选：安装LangChain功能
+uv sync -E langchain  # Optional: install LangChain functionality
 ```
 
-#### 2. 前端设置
+#### 2. Frontend Setup
 ```bash
-# 运行前端初始化脚本
+# Run frontend initialization script
 python scripts/setup_frontend.py
 
-# 或手动安装
+# Or manual installation
 cd frontend
 npm install
 ```
 
-#### 3. 数据库初始化
+#### 3. Database Initialization
 ```bash
-# 运行数据库初始化脚本
+# Run database initialization script
 python scripts/init_database.py
 
-# 或手动初始化
+# Or manual initialization
 sqlite3 hua_news.db < db/init_database.sql
 ```
 
-### 环境配置
+### Environment Configuration
 
-#### 后端环境变量 (.env)
+#### Backend Environment Variables (.env)
 ```env
-# 数据库配置
+# Database configuration
 DATABASE_URL=sqlite:///./hua_news.db
 SECRET_KEY=your-secret-key-here
 
-# 服务配置
+# Service configuration
 PORT=5050
 
-# 采集配置
+# Collection configuration
 FETCH_TIMEOUT_SEC=8
 FETCH_RETRIES=3
 RATE_LIMIT_DOMAIN_QPS=1
@@ -232,69 +231,69 @@ CHUNK_SIZE=800
 CHUNK_OVERLAP=120
 SIMHASH_HAMMING_THRESHOLD=4
 
-# 百度搜索API（可选）
+# Baidu Search API (optional)
 BAIDU_API_KEY=
 BAIDU_SECRET_KEY=
 
-# 网络搜索配置
+# Web search configuration
 ENABLE_WEB_SEARCH=true
 WEB_SEARCH_FALLBACK=true
 ```
 
-#### 前端环境变量 (.env.local)
+#### Frontend Environment Variables (.env.local)
 ```env
-# API基础URL
+# API base URL
 NEXT_PUBLIC_API_BASE_URL=http://localhost:5050
 
-# 应用配置
-NEXT_PUBLIC_APP_NAME=华新AI知识库系统
+# Application configuration
+NEXT_PUBLIC_APP_NAME=Hua News AI Knowledge Base System
 NEXT_PUBLIC_APP_VERSION=1.0.0
 ```
 
-## 🚀 启动服务
+## 🚀 Starting Services
 
-### 开发环境
+### Development Environment
 
-#### 启动后端服务
+#### Start Backend Service
 ```bash
 cd backend
 python run.py
-# 默认端口: 5050
-# 健康检查: http://localhost:5050/api/health
+# Default port: 5050
+# Health check: http://localhost:5050/api/health
 ```
 
-#### 启动前端服务
+#### Start Frontend Service
 ```bash
 cd frontend
 npm run dev
-# 默认端口: 3000
-# 访问地址: http://localhost:3000
+# Default port: 3000
+# Access URL: http://localhost:3000
 ```
 
-### 生产环境
+### Production Environment
 
-#### 后端服务
+#### Backend Service
 ```bash
-# 使用Gunicorn（推荐）
+# Using Gunicorn (recommended)
 pip install gunicorn
 gunicorn -w 4 -b 0.0.0.0:5050 core.app:create_app()
 
-# 或使用uWSGI
+# Or using uWSGI
 pip install uwsgi
 uwsgi --http :5050 --module core.app:create_app --callable app
 ```
 
-#### 前端服务
+#### Frontend Service
 ```bash
 cd frontend
-# 构建生产版本
+# Build production version
 npm run build
 
-# 启动生产服务
+# Start production service
 npm start
 ```
 
-### 一键启动脚本
+### One-Click Startup Scripts
 ```bash
 # Windows
 startup_scripts/start_all.bat
@@ -303,351 +302,351 @@ startup_scripts/start_all.bat
 ./startup_scripts/start_all.sh
 ```
 
-## 📚 功能特性
+## 📚 Features
 
-### 🔍 智能搜索
-- **语义搜索**: 基于向量相似度的智能检索
-- **混合搜索**: 结合关键词和语义搜索
-- **网络搜索**: 本地无结果时自动联网补充
-- **引用溯源**: 搜索结果包含来源链接
+### 🔍 Intelligent Search
+- **Semantic Search**: Vector similarity-based intelligent retrieval
+- **Hybrid Search**: Combines keyword and semantic search
+- **Web Search**: Automatically supplements with web search when local results are insufficient
+- **Citation Tracing**: Search results include source links
 
-### 📰 RSS采集管理
-- **多源采集**: 支持多个RSS源同时采集
-- **自动采集**: 定时自动采集，可配置采集间隔
-- **手动采集**: 支持单源和批量手动采集
-- **内容去重**: 基于SimHash的智能去重
-- **状态监控**: 实时显示采集状态和进度
+### 📰 RSS Collection Management
+- **Multi-Source Collection**: Supports multiple RSS sources simultaneously
+- **Automatic Collection**: Scheduled automatic collection with configurable intervals
+- **Manual Collection**: Supports single-source and batch manual collection
+- **Content Deduplication**: SimHash-based intelligent deduplication
+- **Status Monitoring**: Real-time collection status and progress display
 
-### 📚 知识库管理
-- **文章管理**: 支持文章的增删改查
-- **分类标签**: 灵活的文章分类和标签系统
-- **批量操作**: 支持批量删除、导入等操作
-- **内容编辑**: 行内编辑文章标签和分类
-- **搜索筛选**: 多维度筛选和搜索
+### 📚 Knowledge Base Management
+- **Article Management**: Supports CRUD operations for articles
+- **Category Tags**: Flexible article categorization and tagging system
+- **Batch Operations**: Supports batch deletion, import, and other operations
+- **Content Editing**: Inline editing of article tags and categories
+- **Search Filtering**: Multi-dimensional filtering and search
 
-### 👥 用户权限管理
-- **用户管理**: 完整的用户CRUD操作
-- **角色权限**: 基于角色的权限控制系统
-- **用户组**: 支持用户分组管理
-- **活动日志**: 详细的用户操作日志
-- **会话管理**: JWT令牌和会话管理
+### 👥 User Permission Management
+- **User Management**: Complete user CRUD operations
+- **Role Permissions**: Role-based access control system
+- **User Groups**: Supports user group management
+- **Activity Logs**: Detailed user operation logs
+- **Session Management**: JWT token and session management
 
-### 📧 邮件通知系统
-- **采集通知**: RSS采集完成自动发送邮件
-- **多收件人**: 支持多个收件人配置
-- **邮件模板**: 可自定义邮件内容和格式
-- **发送状态**: 详细的邮件发送状态反馈
-- **重试机制**: 发送失败自动重试
+### 📧 Email Notification System
+- **Collection Notifications**: Automatic email sending upon RSS collection completion
+- **Multiple Recipients**: Supports multiple recipient configuration
+- **Email Templates**: Customizable email content and format
+- **Send Status**: Detailed email sending status feedback
+- **Retry Mechanism**: Automatic retry on send failure
 
-### 🤖 AI智能功能
-- **智能问答**: 基于知识库的问答系统
-- **内容摘要**: 自动生成文章摘要
-- **关键词提取**: 智能提取文章关键词
-- **向量搜索**: 基于FAISS的高效向量检索
-- **模型配置**: 支持多种AI模型配置
+### 🤖 AI Intelligent Features
+- **Intelligent Q&A**: Knowledge base-based Q&A system
+- **Content Summarization**: Automatic article summarization
+- **Keyword Extraction**: Intelligent article keyword extraction
+- **Vector Search**: FAISS-based efficient vector retrieval
+- **Model Configuration**: Supports multiple AI model configurations
 
-### 📊 数据分析
-- **仪表盘**: 数据概览和统计信息
-- **趋势分析**: 文章入库趋势分析
-- **关键词统计**: 热门关键词分析
-- **来源分析**: RSS源效果分析
-- **可视化图表**: 直观的数据展示
+### 📊 Data Analytics
+- **Dashboard**: Data overview and statistical information
+- **Trend Analysis**: Article ingest trend analysis
+- **Keyword Statistics**: Popular keyword analysis
+- **Source Analysis**: RSS source effectiveness analysis
+- **Visualization Charts**: Intuitive data display
 
-## 🔌 API接口
+## 🔌 API Interface
 
-### 接口文档
-- **OpenAPI规范**: `openapi.yaml`
-- **详细文档**: `doc/backend_api.md`
-- **基准URL**: `http://localhost:5050`
+### Interface Documentation
+- **OpenAPI Specification**: `openapi.yaml`
+- **Detailed Documentation**: `doc/backend_api.md`
+- **Base URL**: `http://localhost:5050`
 
-### 核心API端点
+### Core API Endpoints
 
-#### 认证相关
-- `POST /api/auth/login` - 用户登录
-- `POST /api/auth/logout` - 用户登出
-- `GET /api/auth/me` - 获取当前用户信息
+#### Authentication Related
+- `POST /api/auth/login` - User login
+- `POST /api/auth/logout` - User logout
+- `GET /api/auth/me` - Get current user information
 
-#### 用户管理
-- `GET /api/users` - 获取用户列表
-- `POST /api/users` - 创建用户
-- `PUT /api/users/{id}` - 更新用户
-- `DELETE /api/users/{id}` - 删除用户
-- `GET /api/user-roles` - 获取角色列表
-- `GET /api/user-groups` - 获取用户组列表
+#### User Management
+- `GET /api/users` - Get user list
+- `POST /api/users` - Create user
+- `PUT /api/users/{id}` - Update user
+- `DELETE /api/users/{id}` - Delete user
+- `GET /api/user-roles` - Get role list
+- `GET /api/user-groups` - Get user group list
 
-#### RSS管理
-- `GET /api/settings/rss` - 获取RSS源列表
-- `POST /api/settings/rss` - 创建RSS源
-- `PUT /api/settings/rss/{id}` - 更新RSS源
-- `DELETE /api/settings/rss/{id}` - 删除RSS源
-- `POST /api/settings/rss/ingest/{id}` - 手动采集
-- `POST /api/settings/rss/ingest-all` - 批量采集
+#### RSS Management
+- `GET /api/settings/rss` - Get RSS source list
+- `POST /api/settings/rss` - Create RSS source
+- `PUT /api/settings/rss/{id}` - Update RSS source
+- `DELETE /api/settings/rss/{id}` - Delete RSS source
+- `POST /api/settings/rss/ingest/{id}` - Manual collection
+- `POST /api/settings/rss/ingest-all` - Batch collection
 
-#### 知识库
-- `GET /api/kb/items` - 获取文章列表
-- `GET /api/kb/items/{id}` - 获取文章详情
-- `PUT /api/kb/items/{id}` - 更新文章
-- `DELETE /api/kb/items/{id}` - 删除文章
-- `POST /api/kb/items/batch-delete` - 批量删除
+#### Knowledge Base
+- `GET /api/kb/items` - Get article list
+- `GET /api/kb/items/{id}` - Get article details
+- `PUT /api/kb/items/{id}` - Update article
+- `DELETE /api/kb/items/{id}` - Delete article
+- `POST /api/kb/items/batch-delete` - Batch delete
 
-#### 搜索功能
-- `POST /api/search/semantic` - 语义搜索
-- `POST /api/search/qa` - 智能问答
+#### Search Functionality
+- `POST /api/search/semantic` - Semantic search
+- `POST /api/search/qa` - Intelligent Q&A
 
-#### 系统设置
-- `GET /api/settings` - 获取系统设置
-- `PUT /api/settings` - 更新系统设置
-- `GET /api/settings/models` - 获取模型配置
-- `PUT /api/settings/models` - 更新模型配置
-- `POST /api/email/test` - 测试邮件发送
+#### System Settings
+- `GET /api/settings` - Get system settings
+- `PUT /api/settings` - Update system settings
+- `GET /api/settings/models` - Get model configuration
+- `PUT /api/settings/models` - Update model configuration
+- `POST /api/email/test` - Test email sending
 
-#### 数据分析
-- `GET /api/dashboard/summary` - 获取仪表盘数据
-- `GET /api/analytics/keywords` - 获取关键词统计
-- `GET /api/analytics/trends` - 获取趋势分析
+#### Data Analytics
+- `GET /api/dashboard/summary` - Get dashboard data
+- `GET /api/analytics/keywords` - Get keyword statistics
+- `GET /api/analytics/trends` - Get trend analysis
 
-### API测试
-- **HTTP集合**: `tests/api.http` (VS Code REST Client)
-- **冒烟测试**: `tests/smoke_test.py` (Python requests)
-- **测试报告**: `tests/api_test_report.md`
+### API Testing
+- **HTTP Collection**: `tests/api.http` (VS Code REST Client)
+- **Smoke Test**: `tests/smoke_test.py` (Python requests)
+- **Test Report**: `tests/api_test_report.md`
 
-## 📁 项目结构
+## 📁 Project Structure
 
 ```
-hua_news_ai_rag/                    # 项目根目录
-├── backend/                        # 后端模块
-│   ├── core/                       # 核心应用层
-│   │   └── app.py                  # Flask主应用入口
-│   ├── data/                       # 数据层
-│   │   ├── db.py                   # 数据库连接管理
-│   │   ├── models.py               # 基础数据模型
-│   │   ├── user_management_models.py # 用户管理模型
-│   │   └── model_config_models.py  # 模型配置模型
-│   ├── ai/                         # AI服务层
-│   │   ├── embeddings.py           # 文本嵌入服务
-│   │   ├── enrich.py               # 文本增强工具
-│   │   ├── qa.py                   # 问答系统
-│   │   └── vectorstore.py          # 向量搜索功能
-│   ├── crawler/                    # 数据采集层
-│   │   ├── fetcher.py              # HTTP抓取器
-│   │   ├── ingest.py               # RSS采集处理
-│   │   └── ingest_utils.py         # 采集工具
-│   ├── routes/                     # API路由层
-│   │   ├── auth.py                 # 认证端点
-│   │   ├── users.py                # 用户管理端点
-│   │   ├── rss.py                  # RSS管理端点
-│   │   ├── kb.py                   # 知识库端点
-│   │   ├── models_settings.py      # 模型配置端点
-│   │   ├── settings.py             # 系统设置端点
-│   │   ├── email_test.py           # 邮件测试端点
-│   │   └── user_*.py               # 用户管理相关端点
-│   ├── services/                   # 领域服务
-│   │   ├── ai_summary.py           # AI摘要服务
-│   │   ├── web_search.py           # 联网搜索服务
-│   │   └── simple_web_search.py    # 简单搜索服务
-│   ├── email_fly/                  # 邮件模块
-│   │   ├── email_sender.py         # 邮件发送服务
-│   │   ├── email_templates.py      # 邮件模板
-│   │   └── db_email_sender.py      # 数据库邮件发送
-│   ├── scripts/                    # 脚本工具
-│   │   ├── export_openapi.py       # OpenAPI导出
-│   │   └── migrate_*.py            # 数据库迁移脚本
-│   ├── config.py                   # 应用配置
-│   └── run.py                      # 服务启动文件
-├── frontend/                       # 前端应用
-│   ├── app/                        # Next.js应用目录
-│   │   ├── page.tsx                # 首页
-│   │   ├── login/                  # 登录页面
-│   │   ├── kb/                     # 知识库页面
-│   │   ├── search/                 # 搜索页面
-│   │   ├── settings/               # 设置页面
-│   │   │   ├── rss/                # RSS管理
-│   │   │   ├── models/             # 模型配置
-│   │   │   ├── system/             # 系统设置
-│   │   │   └── users/              # 用户管理
-│   │   └── analytics/              # 数据分析
-│   ├── components/                 # 组件库
-│   │   ├── UserManagement/         # 用户管理组件
-│   │   ├── Nav.tsx                 # 导航组件
-│   │   ├── Notification.tsx        # 通知组件
-│   │   └── ContentModal.tsx        # 内容模态框
-│   ├── lib/                        # 工具库
-│   │   ├── api.ts                  # API客户端
-│   │   ├── auth.ts                 # 认证工具
-│   │   └── validators.ts           # 验证器
-│   └── package.json                # 前端依赖配置
-├── db/                             # 数据库相关
-│   ├── init_database.sql           # 数据库初始化脚本
-│   ├── schema.sql                  # 基础表结构
-│   ├── seed.sql                    # 种子数据
-│   └── user_management_schema.sql  # 用户管理表结构
-├── scripts/                        # 安装脚本
-│   ├── init_database.py            # 数据库初始化脚本
-│   ├── setup_backend.py            # 后端设置脚本
-│   └── setup_frontend.py           # 前端设置脚本
-├── doc/                            # 项目文档
-│   ├── backend_api.md              # API文档
-│   ├── system_architecture_document.md # 系统架构文档
-│   ├── product_requirements_document.md # 产品需求文档
-│   └── user_management_design.md   # 用户管理设计文档
-├── tests/                          # 测试文件
-│   ├── api.http                    # HTTP测试集合
-│   ├── smoke_test.py               # 冒烟测试
-│   └── api_test_report.md          # 测试报告
-├── snapshot/                       # 系统截图
-├── install.py                      # 一键安装脚本
-├── INSTALLATION.md                 # 详细安装指南
-├── README_INSTALL.md               # 快速安装指南
-├── pyproject.toml                  # Python项目配置
-├── openapi.yaml                    # OpenAPI规范
-└── hua_news.db                     # SQLite数据库文件
+hua_news_ai_rag/                    # Project root directory
+├── backend/                        # Backend module
+│   ├── core/                       # Core application layer
+│   │   └── app.py                  # Flask main application entry
+│   ├── data/                       # Data layer
+│   │   ├── db.py                   # Database connection management
+│   │   ├── models.py               # Basic data models
+│   │   ├── user_management_models.py # User management models
+│   │   └── model_config_models.py  # Model configuration models
+│   ├── ai/                         # AI service layer
+│   │   ├── embeddings.py           # Text embedding service
+│   │   ├── enrich.py               # Text enhancement tools
+│   │   ├── qa.py                   # Q&A system
+│   │   └── vectorstore.py          # Vector search functionality
+│   ├── crawler/                    # Data collection layer
+│   │   ├── fetcher.py              # HTTP fetcher
+│   │   ├── ingest.py               # RSS collection processing
+│   │   └── ingest_utils.py         # Collection utilities
+│   ├── routes/                     # API route layer
+│   │   ├── auth.py                 # Authentication endpoints
+│   │   ├── users.py                # User management endpoints
+│   │   ├── rss.py                  # RSS management endpoints
+│   │   ├── kb.py                   # Knowledge base endpoints
+│   │   ├── models_settings.py      # Model configuration endpoints
+│   │   ├── settings.py             # System settings endpoints
+│   │   ├── email_test.py           # Email test endpoints
+│   │   └── user_*.py               # User management related endpoints
+│   ├── services/                   # Domain services
+│   │   ├── ai_summary.py           # AI summary service
+│   │   ├── web_search.py           # Web search service
+│   │   └── simple_web_search.py    # Simple search service
+│   ├── email_fly/                  # Email module
+│   │   ├── email_sender.py         # Email sending service
+│   │   ├── email_templates.py      # Email templates
+│   │   └── db_email_sender.py      # Database email sender
+│   ├── scripts/                    # Script tools
+│   │   ├── export_openapi.py       # OpenAPI export
+│   │   └── migrate_*.py            # Database migration scripts
+│   ├── config.py                   # Application configuration
+│   └── run.py                      # Service startup file
+├── frontend/                       # Frontend application
+│   ├── app/                        # Next.js application directory
+│   │   ├── page.tsx                # Home page
+│   │   ├── login/                  # Login page
+│   │   ├── kb/                     # Knowledge base page
+│   │   ├── search/                 # Search page
+│   │   ├── settings/               # Settings page
+│   │   │   ├── rss/                # RSS management
+│   │   │   ├── models/             # Model configuration
+│   │   │   ├── system/             # System settings
+│   │   │   └── users/              # User management
+│   │   └── analytics/              # Data analytics
+│   ├── components/                 # Component library
+│   │   ├── UserManagement/         # User management components
+│   │   ├── Nav.tsx                 # Navigation component
+│   │   ├── Notification.tsx        # Notification component
+│   │   └── ContentModal.tsx        # Content modal
+│   ├── lib/                        # Utility library
+│   │   ├── api.ts                  # API client
+│   │   ├── auth.ts                 # Authentication utilities
+│   │   └── validators.ts           # Validators
+│   └── package.json                # Frontend dependency configuration
+├── db/                             # Database related
+│   ├── init_database.sql           # Database initialization script
+│   ├── schema.sql                  # Basic table structure
+│   ├── seed.sql                    # Seed data
+│   └── user_management_schema.sql  # User management table structure
+├── scripts/                        # Installation scripts
+│   ├── init_database.py            # Database initialization script
+│   ├── setup_backend.py            # Backend setup script
+│   └── setup_frontend.py           # Frontend setup script
+├── doc/                            # Project documentation
+│   ├── backend_api.md              # API documentation
+│   ├── system_architecture_document.md # System architecture document
+│   ├── product_requirements_document.md # Product requirements document
+│   └── user_management_design.md   # User management design document
+├── tests/                          # Test files
+│   ├── api.http                    # HTTP test collection
+│   ├── smoke_test.py               # Smoke test
+│   └── api_test_report.md          # Test report
+├── snapshot/                       # System screenshots
+├── install.py                      # One-click installation script
+├── INSTALLATION.md                 # Detailed installation guide
+├── README_INSTALL.md               # Quick installation guide
+├── pyproject.toml                  # Python project configuration
+├── openapi.yaml                    # OpenAPI specification
+└── hua_news.db                     # SQLite database file
 ```
 
-## 🛠️ 开发指南
+## 🛠️ Development Guide
 
-### 开发环境设置
+### Development Environment Setup
 ```bash
-# 后端开发
+# Backend development
 cd backend
 source ../.venv/bin/activate
 python run.py
 
-# 前端开发
+# Frontend development
 cd frontend
 npm run dev
 ```
 
-### 代码格式化
+### Code Formatting
 ```bash
-# 后端代码格式化
+# Backend code formatting
 pip install black isort flake8
 black backend/
 isort backend/
 flake8 backend/
 
-# 前端代码格式化
+# Frontend code formatting
 npm install -g prettier
 prettier --write frontend/
 ```
 
-### 测试
+### Testing
 ```bash
-# 后端测试
+# Backend testing
 cd backend
 python -m pytest
 
-# 前端测试
+# Frontend testing
 cd frontend
 npm test
 ```
 
-### 调试
+### Debugging
 ```bash
-# 后端调试
+# Backend debugging
 cd backend
 python -m pdb run.py
 
-# 前端调试
+# Frontend debugging
 cd frontend
 npm run dev -- --inspect
 ```
 
-## ❓ 常见问题
+## ❓ FAQ
 
-### 🔌 连接问题
-**Q: 前端报错无法访问API**
-- 确认 `NEXT_PUBLIC_API_BASE_URL` 指向后端实际地址
-- 默认配置：前端 `http://localhost:3000` ↔ 后端 `http://localhost:5050`
-- 如需要，可在 `frontend/.env.local` 中设置：`NEXT_PUBLIC_API_BASE_URL=http://localhost:5050`
+### 🔌 Connection Issues
+**Q: Frontend reports error accessing API**
+- Confirm `NEXT_PUBLIC_API_BASE_URL` points to actual backend address
+- Default configuration: Frontend `http://localhost:3000` ↔ Backend `http://localhost:5050`
+- If needed, set in `frontend/.env.local`: `NEXT_PUBLIC_API_BASE_URL=http://localhost:5050`
 
-**Q: 端口冲突**
-- 检查端口占用：`lsof -i :5050` 和 `lsof -i :3000`
-- 修改后端端口：`PORT=8080 python run.py`
+**Q: Port conflicts**
+- Check port usage: `lsof -i :5050` and `lsof -i :3000`
+- Modify backend port: `PORT=8080 python run.py`
 
-### 🐍 Python相关问题
-**Q: 导入错误 (ImportError)**
-- 运行修复脚本：`cd backend && python fix_imports.py`
-- 确保使用正确的启动方式：`python run.py`
+### 🐍 Python Related Issues
+**Q: Import errors (ImportError)**
+- Run fix script: `cd backend && python fix_imports.py`
+- Ensure correct startup method: `python run.py`
 
-**Q: 虚拟环境问题**
-- 确保激活虚拟环境：`source .venv/bin/activate`
-- 检查Python版本：`python --version` (建议3.11+)
+**Q: Virtual environment issues**
+- Ensure virtual environment is activated: `source .venv/bin/activate`
+- Check Python version: `python --version` (recommend 3.11+)
 
-### 🗄️ 数据库问题
-**Q: 数据库连接失败**
-- 确认 `hua_news.db` 文件路径正确
-- 检查 `backend/config.py` 中的 `database_url` 配置
-- 默认路径：项目根目录的 `hua_news.db`
+### 🗄️ Database Issues
+**Q: Database connection failure**
+- Confirm `hua_news.db` file path is correct
+- Check `database_url` configuration in `backend/config.py`
+- Default path: `hua_news.db` in project root directory
 
-**Q: 表不存在错误**
-- 首次启动会自动创建表结构
-- 手动检查：`sqlite3 hua_news.db ".tables"`
+**Q: Table does not exist error**
+- Tables are automatically created on first startup
+- Manual check: `sqlite3 hua_news.db ".tables"`
 
-### 🤖 AI功能问题
-**Q: RAG/QA无法使用**
-- 执行：`uv sync -E langchain`
-- 确保本机有可用的LLM服务（例如Ollama）
-- 拉取模型：`ollama pull qwen2.5:3b`
+### 🤖 AI Function Issues
+**Q: RAG/QA cannot be used**
+- Execute: `uv sync -E langchain`
+- Ensure local LLM service is available (e.g., Ollama)
+- Pull model: `ollama pull qwen2.5:3b`
 
-**Q: 向量搜索失败**
-- 检查FAISS索引是否正确创建
-- 确认文本嵌入服务正常运行
-- 查看后端日志中的错误信息
+**Q: Vector search failure**
+- Check if FAISS index is correctly created
+- Confirm text embedding service is running normally
+- Check error messages in backend logs
 
-### 🚀 启动问题
-**Q: 后端启动失败**
-- 检查依赖是否安装完整：`uv sync`
-- 确认端口未被占用
-- 查看错误日志
+### 🚀 Startup Issues
+**Q: Backend startup failure**
+- Check if dependencies are completely installed: `uv sync`
+- Confirm port is not occupied
+- Check error logs
 
-**Q: 前端启动失败**
-- 检查Node.js版本：`node --version` (建议18+)
-- 重新安装依赖：`cd frontend && rm -rf node_modules && npm install`
-- 清除缓存：`npm run dev -- --clear`
+**Q: Frontend startup failure**
+- Check Node.js version: `node --version` (recommend 18+)
+- Reinstall dependencies: `cd frontend && rm -rf node_modules && npm install`
+- Clear cache: `npm run dev -- --clear`
 
-### 📧 邮件问题
-**Q: 邮件发送失败**
-- 检查邮件配置：系统设置 → 邮件设置
-- 验证SMTP设置和认证信息
-- 查看邮件发送日志
+### 📧 Email Issues
+**Q: Email sending failure**
+- Check email configuration: System Settings → Email Settings
+- Verify SMTP settings and authentication information
+- Check email sending logs
 
-**Q: 邮件通知不工作**
-- 确认邮件模块已启用
-- 检查收件人邮箱配置
-- 验证RSS采集是否正常
+**Q: Email notifications not working**
+- Confirm email module is enabled
+- Check recipient email configuration
+- Verify RSS collection is working normally
 
-## 📖 相关文档
+## 📖 Related Documentation
 
-### 安装部署
-- [详细安装指南](INSTALLATION.md) - 完整的安装和配置说明
-- [快速安装指南](README_INSTALL.md) - 快速上手指南
+### Installation & Deployment
+- [Detailed Installation Guide](INSTALLATION.md) - Complete installation and configuration instructions
+- [Quick Installation Guide](README_INSTALL.md) - Quick start guide
 
-### 技术文档
-- [API接口文档](doc/backend_api.md) - 完整的后端API文档
-- [系统架构文档](doc/system_architecture_document.md) - 系统架构设计
-- [产品需求文档](doc/product_requirements_document.md) - 产品功能需求
-- [用户管理设计](doc/user_management_design.md) - 用户权限系统设计
+### Technical Documentation
+- [API Interface Documentation](doc/backend_api.md) - Complete backend API documentation
+- [System Architecture Document](doc/system_architecture_document.md) - System architecture design
+- [Product Requirements Document](doc/product_requirements_document.md) - Product feature requirements
+- [User Management Design](doc/user_management_design.md) - User permission system design
 
-### 开发文档
-- [数据采集技术文档](doc/data_collection_technical_doc.md) - RSS采集技术实现
-- [系统架构代码配置](doc/system_architecture_code_and_config.md) - 代码架构说明
+### Development Documentation
+- [Data Collection Technical Document](doc/data_collection_technical_doc.md) - RSS collection technical implementation
+- [System Architecture Code Configuration](doc/system_architecture_code_and_config.md) - Code architecture description
 
-### 测试文档
-- [API测试报告](tests/api_test_report.md) - 接口测试结果
-- [HTTP测试集合](tests/api.http) - VS Code REST Client测试
-
----
-
-## 📄 许可证
-
-本项目采用MIT许可证，详见LICENSE文件。
+### Testing Documentation
+- [API Test Report](tests/api_test_report.md) - Interface test results
+- [HTTP Test Collection](tests/api.http) - VS Code REST Client tests
 
 ---
 
-## 🤝 贡献指南
+## 📄 License
 
-欢迎提交Issue和Pull Request来改进项目！
+This project is licensed under the MIT License. See LICENSE file for details.
 
 ---
 
-**⚠️ 重要提醒**: 安装完成后请及时修改默认密码并配置生产环境设置！
+## 🤝 Contributing
+
+Welcome to submit Issues and Pull Requests to improve the project!
+
+---
+
+**⚠️ Important Reminder**: Please change the default password and configure production environment settings promptly after installation!
